@@ -1,5 +1,4 @@
-#ifndef __BATTLECRUISERAGENT_H__
-#define __BATTLECRUISERAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -12,15 +11,12 @@
 class BattlecruiserAgent : public UnitAgent {
 
 private:
-	int lastUseFrame;
-	
+  int lastUseFrame;
+
 public:
-	BattlecruiserAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "BattlecruiserAgent";
-	}
+  BattlecruiserAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "BattlecruiserAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities();
 };
-
-#endif

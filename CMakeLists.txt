@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.6)
-#add_subdirectory("deps/bwapi")
 
 project(RnP_bot)
-
 set(CMAKE_CXX_STANDARD 14)
-set(BOOST_DIR f:/boost_1_63_0)
-set(BOOST_GEOM_EXT j:/Projects/boost_geometry_ext)
+
+set(BOOST_VER       1_63)
+set(BOOST_DIR       f:/boost_1_63_0)
+set(BOOST_GEOM_EXT  j:/SSCAIT/boost_geometry_ext)
 
 include_directories(
         ${CMAKE_SOURCE_DIR}/include
@@ -21,135 +21,106 @@ add_definitions(
 	)
 # /DDEBUG_DRAW=1
 
-set(SOURCE_FILES
-        src/AIloop.cpp
-        src/AIloop.h
-        src/Commander/Commander.cpp
-        src/Commander/Commander.h
-        src/Commander/ExplorationSquad.cpp
-        src/Commander/ExplorationSquad.h
-        src/Commander/Protoss/ProtossMain.cpp
-        src/Commander/Protoss/ProtossMain.h
-        src/Commander/RushSquad.cpp
-        src/Commander/RushSquad.h
-        src/Commander/Squad.cpp
-        src/Commander/Squad.h
-        src/Commander/StrategySelector.cpp
-        src/Commander/StrategySelector.h
-        src/Commander/Terran/TerranMain.cpp
-        src/Commander/Terran/TerranMain.h
-        src/Commander/UnitSetup.cpp
-        src/Commander/UnitSetup.h
-        src/Commander/Zerg/LurkerRush.cpp
-        src/Commander/Zerg/LurkerRush.h
-        src/Commander/Zerg/ZergMain.cpp
-        src/Commander/Zerg/ZergMain.h
+set(SRC_SRC
+        src/BWEMUtil.cpp src/BWEMUtil.h
+	src/Geometry.cpp src/Geometry.h
+        src/AIloop.cpp src/AIloop.h
         src/Dll.cpp
-        src/Influencemap/MapManager.cpp
-        src/Influencemap/MapManager.h
-        src/MainAgents/AgentFactory.cpp
-        src/MainAgents/AgentFactory.h
-        src/MainAgents/BaseAgent.cpp
-        src/MainAgents/BaseAgent.h
-        src/MainAgents/TargetingAgent.cpp
-        src/MainAgents/TargetingAgent.h
-        src/MainAgents/WorkerAgent.cpp
-        src/MainAgents/WorkerAgent.h
-        src/Managers/AgentManager.cpp
-        src/Managers/AgentManager.h
-        src/Managers/Agentset.cpp
-        src/Managers/Agentset.h
-        src/Managers/BuildingPlacer.cpp
-        src/Managers/BuildingPlacer.h
-        src/Managers/BuildplanEntry.cpp
-        src/Managers/BuildplanEntry.h
-        src/Managers/Constructor.cpp
-        src/Managers/Constructor.h
-        src/Managers/ExplorationManager.cpp
-        src/Managers/ExplorationManager.h
-        src/Managers/ResourceManager.cpp
-        src/Managers/ResourceManager.h
-        src/Managers/SpottedObject.cpp
-        src/Managers/SpottedObject.h
-        src/Managers/Upgrader.cpp
-        src/Managers/Upgrader.h
-        src/OpprimoBot.cpp
-        src/OpprimoBot.h
-        src/Pathfinding/NavigationAgent.cpp
-        src/Pathfinding/NavigationAgent.h
-        src/Pathfinding/Pathfinder.cpp
-        src/Pathfinding/Pathfinder.h
-        src/Pathfinding/PathObj.cpp
-        src/Pathfinding/PathObj.h
-        src/Pathfinding/PFFunctions.cpp
-        src/Pathfinding/PFFunctions.h
-        src/StructureAgents/Protoss/NexusAgent.cpp
-        src/StructureAgents/Protoss/NexusAgent.h
-        src/StructureAgents/RefineryAgent.cpp
-        src/StructureAgents/RefineryAgent.h
-        src/StructureAgents/StructureAgent.cpp
-        src/StructureAgents/StructureAgent.h
-        src/StructureAgents/Terran/CommandCenterAgent.cpp
-        src/StructureAgents/Terran/CommandCenterAgent.h
-        src/StructureAgents/Terran/ComsatAgent.cpp
-        src/StructureAgents/Terran/ComsatAgent.h
-        src/StructureAgents/Zerg/HatcheryAgent.cpp
-        src/StructureAgents/Zerg/HatcheryAgent.h
-        src/UnitAgents/Protoss/CarrierAgent.cpp
-        src/UnitAgents/Protoss/CarrierAgent.h
-        src/UnitAgents/Protoss/CorsairAgent.cpp
-        src/UnitAgents/Protoss/CorsairAgent.h
-        src/UnitAgents/Protoss/HighTemplarAgent.cpp
-        src/UnitAgents/Protoss/HighTemplarAgent.h
-        src/UnitAgents/Protoss/ReaverAgent.cpp
-        src/UnitAgents/Protoss/ReaverAgent.h
-        src/UnitAgents/Terran/BattlecruiserAgent.cpp
-        src/UnitAgents/Terran/BattlecruiserAgent.h
-        src/UnitAgents/Terran/FirebatAgent.cpp
-        src/UnitAgents/Terran/FirebatAgent.h
-        src/UnitAgents/Terran/GhostAgent.cpp
-        src/UnitAgents/Terran/GhostAgent.h
-        src/UnitAgents/Terran/MarineAgent.cpp
-        src/UnitAgents/Terran/MarineAgent.h
-        src/UnitAgents/Terran/MedicAgent.cpp
-        src/UnitAgents/Terran/MedicAgent.h
-        src/UnitAgents/Terran/ScienceVesselAgent.cpp
-        src/UnitAgents/Terran/ScienceVesselAgent.h
-        src/UnitAgents/Terran/SiegeTankAgent.cpp
-        src/UnitAgents/Terran/SiegeTankAgent.h
-        src/UnitAgents/Terran/VultureAgent.cpp
-        src/UnitAgents/Terran/VultureAgent.h
-        src/UnitAgents/Terran/WraithAgent.cpp
-        src/UnitAgents/Terran/WraithAgent.h
-        src/UnitAgents/TransportAgent.cpp
-        src/UnitAgents/TransportAgent.h
-        src/UnitAgents/UnitAgent.cpp
-        src/UnitAgents/UnitAgent.h
-        src/UnitAgents/Zerg/DefilerAgent.cpp
-        src/UnitAgents/Zerg/DefilerAgent.h
-        src/UnitAgents/Zerg/HydraliskAgent.cpp
-        src/UnitAgents/Zerg/HydraliskAgent.h
-        src/UnitAgents/Zerg/LurkerAgent.cpp
-        src/UnitAgents/Zerg/LurkerAgent.h
-        src/UnitAgents/Zerg/MutaliskAgent.cpp
-        src/UnitAgents/Zerg/MutaliskAgent.h
-        src/UnitAgents/Zerg/QueenAgent.cpp
-        src/UnitAgents/Zerg/QueenAgent.h
-        src/Utils/Config.cpp
-        src/Utils/Config.h
-        src/Utils/cthread.cpp
-        src/Utils/cthread.h
-        src/Utils/FileReaderUtils.cpp
-        src/Utils/FileReaderUtils.h
-        src/Utils/Profiler.cpp
-        src/Utils/Profiler.h
-        src/Utils/ProfilerObj.cpp
-        src/Utils/ProfilerObj.h
-        src/Utils/Sets.h
-        src/Utils/Statistics.cpp
-        src/Utils/Statistics.h
+        src/Influencemap/MapManager.cpp src/Influencemap/MapManager.h
+        src/OpprimoBot.cpp src/OpprimoBot.h
         )
-source_group("Source" FILES ${SOURCE_FILES})
+set(SRC_PATHING
+        src/Pathfinding/NavigationAgent.cpp src/Pathfinding/NavigationAgent.h
+        src/Pathfinding/Pathfinder.cpp src/Pathfinding/Pathfinder.h
+        src/Pathfinding/PathObj.cpp src/Pathfinding/PathObj.h
+        src/Pathfinding/PFFunctions.cpp src/Pathfinding/PFFunctions.h
+        )
+set(SRC_MAINAGENTS
+        src/MainAgents/AgentFactory.cpp src/MainAgents/AgentFactory.h
+        src/MainAgents/BaseAgent.cpp src/MainAgents/BaseAgent.h
+        src/MainAgents/TargetingAgent.cpp src/MainAgents/TargetingAgent.h
+        src/MainAgents/WorkerAgent.cpp src/MainAgents/WorkerAgent.h
+        )
+set(SRC_MANAGERS
+        src/Managers/AgentManager.cpp src/Managers/AgentManager.h
+        src/Managers/Agentset.cpp src/Managers/Agentset.h
+        src/Managers/BuildingPlacer.cpp src/Managers/BuildingPlacer.h
+        src/Managers/BuildplanEntry.cpp src/Managers/BuildplanEntry.h
+        src/Managers/Constructor.cpp src/Managers/Constructor.h
+        src/Managers/ExplorationManager.cpp src/Managers/ExplorationManager.h
+        src/Managers/ResourceManager.cpp src/Managers/ResourceManager.h
+        src/Managers/SpottedObject.cpp src/Managers/SpottedObject.h
+        src/Managers/Upgrader.cpp src/Managers/Upgrader.h
+        )
+set(SRC_COMMANDER
+        src/Commander/Commander.cpp src/Commander/Commander.h
+        src/Commander/ExplorationSquad.cpp src/Commander/ExplorationSquad.h
+        src/Commander/Protoss/ProtossMain.cpp src/Commander/Protoss/ProtossMain.h
+        src/Commander/RushSquad.cpp src/Commander/RushSquad.h
+        src/Commander/Squad.cpp src/Commander/Squad.h
+        src/Commander/StrategySelector.cpp src/Commander/StrategySelector.h
+        src/Commander/Terran/TerranMain.cpp src/Commander/Terran/TerranMain.h
+        src/Commander/UnitSetup.cpp src/Commander/UnitSetup.h
+        src/Commander/Zerg/LurkerRush.cpp src/Commander/Zerg/LurkerRush.h
+        src/Commander/Zerg/ZergMain.cpp src/Commander/Zerg/ZergMain.h
+        )
+set(SRC_STRUCTAGENTS
+        src/StructureAgents/Protoss/NexusAgent.cpp src/StructureAgents/Protoss/NexusAgent.h
+        src/StructureAgents/RefineryAgent.cpp src/StructureAgents/RefineryAgent.h
+        src/StructureAgents/StructureAgent.cpp src/StructureAgents/StructureAgent.h
+        src/StructureAgents/Terran/CommandCenterAgent.cpp src/StructureAgents/Terran/CommandCenterAgent.h
+        src/StructureAgents/Terran/ComsatAgent.cpp src/StructureAgents/Terran/ComsatAgent.h
+        src/StructureAgents/Zerg/HatcheryAgent.cpp src/StructureAgents/Zerg/HatcheryAgent.h
+        )
+set(SRC_UNITAGENTS
+        src/UnitAgents/Protoss/CarrierAgent.cpp src/UnitAgents/Protoss/CarrierAgent.h
+        src/UnitAgents/Protoss/CorsairAgent.cpp src/UnitAgents/Protoss/CorsairAgent.h
+        src/UnitAgents/Protoss/HighTemplarAgent.cpp src/UnitAgents/Protoss/HighTemplarAgent.h
+        src/UnitAgents/Protoss/ReaverAgent.cpp src/UnitAgents/Protoss/ReaverAgent.h
+        src/UnitAgents/Terran/BattlecruiserAgent.cpp src/UnitAgents/Terran/BattlecruiserAgent.h
+        src/UnitAgents/Terran/FirebatAgent.cpp src/UnitAgents/Terran/FirebatAgent.h
+        src/UnitAgents/Terran/GhostAgent.cpp src/UnitAgents/Terran/GhostAgent.h
+        src/UnitAgents/Terran/MarineAgent.cpp src/UnitAgents/Terran/MarineAgent.h
+        src/UnitAgents/Terran/MedicAgent.cpp src/UnitAgents/Terran/MedicAgent.h
+        src/UnitAgents/Terran/ScienceVesselAgent.cpp src/UnitAgents/Terran/ScienceVesselAgent.h
+        src/UnitAgents/Terran/SiegeTankAgent.cpp src/UnitAgents/Terran/SiegeTankAgent.h
+        src/UnitAgents/Terran/VultureAgent.cpp src/UnitAgents/Terran/VultureAgent.h
+        src/UnitAgents/Terran/WraithAgent.cpp src/UnitAgents/Terran/WraithAgent.h
+        src/UnitAgents/TransportAgent.cpp src/UnitAgents/TransportAgent.h
+        src/UnitAgents/UnitAgent.cpp src/UnitAgents/UnitAgent.h
+        src/UnitAgents/Zerg/DefilerAgent.cpp src/UnitAgents/Zerg/DefilerAgent.h
+        src/UnitAgents/Zerg/HydraliskAgent.cpp src/UnitAgents/Zerg/HydraliskAgent.h
+        src/UnitAgents/Zerg/LurkerAgent.cpp src/UnitAgents/Zerg/LurkerAgent.h
+        src/UnitAgents/Zerg/MutaliskAgent.cpp src/UnitAgents/Zerg/MutaliskAgent.h
+        src/UnitAgents/Zerg/QueenAgent.cpp src/UnitAgents/Zerg/QueenAgent.h
+        )
+set(SRC_UTILS
+        src/Utils/Config.cpp src/Utils/Config.h
+        src/Utils/cthread.cpp src/Utils/cthread.h
+        src/Utils/FileReaderUtils.cpp src/Utils/FileReaderUtils.h
+        src/Utils/Profiler.cpp src/Utils/Profiler.h
+        src/Utils/ProfilerObj.cpp src/Utils/ProfilerObj.h
+        src/Utils/Sets.h
+        src/Utils/Statistics.cpp src/Utils/Statistics.h
+        )
+source_group("Bot" FILES ${SRC_SRC})
+source_group("Bot/MainAgents" FILES ${SRC_MAINAGENTS})
+source_group("Bot/Utils" FILES ${SRC_UTILS})
+source_group("Bot/Commander" FILES ${SRC_COMMANDER})
+source_group("Bot/Pathing" FILES ${SRC_PATHING})
+source_group("Bot/Managers" FILES ${SRC_MANAGERS})
+source_group("Bot/UnitAgents" FILES ${SRC_UNITAGENTS})
+source_group("Bot/StructureAgents" FILES ${SRC_STRUCTAGENTS})
+set(SOURCE_FILES 
+        ${SRC_SRC}
+        ${SRC_COMMANDER}
+        ${SRC_MAINAGENTS}
+        ${SRC_MANAGERS}
+        ${SRC_UTILS}
+        ${SRC_PATHING}
+        ${SRC_STRUCTAGENTS}
+        ${SRC_UNITAGENTS}
+        )  
 
 set(BWAPI_FILES
         include/BWAPI.h
@@ -225,56 +196,34 @@ set(BWAPI_FILES
         )
 source_group("BWAPI" FILES ${BWAPI_FILES})
 
-set(BWTA2_FILES
-        include/BWTA.h
-        include/BWTA/BaseLocation.h
-        include/BWTA/Chokepoint.h
-        include/BWTA/Polygon.h
-        include/BWTA/RectangleArray.h
-        include/BWTA/Region.h
-        src/BWTA2/BalanceMetrics.cpp
-        src/BWTA2/BalanceMetrics.h
-        src/BWTA2/BaseLocationGenerator.cpp
-        src/BWTA2/BaseLocationGenerator.h
-        src/BWTA2/BaseLocationImpl.cpp
-        src/BWTA2/BaseLocationImpl.h
-        src/BWTA2/BWTA.cpp
-        src/BWTA2/BWTA_Result.cpp
-        src/BWTA2/BWTA_Result.h
-        src/BWTA2/ChokepointImpl.cpp
-        src/BWTA2/ChokepointImpl.h
-        src/BWTA2/ClosestObjectMap.cpp
-        src/BWTA2/ClosestObjectMap.h
-        src/BWTA2/distanceTransform.cpp
-        src/BWTA2/DistanceTransform.h
-        src/BWTA2/GraphColoring.cpp
-        src/BWTA2/GraphColoring.h
-        src/BWTA2/Heap.h
-        src/BWTA2/LoadData.cpp
-        src/BWTA2/LoadData.h
-        src/BWTA2/MapData.cpp
-        src/BWTA2/MapData.h
-        src/BWTA2/Painter.cpp
-        src/BWTA2/Painter.h
-        src/BWTA2/pathfinding.cpp
-        src/BWTA2/Pathfinding.h
-        src/BWTA2/PolygonGenerator.cpp
-        src/BWTA2/PolygonGenerator.h
-        src/BWTA2/PolygonImpl.cpp
-        src/BWTA2/PolygonImpl.h
-        src/BWTA2/RegionGenerator.cpp
-        src/BWTA2/RegionGenerator.h
-        src/BWTA2/RegionImpl.cpp
-        src/BWTA2/RegionImpl.h
-        src/BWTA2/stdafx.cpp
-        src/BWTA2/stdafx.h
-        src/BWTA2/TerrainAnalysis.cpp
-        src/BWTA2/TileType.h
-        src/BWTA2/Timer.h
-        src/BWTA2/Utils.cpp
-        src/BWTA2/Utils.h
+set(BWEM_ROOT deps/BWEM131)
+set(BWEM_DIR  ${BWEM_ROOT}/src)
+set(BWEM_EASYBMP ${BWEM_ROOT}/easybmp106)
+include_directories(${BWEM_ROOT}/src ${BWEM_ROOT})
+set(BWEM_FILES
+        ${BWEM_EASYBMP}/EasyBMP.cpp ${BWEM_EASYBMP}/EasyBMP.h
+        ${BWEM_EASYBMP}/EasyBMP_BMP.h
+        ${BWEM_EASYBMP}/EasyBMP_DataStructures.h
+        ${BWEM_EASYBMP}/EasyBMP_VariousBMPutilities.h
+
+        ${BWEM_DIR}/area.cpp ${BWEM_DIR}/area.h
+        ${BWEM_DIR}/base.cpp ${BWEM_DIR}/base.h
+        ${BWEM_DIR}/bwapiExt.cpp ${BWEM_DIR}/bwapiExt.h
+        ${BWEM_DIR}/bwem.cpp ${BWEM_DIR}/bwem.h
+        ${BWEM_DIR}/cp.cpp ${BWEM_DIR}/cp.h
+        ${BWEM_DIR}/defs.h
+        ${BWEM_DIR}/graph.cpp ${BWEM_DIR}/graph.h
+        ${BWEM_DIR}/gridMap.cpp ${BWEM_DIR}/gridMap.h
+        ${BWEM_DIR}/map.cpp ${BWEM_DIR}/map.h
+        ${BWEM_DIR}/mapDrawer.cpp ${BWEM_DIR}/mapDrawer.h
+        ${BWEM_DIR}/mapImpl.cpp ${BWEM_DIR}/mapImpl.h
+        ${BWEM_DIR}/mapPrinter.cpp ${BWEM_DIR}/mapPrinter.h
+        ${BWEM_DIR}/neutral.cpp ${BWEM_DIR}/neutral.h
+        ${BWEM_DIR}/tiles.cpp ${BWEM_DIR}/tiles.h
+        ${BWEM_DIR}/utils.cpp ${BWEM_DIR}/utils.h
+        ${BWEM_DIR}/winutils.cpp ${BWEM_DIR}/winutils.h
         )
-source_group("BWTA2" FILES ${BWTA2_FILES})
+source_group("BWEM" FILES ${BWEM_FILES})
 
 link_directories(
         ${BOOST_DIR}/lib32-msvc-12.0
@@ -284,23 +233,20 @@ link_directories(
 set(DEBUG_D_SUFFIX d)
 set(DEBUG_GD_SUFFIX -gd)
 set(BOT_TARGET_NAME rnpbot${DEBUG_D_SUFFIX})
-set(BOOST_VER 1_63)
 
 add_library(${BOT_TARGET_NAME} SHARED
-        ${SOURCE_FILES} ${BWAPI_FILES} ${BWTA2_FILES})
+        ${SOURCE_FILES}
+        ${BWAPI_FILES}
+        ${BWEM_FILES}
+        )
 
 target_link_libraries(${BOT_TARGET_NAME}
         BWAPI${DEBUG_D_SUFFIX}
         BWAPIClient${DEBUG_D_SUFFIX}
-        libCGAL-vc120-mt-4.4
         libboost_filesystem-vc120-mt${DEBUG_GD_SUFFIX}-${BOOST_VER}
         libboost_system-vc120-mt${DEBUG_GD_SUFFIX}-${BOOST_VER}
         libboost_thread-vc120-mt${DEBUG_GD_SUFFIX}-${BOOST_VER}
         )
-
-#        BWTA${DEBUG_D_SUFFIX}
-#        gmpd
-#        libmpfr-4
 
 #install(TARGETS ${BOT_TARGET_NAME}
 #        RUNTIME DESTINATION f:/Games/Starcraft/bwapi-data/

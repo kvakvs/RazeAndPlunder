@@ -14,75 +14,93 @@
 #include "Utils/Statistics.h"
 
 #include "Managers/AgentManager.h"
+
 #include <Shlwapi.h>
+#include "mapPrinter.h"
 
 using namespace BWAPI;
 
-bool analyzed;
-bool analysis_just_finished;
+//bool analyzed;
+//bool analysis_just_finished;
 bool leader = false;
 
 void OpprimoBot::onStart() {
-  //Enable/disable file writing stuff
-  Profiler::getInstance()->disable();
-  Statistics::getInstance()->disable();
-  StrategySelector::getInstance()->disable();
+  try {
+    //Enable/disable file writing stuff
+    Profiler::getInstance()->disable();
+    Statistics::getInstance()->disable();
+    StrategySelector::getInstance()->disable();
 
-  Profiler::getInstance()->start("OnInit");
+    Profiler::getInstance()->start("OnInit");
 
-  //Needed for text commands to work
-  Broodwar->enableFlag(Flag::UserInput);
+    //Needed for text commands to work
+    Broodwar->enableFlag(Flag::UserInput);
 
-  //Uncomment to enable complete map information
-  //Broodwar->enableFlag(Flag::CompleteMapInformation);
+    //Uncomment to enable complete map information
+    //Broodwar->enableFlag(Flag::CompleteMapInformation);
 
-  //Analyze map using BWTA
-  BWTA::analyze();
-  analyzed = false;
-  analysis_just_finished = false;
-  //CreateThread(nullptr, 0, (LPTHREAD_START_ROUTINE)AnalyzeThread, nullptr, 0, nullptr); //Threaded version
-  AnalyzeThread();
+    //
+    // Analyze map // using BWTA
+    // 
+    Broodwar << "Map initialization..." << std::endl;
 
-  profile = false;
+    bwem_.Initialize();
+    bwem_.EnableAutomaticPathAnalysis();
+    bool startingLocationsOK = bwem_.FindBasesForStartingLocations();
+    assert(startingLocationsOK);
 
-  //Init our singleton agents
-  AgentManager::getInstance();
-  BuildingPlacer::getInstance();
-  Constructor::getInstance();
-  Upgrader::getInstance();
-  ResourceManager::getInstance();
-  Pathfinder::getInstance();
+    BWEM::utils::MapPrinter::Initialize(&bwem_);
+//    BWEM::utils::printMap(theMap);      // will print the map into the file <StarCraftFolder>bwapi-data/map.bmp
+//    BWEM::utils::pathExample(theMap);   // add to the printed map a path between two starting locations
 
-  //Fill pathfinder
-  for (BaseLocation* base : getBaseLocations()) {
-    TilePosition pos = base->getTilePosition();
-    Pathfinder::getInstance()->requestPath(Broodwar->self()->getStartLocation(), pos);
+    Broodwar << "gg" << std::endl;
+
+    profile = false;
+
+    //
+    // Init our singleton agents
+    //
+    AgentManager::getInstance();
+    BuildingPlacer::getInstance();
+    Constructor::getInstance();
+    Upgrader::getInstance();
+    ResourceManager::getInstance();
+    Pathfinder::getInstance();
+
+    //Fill pathfinder
+    for (auto base : getBaseLocations()) {
+      auto pos = base->getTilePosition();
+      Pathfinder::getInstance()->requestPath(Broodwar->self()->getStartLocation(), pos);
+    }
+
+    MapManager::getInstance();
+
+    //Add the units we have from start to agent manager
+    for (auto& u : Broodwar->self()->getUnits()) {
+      AgentManager::getInstance()->addAgent(u);
+    }
+
+    running = true;
+
+    Broodwar->setCommandOptimizationLevel(2); //0--3
+
+    //Debug mode. Active panels.
+    Commander::getInstance()->toggleSquadsDebug();
+    Commander::getInstance()->toggleBuildplanDebug();
+    Upgrader::getInstance()->toggleDebug();
+    loop.toggleUnitDebug();
+    //loop.toggleBPDebug();
+    //End Debug mode
+
+    //Set speed
+    speed = 0;
+    Broodwar->setLocalSpeed(speed);
+
+    Profiler::getInstance()->end("OnInit");
   }
-
-  MapManager::getInstance();
-
-  //Add the units we have from start to agent manager
-  for (auto& u : Broodwar->self()->getUnits()) {
-    AgentManager::getInstance()->addAgent(u);
+  catch (const std::exception& e) {
+    Broodwar << "EXCEPTION: " << e.what() << std::endl;
   }
-
-  running = true;
-
-  Broodwar->setCommandOptimizationLevel(2); //0--3
-
-  //Debug mode. Active panels.
-  Commander::getInstance()->toggleSquadsDebug();
-  Commander::getInstance()->toggleBuildplanDebug();
-  Upgrader::getInstance()->toggleDebug();
-  loop.toggleUnitDebug();
-  //loop.toggleBPDebug();
-  //End Debug mode
-
-  //Set speed
-  speed = 0;
-  Broodwar->setLocalSpeed(speed);
-
-  Profiler::getInstance()->end("OnInit");
 }
 
 void OpprimoBot::gameStopped() {
@@ -102,6 +120,9 @@ void OpprimoBot::gameStopped() {
   delete NavigationAgent::getInstance();
   delete StrategySelector::getInstance();
   delete MapManager::getInstance();
+}
+
+OpprimoBot::OpprimoBot(): BWAPI::AIModule(), bwem_(BWEM::Map::Instance()) {
 }
 
 void OpprimoBot::onEnd(bool isWinner) {
@@ -183,22 +204,22 @@ void OpprimoBot::onSendText(std::string text) {
     if (speed < 0) {
       speed = 0;
     }
-    Broodwar << "Changed game speed: " << speed << endl;
+    Broodwar << "Changed game speed: " << speed << std::endl;
     Broodwar->setLocalSpeed(speed);
   }
   else if (text == "++") {
     speed = 0;
-    Broodwar << "Changed game speed: " << speed << endl;
+    Broodwar << "Changed game speed: " << speed << std::endl;
     Broodwar->setLocalSpeed(speed);
   }
   else if (text == "-") {
     speed += 4;
-    Broodwar << "Changed game speed: " << speed << endl;
+    Broodwar << "Changed game speed: " << speed << std::endl;
     Broodwar->setLocalSpeed(speed);
   }
   else if (text == "--") {
     speed = 24;
-    Broodwar << "Changed game speed: " << speed << endl;
+    Broodwar << "Changed game speed: " << speed << std::endl;
     Broodwar->setLocalSpeed(speed);
   }
   else if (text == "t") {
@@ -214,12 +235,12 @@ void OpprimoBot::onSendText(std::string text) {
     loop.toggleUnitDebug();
   }
   else {
-    Broodwar << "You typed '" << text << "'!" << endl;
+    Broodwar << "You typed '" << text << "'!" << std::endl;
   }
 }
 
 void OpprimoBot::onReceiveText(BWAPI::Player player, std::string text) {
-  Broodwar << player->getName() << " said '" << text << "'" << endl;
+  Broodwar << player->getName() << " said '" << text << "'" << std::endl;
 }
 
 void OpprimoBot::onPlayerLeft(BWAPI::Player player) {
@@ -229,10 +250,10 @@ void OpprimoBot::onPlayerLeft(BWAPI::Player player) {
 void OpprimoBot::onNukeDetect(BWAPI::Position target) {
   if (target != Positions::Unknown) {
     TilePosition t = TilePosition(target);
-    Broodwar << "Nuclear Launch Detected at (" << t.x << "," << t.y << ")" << endl;
+    Broodwar << "Nuclear Launch Detected at (" << t.x << "," << t.y << ")" << std::endl;
   }
   else {
-    Broodwar << "Nuclear Launch Detected" << endl;
+    Broodwar << "Nuclear Launch Detected" << std::endl;
   }
 }
 
@@ -298,15 +319,7 @@ void OpprimoBot::onUnitRenegade(BWAPI::Unit unit) {
 }
 
 void OpprimoBot::onSaveGame(std::string gameName) {
-  Broodwar << "The game was saved to '" << gameName << "'" << endl;
-}
-
-DWORD WINAPI AnalyzeThread() {
-  BWTA::analyze();
-
-  analyzed = true;
-  analysis_just_finished = true;
-  return 0;
+  Broodwar << "The game was saved to '" << gameName << "'" << std::endl;
 }
 
 bool BotTournamentModule::onAction(int actionType, void* parameter) {

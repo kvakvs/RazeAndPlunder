@@ -1,5 +1,4 @@
-#ifndef __PATHFINDER_H__
-#define __PATHFINDER_H__
+#pragma once
 
 #include "../MainAgents/BaseAgent.h"
 #include "PathObj.h"
@@ -7,7 +6,8 @@
 
 using namespace BWAPI;
 using namespace BWTA;
-using namespace std;
+
+
 
 class PathObjSet : public SetContainer<PathObj*, std::hash<void*>> {
 public:
@@ -25,38 +25,37 @@ public:
 class Pathfinder : public CThread {
 
 private:
-	Pathfinder();
-	static Pathfinder* instance;
-	bool running;
+  Pathfinder();
+  static Pathfinder* instance;
+  bool running;
 
-	PathObjSet pathObj;
+  PathObjSet pathObj;
 
-	PathObj* getPathObj(TilePosition start, TilePosition end);
+  PathObj* getPathObj(TilePosition start, TilePosition end);
 
-	bool isRunning();
+  bool isRunning();
 
 public:
-	/** Destructor */
-	~Pathfinder();
+  /** Destructor */
+  ~Pathfinder();
 
-	/** Returns the instance of the class. */
-	static Pathfinder* getInstance();
+  /** Returns the instance of the class. */
+  static Pathfinder* getInstance();
 
-	/** Returns the ground distance between two positions. */
-	int getDistance(TilePosition start, TilePosition end);
+  /** Returns the ground distance between two positions. */
+  int getDistance(TilePosition start, TilePosition end);
 
-	void requestPath(TilePosition start, TilePosition end);
+  void requestPath(TilePosition start, TilePosition end);
 
-	bool isReady(TilePosition start, TilePosition end);
+  bool isReady(TilePosition start, TilePosition end);
 
-	/** Returns the path between two positions. */
-	vector<TilePosition> getPath(TilePosition start, TilePosition end);
+  /** Returns the path between two positions. */
+  std::vector<TilePosition> getPath(TilePosition start, TilePosition end);
 
-	/** Stops the pathfinder thread. */
-	void stop();
+  /** Stops the pathfinder thread. */
+  void stop();
 
-	/** Thread update method. */
-	unsigned long Process (void* parameter);
+  /** Thread update method. */
+  unsigned long Process(void* parameter);
 };
 
-#endif

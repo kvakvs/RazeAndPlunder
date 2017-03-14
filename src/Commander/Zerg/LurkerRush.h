@@ -1,11 +1,10 @@
-#ifndef __LURKERRUSH_H__
-#define __LURKERRUSH_H__
+#pragma once
 
 #include "../Commander.h"
 #include "../Squad.h"
 
 using namespace BWAPI;
-using namespace std;
+
 
 /** This is the Commander class for the Zerg Lurker Rush tactic.
  *
@@ -14,25 +13,22 @@ using namespace std;
 class LurkerRush : public Commander {
 
 private:
-	Squad* mainSquad;
-	Squad* l1;
-	Squad* sc1;
-	Squad* sc2;
+  Squad* mainSquad;
+  Squad* l1;
+  Squad* sc1;
+  Squad* sc2;
 
 public:
-	LurkerRush();
+  LurkerRush();
 
-	/** Destructor. */
-	~LurkerRush();
+  /** Destructor. */
+  ~LurkerRush();
 
-	/** Called each update to issue orders. */
-	virtual void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions() override;
 
-	/** Returns the unique id for this strategy. */
-	static string getStrategyId()
-	{
-		return "LurkerRush";
-	}
+  /** Returns the unique id for this strategy. */
+  static std::string getStrategyId() {
+    return "LurkerRush";
+  }
 };
-
-#endif

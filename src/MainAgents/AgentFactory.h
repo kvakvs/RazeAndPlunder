@@ -1,11 +1,10 @@
-#ifndef __AGENTFACTORY_H__
-#define __AGENTFACTORY_H__
+#pragma once
 
 #include "BaseAgent.h"
 #include <BWAPI.h>
 
 using namespace BWAPI;
-using namespace std;
+
 
 /** The agent system is built from a single base agent where all specific agents extends the base agent indirectly or directly.
  * The AgentFactory class is a factory that creates the correct BaseAgent instance for a specific unit. This class shall always
@@ -19,25 +18,23 @@ using namespace std;
 class AgentFactory {
 
 private:
-	AgentFactory();
-	static AgentFactory* instance;
-	static bool instanceFlag;
-	BaseAgent* createTerranAgent(Unit unit);
-	BaseAgent* createProtossAgent(Unit unit);
-	BaseAgent* createZergAgent(Unit unit);
-	
+  AgentFactory();
+  static AgentFactory* instance;
+  static bool instanceFlag;
+  BaseAgent* createTerranAgent(Unit unit);
+  BaseAgent* createProtossAgent(Unit unit);
+  BaseAgent* createZergAgent(Unit unit);
+
 public:
-	~AgentFactory();
+  ~AgentFactory();
 
-	/** Returns the instance to the class. */
-	static AgentFactory* getInstance();
+  /** Returns the instance to the class. */
+  static AgentFactory* getInstance();
 
-	/** Creates the BaseAgent */
-	BaseAgent* createAgent(Unit unit);
+  /** Creates the BaseAgent */
+  BaseAgent* createAgent(Unit unit);
 
-	/** Returns true if the unit is of the specified type. */
-	bool isOfType(Unit unit, UnitType type);
-	
+  /** Returns true if the unit is of the specified type. */
+  bool isOfType(Unit unit, UnitType type);
+
 };
-
-#endif

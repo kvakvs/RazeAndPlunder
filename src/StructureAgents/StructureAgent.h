@@ -1,10 +1,10 @@
-#ifndef __STRUCTUREAGENT_H__
-#define __STRUCTUREAGENT_H__
+#pragma once
 
 #include "../MainAgents/BaseAgent.h"
 
 using namespace BWAPI;
-using namespace std;
+
+
 
 /** The StructureAgent is the base agent class for all agents handling buildings. If a building is created and no
  * specific agent for that type is found, the building is assigned to a StructureAgent. StructureAgents are typically
@@ -16,37 +16,35 @@ using namespace std;
 class StructureAgent : public BaseAgent {
 
 private:
-	
+
 protected:
-	bool repairing;
-	
-	bool canBuildUnit(UnitType type);
-	bool canEvolveUnit(UnitType type);
+  bool repairing;
 
-	vector<TilePosition> hasScanned;
+  bool canBuildUnit(UnitType type);
+  bool canEvolveUnit(UnitType type);
 
-	/** Checks if the specified unit/building can be constructed */
-	bool canBuild(UnitType type);
+  std::vector<TilePosition> hasScanned;
+
+  /** Checks if the specified unit/building can be constructed */
+  bool canBuild(UnitType type);
 
 public:
-	StructureAgent();
-	StructureAgent(Unit mUnit);
-	virtual ~StructureAgent();
+  StructureAgent();
+  explicit StructureAgent(Unit mUnit);
+  virtual ~StructureAgent();
 
-	/** Called each update to issue orders. */
-	virtual void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions() override;
 
-	/** Used in debug modes to show a line to the agents' goal. */
-	virtual void debug_showGoal();
+  /** Used in debug modes to show a line to the agents' goal. */
+  void debug_showGoal() override;
 
-	/** Checks if the agent can morph into the specified type. Zerg only. */
-	bool canMorphInto(UnitType type);
+  /** Checks if the agent can morph into the specified type. Zerg only. */
+  bool canMorphInto(UnitType type);
 
-	/** Sends a number of workers to a newly constructed base. */
-	void sendWorkers();
+  /** Sends a number of workers to a newly constructed base. */
+  void sendWorkers();
 
-	/** Used to print info about this agent to the screen. */
-	virtual void printInfo();
+  /** Used to print info about this agent to the screen. */
+  void printInfo() override;
 };
-
-#endif

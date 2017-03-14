@@ -1,5 +1,4 @@
-#ifndef __HIGHTEMPLARAGENT_H__
-#define __HIGHTEMPLARAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -11,20 +10,17 @@
 class HighTemplarAgent : public UnitAgent {
 
 private:
-	Unit findPsiStormTarget();
-	BaseAgent* findHallucinationTarget();
-	BaseAgent* findArchonTarget();
-	bool hasCastTransform;
-	/** Returns the number of own units that are within maxRange of the specified tile. */
-	int friendlyUnitsWithinRange(TilePosition tilePos, int maxRange);
+  Unit findPsiStormTarget();
+  BaseAgent* findHallucinationTarget();
+  BaseAgent* findArchonTarget();
+  bool hasCastTransform = false;
+  /** Returns the number of own units that are within maxRange of the specified tile. */
+  int friendlyUnitsWithinRange(TilePosition tilePos, int maxRange);
 
 public:
-	HighTemplarAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "HighTemplarAgent";
-	}
+  explicit HighTemplarAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "HighTemplarAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

@@ -3,37 +3,41 @@
 #include "../Managers/ExplorationManager.h"
 #include "../MainAgents/BaseAgent.h"
 
+#include "cp.h"
+
 MapManager* MapManager::instance = nullptr;
 
-MapManager::MapManager() {
+MapManager::MapManager() : bwem_(BWEM::Map::Instance()) {
   //Add the regions for this map
-  for (BWTA::Region* r : BWTA::getRegions()) {
+  for (auto& r : bwem_.Areas()) {
     MRegion* mr = new MRegion();
-    mr->region = r;
+    mr->region = &r;
     mr->resetInfluence();
     map.insert(mr);
+
+    //Add base locations for this map
+    for (auto& base : r.Bases()) {
+      bases.insert(new BaseLocationItem(base.Location()));
+    }
   }
   lastCallFrame = 0;
-
-  //Add base locations for this map
-  for (BaseLocation* base : BWTA::getBaseLocations()) {
-    bases.insert(new BaseLocationItem(base->getTilePosition()));
-  }
 }
 
-const MRegion* MapManager::getMapRegion(const BWTA::Region* r) {
+const MRegion* MapManager::getMapRegion(const BWEM::Area* area) {
+  auto a_center = rnp::get_center(area);
   for (MRegion* mr : map) {
-    if (mr->region->getCenter().x == r->getCenter().x && mr->region->getCenter().y == r->getCenter().y) {
+    auto center = rnp::get_center(mr->region);
+    if (center.x == a_center.x && center.y == a_center.y) {
       return mr;
     }
   }
   return nullptr;
 }
 
-bool MapManager::isValidChokepoint(const Chokepoint* cp) {
+bool MapManager::isValidChokepoint(const BWEM::ChokePoint* cp) {
   //Use this code to hard-code chokepoints that shall not be used.
   if (Broodwar->mapFileName() == "(4)Andromeda.scx") {
-    Position c = cp->getCenter();
+    Position c = cp->Center();
     if (c.x == 2780 && c.y == 3604) return false;
     if (c.x == 2776 && c.y == 448) return false;
     if (c.x == 1292 && c.y == 436) return false;
@@ -58,19 +62,24 @@ bool MapManager::isValidChokepoint(const Chokepoint* cp) {
   return true;
 }
 
-const BWTA::Chokepoint* MapManager::findGuardChokepoint(const MRegion* mr) {
-  for (Chokepoint* c : mr->region->getChokepoints()) {
+const BWEM::ChokePoint* MapManager::findGuardChokepoint(const MRegion* mr) {
+  auto mr_center = rnp::get_center(mr->region);
+
+  for (auto c : mr->region->ChokePoints()) {
     if (isValidChokepoint(c)) {
-      pair<BWTA::Region*, BWTA::Region*> regions = c->getRegions();
-      if (regions.first->getCenter().x == mr->region->getCenter().x && regions.first->getCenter().y == mr->region->getCenter().y) {
-        const MRegion* adj = getMapRegion(regions.second);
+      auto connected_areas = c->GetAreas();
+      auto first_center = rnp::get_center(connected_areas.first);
+      
+      if (first_center.x == mr_center.x && first_center.y == mr_center.y) {
+        const MRegion* adj = getMapRegion(connected_areas.second);
         if (adj->inf_own_buildings == 0) {
           return c;
         }
       }
 
-      if (regions.second->getCenter().x == mr->region->getCenter().x && regions.second->getCenter().y == mr->region->getCenter().y) {
-        const MRegion* adj = getMapRegion(regions.first);
+      auto second_center = rnp::get_center(connected_areas.second);
+      if (second_center.x == mr_center.x && second_center.y == mr_center.y) {
+        const MRegion* adj = getMapRegion(connected_areas.first);
         if (adj->inf_own_buildings == 0) {
           return c;
         }
@@ -80,13 +89,13 @@ const BWTA::Chokepoint* MapManager::findGuardChokepoint(const MRegion* mr) {
   return nullptr;
 }
 
-const BWTA::Chokepoint* MapManager::getDefenseLocation() {
+const BWEM::ChokePoint* MapManager::getDefenseLocation() {
   int bestInfluence = 0;
-  const BWTA::Chokepoint* best = nullptr;
+  const BWEM::ChokePoint* best = nullptr;
 
   for (MRegion* base : map) {
     if (base->inf_own_buildings > bestInfluence) {
-      const BWTA::Chokepoint* cp = findGuardChokepoint(base);
+      const BWEM::ChokePoint* cp = findGuardChokepoint(base);
       if (cp != nullptr) {
         if (base->inf_own_buildings > bestInfluence) {
           bestInfluence = base->inf_own_buildings;

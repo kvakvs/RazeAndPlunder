@@ -1,9 +1,9 @@
-#ifndef __TRANSPORTAGENT_H__
-#define __TRANSPORTAGENT_H__
+#pragma once
 
 #include "UnitAgent.h"
 using namespace BWAPI;
-using namespace std;
+
+
 
 /** The TransportAgent handles transport units (Terran Dropship and Protoss Shuttle).
  *
@@ -13,17 +13,15 @@ using namespace std;
 class TransportAgent : public UnitAgent {
 
 private:
-	int maxLoad;
-	int currentLoad;
-	int getCurrentLoad();
-	bool isValidLoadUnit(BaseAgent* a);
-	BaseAgent* findUnitToLoad(int spaceLimit);
+  int maxLoad;
+  int currentLoad;
+  int getCurrentLoad();
+  bool isValidLoadUnit(BaseAgent* a);
+  BaseAgent* findUnitToLoad(int spaceLimit);
 
 public:
-	TransportAgent(Unit mUnit);
+  explicit TransportAgent(Unit mUnit);
 
-	/** Called each update to issue orders. */
-	void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions() override;
 };
-
-#endif

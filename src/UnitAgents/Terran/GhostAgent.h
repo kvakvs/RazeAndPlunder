@@ -1,5 +1,4 @@
-#ifndef __GHOSTAGENT_H__
-#define __GHOSTAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -9,19 +8,14 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class GhostAgent : public UnitAgent {
-
-private:
-	Unit findLockdownTarget();
-	/** Returns the number of own units that are within maxRange of the agent. */
-	int friendlyUnitsWithinRange(int maxRange);
+  Unit findLockdownTarget();
+  /** Returns the number of own units that are within maxRange of the agent. */
+  int friendlyUnitsWithinRange(int maxRange);
 
 public:
-	GhostAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "GhostAgent";
-	}
+  explicit GhostAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "GhostAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

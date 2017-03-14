@@ -1,35 +1,26 @@
-#ifndef __EXPLORATIONMANAGER_H__
-#define __EXPLORATIONMANAGER_H__
+#pragma once
 
 #include "SpottedObject.h"
 #include "../Commander/Squad.h"
-#include <BWTA.h>
+
+#include "bwem.h"
+#include "BWEMUtil.h"
 
 using namespace BWAPI;
-using namespace BWTA;
-using namespace std;
 
-class SpottedObjectSet : public SetContainer<SpottedObject*, std::hash<void*>>
-{
-public:
 
+class SpottedObjectSet : public SetContainer<SpottedObject*, std::hash<void*>> {
 };
 
-class RegionItem
-{
+class RegionItem {
 public:
-	RegionItem(BWTA::Region* region)
-	{
-		location = TilePosition(region->getCenter());
-		frameVisited = Broodwar->getFrameCount();
-	};
+  explicit RegionItem(const BWEM::Area* region);
 
-	TilePosition location;
-	int frameVisited;
+  TilePosition location;
+  int frameVisited;
 };
 
-class RegionSet : public SetContainer<RegionItem*, std::hash<void*>>
-{
+class RegionSet : public SetContainer<RegionItem*, std::hash<void*>> {
 public:
 
 };
@@ -45,80 +36,79 @@ public:
 class ExplorationManager {
 
 private:
-	SpottedObjectSet enemy;
-	RegionSet explore;
-	
-	ExplorationManager();
-	static ExplorationManager* instance;
-	
-	void cleanup();
+  BWEM::Map& bwem_;
+  SpottedObjectSet enemy;
+  RegionSet explore;
 
-	int lastCallFrame;
+  static ExplorationManager* instance;
+  int lastCallFrame;
 
-	int siteSetFrame;
-	TilePosition expansionSite;
+  int siteSetFrame;
+  TilePosition expansionSite;
+
+private:
+  ExplorationManager();
+  void cleanup();
 
 public:
-	/** Destructor */
-	~ExplorationManager();
+  /** Destructor */
+  ~ExplorationManager();
 
-	/** Returns the instance of the class. */
-	static ExplorationManager* getInstance();
+  /** Returns the instance of the class. */
+  static ExplorationManager* getInstance();
 
-	/** Called each update to issue orders. */
-	void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions();
 
-	/** Returns the next position to explore for this squad. */
-	TilePosition getNextToExplore(Squad* squad);
+  /** Returns the next position to explore for this squad. */
+  TilePosition getNextToExplore(Squad* squad);
 
-	/** Searches for the next position to expand the base to. */
-	TilePosition searchExpansionSite();
+  /** Searches for the next position to expand the base to. */
+  TilePosition searchExpansionSite();
 
-	/** Returns the next position to expand the base to. */
-	TilePosition getExpansionSite();
+  /** Returns the next position to expand the base to. */
+  TilePosition getExpansionSite();
 
-	/** Sets the next position to expand the base to. */
-	void setExpansionSite(TilePosition pos);
+  /** Sets the next position to expand the base to. */
+  void setExpansionSite(TilePosition pos);
 
-	/** Shows all spotted objects as squares on the SC map. Use for debug purpose. */
-	void printInfo();
+  /** Shows all spotted objects as squares on the SC map. Use for debug purpose. */
+  void printInfo();
 
-	/** Notifies about an enemy unit that has been spotted. */
-	void addSpottedUnit(Unit unit);
+  /** Notifies about an enemy unit that has been spotted. */
+  void addSpottedUnit(Unit unit);
 
-	/** Notifies that an enemy unit has been destroyed. If the destroyed unit was among
-	 * the spotted units, it is removed from the list. */
-	void unitDestroyed(Unit unit);
+  /** Notifies that an enemy unit has been destroyed. If the destroyed unit was among
+   * the spotted units, it is removed from the list. */
+  void unitDestroyed(Unit unit);
 
-	/** Returns the closest enemy spotted building from a start position, or TilePosition(-1,-1) if 
-	 * none was found. */
-	TilePosition getClosestSpottedBuilding(TilePosition start);
+  /** Returns the closest enemy spotted building from a start position, or TilePosition(-1,-1) if 
+   * none was found. */
+  TilePosition getClosestSpottedBuilding(TilePosition start);
 
-	/** Calculates the influence of spotted enemy buildings within a specified region. */
-	int getSpottedInfluenceInRegion(const BWTA::Region* region);
+  /** Calculates the influence of spotted enemy buildings within a specified region. */
+  int getSpottedInfluenceInRegion(const BWEM::Area* region);
 
-	/** Returns true if a ground unit can reach position b from position a.
-	 * Uses BWTA. */
-	static bool canReach(TilePosition a, TilePosition b);
+  /** Returns true if a ground unit can reach position b from position a.
+   * Uses BWTA. */
+  static bool canReach(TilePosition a, TilePosition b);
 
-	/** Returns true if an agent can reach position b. */
-	static bool canReach(BaseAgent* agent, TilePosition b);
+  /** Returns true if an agent can reach position b. */
+  static bool canReach(BaseAgent* agent, TilePosition b);
 
-	/** Sets that a region is explored. The position must be the TilePosition for the center of the
-	 * region. */
-	void setExplored(TilePosition goal);
+  /** Sets that a region is explored. The position must be the TilePosition for the center of the
+   * region. */
+  void setExplored(TilePosition goal);
 
-	/** Returns true if an enemy is Protoss. */
-	static bool enemyIsProtoss();
+  /** Returns true if an enemy is Protoss. */
+  static bool enemyIsProtoss();
 
-	/** Returns true if an enemy is Zerg. */
-	static bool enemyIsZerg();
+  /** Returns true if an enemy is Zerg. */
+  static bool enemyIsZerg();
 
-	/** Returns true if an enemy is Terran. */
-	static bool enemyIsTerran();
+  /** Returns true if an enemy is Terran. */
+  static bool enemyIsTerran();
 
-	/** All enemy races are currently unknown. */
-	static bool enemyIsUnknown();
+  /** All enemy races are currently unknown. */
+  static bool enemyIsUnknown();
 };
-
-#endif

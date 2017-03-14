@@ -1,9 +1,8 @@
-#ifndef __UNITAGENT_H__
-#define __UNITAGENT_H__
+#pragma once
 
 #include "../MainAgents/BaseAgent.h"
 using namespace BWAPI;
-using namespace std;
+
 
 #define DISABLE_UNIT_AI 0
 
@@ -17,31 +16,28 @@ using namespace std;
 class UnitAgent : public BaseAgent {
 
 protected:
-	
+
 public:
-	UnitAgent(Unit mUnit);
-	UnitAgent();
-	virtual ~UnitAgent();
+  explicit UnitAgent(Unit mUnit);
+  UnitAgent();
+  virtual ~UnitAgent();
 
-	/** Called each update to issue orders. */
-	void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions() override;
 
-	/** Issues an attack order. True if an order is requested, false otherwise. */
-	bool attack();
+  /** Issues an attack order. True if an order is requested, false otherwise. */
+  bool attack();
 
-	/** Issues a move order. True if an order is requested, false otherwise. */
-	bool move();
+  /** Issues a move order. True if an order is requested, false otherwise. */
+  bool move();
 
-	/** Issues an order to use special abilities. True if an order is requested, false otherwise. 
-	 * Must be implemented in specific subclasses for each unit type.
-	 */
-	virtual bool useAbilities()
-	{
-		return false;
-	}
-	
-	/** Used to print info about this agent to the screen. */
-	void printInfo();
+  /** Issues an order to use special abilities. True if an order is requested, false otherwise. 
+   * Must be implemented in specific subclasses for each unit type.
+   */
+  virtual bool useAbilities() {
+    return false;
+  }
+
+  /** Used to print info about this agent to the screen. */
+  void printInfo() override;
 };
-
-#endif

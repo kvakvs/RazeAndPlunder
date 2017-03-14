@@ -1,31 +1,29 @@
-#ifndef __MAPMANAGER_H__
-#define __MAPMANAGER_H__
+#pragma once
 
 #include <BWAPI.h>
-#include <BWTA.h>
 #include "../Utils/Sets.h"
+
+#include "bwem.h"
+
 using namespace BWAPI;
-using namespace BWTA;
-using namespace std;
 
 struct MRegion {
-	BWTA::Region* region;
-	int inf_own_ground;
-	int inf_own_air;
-	int inf_own_buildings;
-	int inf_en_ground;
-	int inf_en_air;
-	int inf_en_buildings;
+  const BWEM::Area* region;
+  int inf_own_ground;
+  int inf_own_air;
+  int inf_own_buildings;
+  int inf_en_ground;
+  int inf_en_air;
+  int inf_en_buildings;
 
-	void resetInfluence()
-	{
-		inf_own_ground = 0;
-		inf_own_air = 0;
-		inf_own_buildings = 0;
-		inf_en_ground = 0;
-		inf_en_air = 0;
-		inf_en_buildings = 0;
-	}
+  void resetInfluence() {
+    inf_own_ground = 0;
+    inf_own_air = 0;
+    inf_own_buildings = 0;
+    inf_en_ground = 0;
+    inf_en_air = 0;
+    inf_en_buildings = 0;
+  }
 };
 
 class MRegionSet : public SetContainer<MRegion*, std::hash<void*>> {
@@ -39,54 +37,52 @@ public:
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class MapManager {
+  MRegionSet map;
+  BaseLocationSet bases;
+  int lastCallFrame;
+  BWEM::Map& bwem_;
+  static MapManager* instance;
 
 private:
-	MRegionSet map;
-	BaseLocationSet bases;
-	int lastCallFrame;
-	
-	MapManager();
-	static MapManager* instance;
+  MapManager();
 
-	MRegion* getMapFor(Position p);
+  MRegion* getMapFor(Position p);
 
-	const MRegion* getMapRegion(const BWTA::Region* r);
-	const BWTA::Chokepoint* findGuardChokepoint(const MRegion* mr);
-	bool isValidChokepoint(const Chokepoint* cp);
-	
+  const MRegion* getMapRegion(const BWEM::Area* r);
+  const BWEM::ChokePoint* findGuardChokepoint(const MRegion* mr);
+  bool isValidChokepoint(const BWEM::ChokePoint* cp);
+
 public:
-	/** Destructor */
-	~MapManager();
+  /** Destructor */
+  ~MapManager();
 
-	/** Returns the instance of the class. */
-	static MapManager* getInstance();
+  /** Returns the instance of the class. */
+  static MapManager* getInstance();
 
-	/** Updates the influence map. */
-	void update();
+  /** Updates the influence map. */
+  void update();
 
-	/** Returns a good chokepoint to place defensive forces at. */
-	const BWTA::Chokepoint* getDefenseLocation();
+  /** Returns a good chokepoint to place defensive forces at. */
+  const BWEM::ChokePoint* getDefenseLocation();
 
-	/** Checks if any region with enemy influence has been found. */
-	bool hasEnemyInfluence();
+  /** Checks if any region with enemy influence has been found. */
+  bool hasEnemyInfluence();
 
-	/** Returns a suitable position to attack the enemy at. */
-	TilePosition findAttackPosition();
+  /** Returns a suitable position to attack the enemy at. */
+  TilePosition findAttackPosition();
 
-	/** Checks if the player has infuence in the specified position. */
-	bool hasOwnInfluenceIn(TilePosition pos);
+  /** Checks if the player has infuence in the specified position. */
+  bool hasOwnInfluenceIn(TilePosition pos);
 
-	/** Checks if the enemy has influence in the specified position. */
-	bool hasEnemyInfluenceIn(TilePosition pos);
+  /** Checks if the enemy has influence in the specified position. */
+  bool hasEnemyInfluenceIn(TilePosition pos);
 
-	/** Returns the player ground unit infuence in the specified position. */
-	int getOwnGroundInfluenceIn(TilePosition pos);
+  /** Returns the player ground unit infuence in the specified position. */
+  int getOwnGroundInfluenceIn(TilePosition pos);
 
-	/** Returns the enemy ground influence in the specified position. */
-	int getEnemyGroundInfluenceIn(TilePosition pos);
+  /** Returns the enemy ground influence in the specified position. */
+  int getEnemyGroundInfluenceIn(TilePosition pos);
 
-	/** Prints debug info to screen. */
-	void printInfo();
+  /** Prints debug info to screen. */
+  void printInfo();
 };
-
-#endif

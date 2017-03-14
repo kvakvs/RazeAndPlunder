@@ -4,52 +4,44 @@
 
 Config* Config::instance = nullptr;
 
-Config::Config()
-{
-	version = "15.4";
-	botName = "OpprimoBot";
+Config::Config() {
+  version = "15.4";
+  botName = "OpprimoBot";
 
-	stringstream ss;
-	ss << "\x1C";
-	ss << botName;
-	ss << " ";
-	ss << version;
+  std::stringstream ss;
+  ss << "\x1C";
+  ss << botName;
+  ss << " ";
+  ss << version;
 
-	info = ss.str();
+  info = ss.str();
 
-	int l = botName.length()+version.length();
-	w = 7+l*6;
+  int l = botName.length() + version.length();
+  w = 7 + l * 6;
 }
 
-Config::~Config()
-{
-	delete instance;
+Config::~Config() {
+  delete instance;
 }
 
-Config* Config::getInstance()
-{
-	if (instance == nullptr)
-	{
-		instance = new Config();
-	}
-	return instance;
+Config* Config::getInstance() {
+  if (instance == nullptr) {
+    instance = new Config();
+  }
+  return instance;
 }
 
-void Config::displayBotName()
-{
-	if (Broodwar->getFrameCount() >= 10)
-	{
-		Broodwar->drawBoxScreen(3,3,w,20,Colors::Black,true);
-		Broodwar->drawTextScreen(7,5, info.c_str());
-	}
+void Config::displayBotName() const {
+  if (Broodwar->getFrameCount() >= 10) {
+    Broodwar->drawBoxScreen(3, 3, w, 20, Colors::Black, true);
+    Broodwar->drawTextScreen(7, 5, info.c_str());
+  }
 }
 
-string Config::getVersion()
-{
-	return version;
+std::string Config::getVersion() const {
+  return version;
 }
 
-string Config::getBotName()
-{
-	return botName;
+std::string Config::getBotName() const {
+  return botName;
 }

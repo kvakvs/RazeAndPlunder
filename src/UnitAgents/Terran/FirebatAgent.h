@@ -1,5 +1,4 @@
-#ifndef __FIREBATAGENT_H__
-#define __FIREBATAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -9,16 +8,10 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class FirebatAgent : public UnitAgent {
-
-private:
-
 public:
-	FirebatAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "FirebatAgent";
-	}
+  explicit FirebatAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "FirebatAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

@@ -1,5 +1,4 @@
-#ifndef __WRAITHAGENT_H__
-#define __WRAITHAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -9,16 +8,10 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class WraithAgent : public UnitAgent {
-
-private:
-	
 public:
-	WraithAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "WraithAgent";
-	}
+  explicit WraithAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "WraithAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

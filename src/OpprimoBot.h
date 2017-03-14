@@ -1,6 +1,8 @@
 #pragma once
+
 #include <BWAPI.h>
 #include "AIloop.h"
+#include "gridMap.h"
 
 #define TOURNAMENT_NAME "SSCAIT 2017"
 #define SPONSORS "the Sponsors!"
@@ -20,32 +22,36 @@ DWORD WINAPI AnalyzeThread();
 *
 */
 class OpprimoBot : public BWAPI::AIModule {
+  bool running = false;
+  bool profile = false;
+  BWEM::Map& bwem_; 
+
 private:
-  bool running;
-  bool profile;
   void gameStopped();
 
 public:
+  OpprimoBot();
+
   // Virtual functions for callbacks, leave these as they are.
-  virtual void onStart();
-  virtual void onEnd(bool isWinner);
-  virtual void onFrame();
-  virtual void onSendText(std::string text);
-  virtual void onReceiveText(BWAPI::Player player, std::string text);
-  virtual void onPlayerLeft(BWAPI::Player player);
-  virtual void onNukeDetect(BWAPI::Position target);
-  virtual void onUnitDiscover(BWAPI::Unit unit);
-  virtual void onUnitEvade(BWAPI::Unit unit);
-  virtual void onUnitShow(BWAPI::Unit unit);
-  virtual void onUnitHide(BWAPI::Unit unit);
-  virtual void onUnitCreate(BWAPI::Unit unit);
-  virtual void onUnitDestroy(BWAPI::Unit unit);
-  virtual void onUnitMorph(BWAPI::Unit unit);
-  virtual void onUnitRenegade(BWAPI::Unit unit);
-  virtual void onSaveGame(std::string gameName);
-  virtual void onUnitComplete(BWAPI::Unit unit);
+  void onStart() override;
+  void onEnd(bool isWinner) override;
+  void onFrame() override;
+  void onSendText(std::string text) override;
+  void onReceiveText(BWAPI::Player player, std::string text) override;
+  void onPlayerLeft(BWAPI::Player player) override;
+  void onNukeDetect(BWAPI::Position target) override;
+  void onUnitDiscover(BWAPI::Unit unit) override;
+  void onUnitEvade(BWAPI::Unit unit) override;
+  void onUnitShow(BWAPI::Unit unit) override;
+  void onUnitHide(BWAPI::Unit unit) override;
+  void onUnitCreate(BWAPI::Unit unit) override;
+  void onUnitDestroy(BWAPI::Unit unit) override;
+  void onUnitMorph(BWAPI::Unit unit) override;
+  void onUnitRenegade(BWAPI::Unit unit) override;
+  void onSaveGame(std::string gameName) override;
+  void onUnitComplete(BWAPI::Unit unit) override;
   // Everything below this line is safe to modify.
 
-  int speed;
+  int speed = 1;
   AIloop loop;
 };

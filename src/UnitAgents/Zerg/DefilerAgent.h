@@ -1,5 +1,4 @@
-#ifndef __DEFILERAGENT_H__
-#define __DEFILERAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -9,18 +8,13 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class DefilerAgent : public UnitAgent {
-
-private:
-	int darkSwarmFrame;
+  int darkSwarmFrame;
 
 public:
-	DefilerAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "DefilerAgent";
-		darkSwarmFrame = 0;
-	}
+  explicit DefilerAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "DefilerAgent";
+    darkSwarmFrame = 0;
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

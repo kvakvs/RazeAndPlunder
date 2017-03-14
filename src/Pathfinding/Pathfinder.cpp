@@ -76,7 +76,7 @@ bool Pathfinder::isReady(TilePosition start, TilePosition end)
 	return false;
 }
 
-vector<TilePosition> Pathfinder::getPath(TilePosition start, TilePosition end)
+std::vector<TilePosition> Pathfinder::getPath(TilePosition start, TilePosition end)
 {
 	PathObj* obj = getPathObj(start, end);
 	if (obj != nullptr)
@@ -86,7 +86,7 @@ vector<TilePosition> Pathfinder::getPath(TilePosition start, TilePosition end)
 			return obj->getPath();
 		}
 	}
-	return vector<TilePosition>();
+	return std::vector<TilePosition>();
 }
 
 void Pathfinder::stop()

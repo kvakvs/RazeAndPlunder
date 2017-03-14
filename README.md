@@ -1,6 +1,18 @@
-# Raze and Plunder (RnP) Starcraft BWAPI Bot
+# Raze and Plunder (RnP) and Kittens 
 
-Based on OpprimoBot.
+RnP (and Kittens) is a C++ Starcraft BWAPI Bot, based on OpprimoBot https://github.com/jhagelback/OpprimoBot
+upgraded to BWTA2 and pieces refactored to more modern and safer C++. Build system changed from VS2013
+project to CMake, which in turn generates a VS2013 project, but opens possibilities to reach other
+build systems.
+
+Main dependencies are added as sources to reduce project setup time.
+
+## Features
+
+* Razing and Plundering are implemented.
+* Kittens are TODO.
+
+## Opprimo Readme
 
 OpprimoBot is an AI bot for Starcraft:Broodwar. It uses the BWAPI project to communicate with the Starcraft engine. 
 It can play all three races on (almost) all maps, but works best with Terrans.

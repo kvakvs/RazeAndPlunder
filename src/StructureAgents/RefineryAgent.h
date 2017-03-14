@@ -1,9 +1,9 @@
-#ifndef __REFINERYAGENT_H__
-#define __REFINERYAGENT_H__
+#pragma once
 
 #include "StructureAgent.h"
 using namespace BWAPI;
-using namespace std;
+
+
 
 /** The RefineryAgent handles Refinery buildings for all races.
  *
@@ -15,13 +15,11 @@ using namespace std;
 class RefineryAgent : public StructureAgent {
 
 private:
-	vector<BaseAgent*> assignedWorkers;
+  std::vector<BaseAgent*> assignedWorkers;
 
 public:
-	RefineryAgent(Unit mUnit);
+  explicit RefineryAgent(Unit mUnit);
 
-	/** Called each update to issue orders. */
-	void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions() override;
 };
-
-#endif

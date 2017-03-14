@@ -1,9 +1,8 @@
-#ifndef __HATCHERYAGENT_H__
-#define __HATCHERYAGENT_H__
+#pragma once
 
 #include "../StructureAgent.h"
 using namespace BWAPI;
-using namespace std;
+
 
 /** The HatcheryAgent handles Zerg Hatchery/Lair/Hive buildings.
  *
@@ -14,16 +13,12 @@ using namespace std;
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class HatcheryAgent : public StructureAgent {
-
-private:
-	bool hasSentWorkers;
-	bool checkBuildUnit(UnitType type);
+  bool hasSentWorkers = false;
+  bool checkBuildUnit(UnitType type);
 
 public:
-	HatcheryAgent(Unit mUnit);
+  explicit HatcheryAgent(Unit mUnit);
 
-	/** Called each update to issue orders. */
-	void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions() override;
 };
-
-#endif

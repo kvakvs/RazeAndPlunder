@@ -3,10 +3,15 @@
 
 ExplorationManager* ExplorationManager::instance = nullptr;
 
-ExplorationManager::ExplorationManager() {
+RegionItem::RegionItem(const BWEM::Area* region) {
+  location = rnp::get_center(*region);
+  frameVisited = Broodwar->getFrameCount();
+}
+
+ExplorationManager::ExplorationManager(): bwem_(BWEM::Map::Instance()) {
   //Add the regions for this map
-  for (BWTA::Region* r : getRegions()) {
-    explore.insert(new RegionItem(r));
+  for (auto& r : bwem_.Areas()) {
+    explore.insert(new RegionItem(&r));
   }
 
   siteSetFrame = 0;
@@ -71,7 +76,7 @@ void ExplorationManager::setExplored(TilePosition pos) {
     }
   }
 
-  Broodwar << "Cannot set to explored" << endl;
+  Broodwar << "Cannot set to explored" << std::endl;
 }
 
 void ExplorationManager::setExpansionSite(TilePosition pos) {
@@ -167,7 +172,7 @@ void ExplorationManager::cleanup() {
   }
 }
 
-int ExplorationManager::getSpottedInfluenceInRegion(const BWTA::Region* region) {
+int ExplorationManager::getSpottedInfluenceInRegion(const BWEM::Area* region) {
   int im = 0;
   for (auto& a : enemy) {
     if (region->getPolygon().isInside(a->getPosition())) {
@@ -195,8 +200,8 @@ TilePosition ExplorationManager::getClosestSpottedBuilding(TilePosition start) {
 }
 
 bool ExplorationManager::canReach(TilePosition a, TilePosition b) {
-  BWTA::Region* ra = BWTA::getRegion(a);
-  BWTA::Region* rb = BWTA::getRegion(b);
+  BWEM::Area* ra = BWTA::getRegion(a);
+  BWEM::Area* rb = BWTA::getRegion(b);
   return (ra->isReachable(rb));
 }
 

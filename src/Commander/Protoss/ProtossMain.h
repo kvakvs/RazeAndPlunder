@@ -1,11 +1,11 @@
-#ifndef __PROTOSSMAIN_H__
-#define __PROTOSSMAIN_H__
+#pragma once
 
 #include "../Commander.h"
 #include "../Squad.h"
 
 using namespace BWAPI;
-using namespace std;
+
+
 
 /**  This is the Commander class for a defensive Protoss tactics.
  *
@@ -14,24 +14,21 @@ using namespace std;
 class ProtossMain : public Commander {
 
 private:
-	Squad* mainSquad;
-	Squad* stealthSquad;
-	Squad* detectorSquad;
+  Squad* mainSquad;
+  Squad* stealthSquad;
+  Squad* detectorSquad;
 
 public:
-	ProtossMain();
+  ProtossMain();
 
-	/** Destructor. */
-	~ProtossMain();
+  /** Destructor. */
+  ~ProtossMain();
 
-	/** Called each update to issue orders. */
-	virtual void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions() override;
 
-	/** Returns the unique id for this strategy. */
-	static string getStrategyId()
-	{
-		return "ProtossMain";
-	}
+  /** Returns the unique id for this strategy. */
+  static std::string getStrategyId() {
+    return "ProtossMain";
+  }
 };
-
-#endif

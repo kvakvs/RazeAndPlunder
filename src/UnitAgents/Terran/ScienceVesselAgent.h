@@ -1,5 +1,4 @@
-#ifndef __SCIENCEVESSELAGENT_H__
-#define __SCIENCEVESSELAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -11,21 +10,18 @@
 class ScienceVesselAgent : public UnitAgent {
 
 private:
-	BaseAgent* findImportantUnit();
-	bool isImportantUnit(BaseAgent* agent);
-	bool isEMPtarget(Unit e);
-	int lastIrradiateFrame;
-	int lastShieldFrame;
-	
+  BaseAgent* findImportantUnit();
+  bool isImportantUnit(BaseAgent* agent);
+  bool isEMPtarget(Unit e);
+  int lastIrradiateFrame;
+  int lastShieldFrame;
+
 public:
-	ScienceVesselAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "ScienceVesselAgent";
-		lastIrradiateFrame = 0;
-		lastShieldFrame = 0;
-	}
+  ScienceVesselAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "ScienceVesselAgent";
+    lastIrradiateFrame = 0;
+    lastShieldFrame = 0;
+  }
 
-	bool useAbilities();
+  bool useAbilities();
 };
-
-#endif

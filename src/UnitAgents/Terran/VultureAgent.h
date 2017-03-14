@@ -1,5 +1,4 @@
-#ifndef __VULTUREAGENT_H__
-#define __VULTUREAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -11,16 +10,13 @@
 class VultureAgent : public UnitAgent {
 
 private:
-	int mineDropFrame;
-	
+  int mineDropFrame;
+
 public:
-	VultureAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "VultureAgent";
-		mineDropFrame = 0;
-	}
+  explicit VultureAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "VultureAgent";
+    mineDropFrame = 0;
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

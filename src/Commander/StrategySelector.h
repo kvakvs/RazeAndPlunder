@@ -1,70 +1,62 @@
-#ifndef __STRATEGYSELECTOR_H__
-#define __STRATEGYSELECTOR_H__
+#pragma once
 
 #include "Commander.h"
 
 using namespace BWAPI;
-using namespace std;
+
+
 
 struct StrategyStats {
-	string mapHash;
-	string mapName;
-	string strategyId;
-	string ownRace;
-	string opponentRace;
-	int won;
-	int lost;
-	int draw;
-	int total;
+  std::string mapHash;
+  std::string mapName;
+  std::string strategyId;
+  std::string ownRace;
+  std::string opponentRace;
+  int won;
+  int lost;
+  int draw;
+  int total;
 
-	StrategyStats()
-	{
-		won = 0;
-		lost = 0;
-		draw = 0;
-		total = 0;
-	}
+  StrategyStats() {
+    won = 0;
+    lost = 0;
+    draw = 0;
+    total = 0;
+  }
 
-	int getTotal()
-	{
-		if (total == 0) return 1; //To avoid division by zero.
-		return total;
-	}
+  int getTotal() {
+    if (total == 0) return 1; //To avoid division by zero.
+    return total;
+  }
 
-	bool matches()
-	{
-		string mMapHash = Broodwar->mapHash();
-		string mOwnRace = Broodwar->self()->getRace().getName();
-		if (mMapHash == mapHash && mOwnRace == ownRace)
-		{
-			Race oRace = Broodwar->enemy()->getRace();
-			if (oRace.getID() != Races::Unknown.getID())
-			{
-				//Opponent race is known. Match race as well.
-				if (oRace.getName() == opponentRace)
-				{
-					return true;
-				}
-				else
-				{
-					return false;
-				}
-			}	
-			return true;
-		}
-		return false;
-	}
+  bool matches() {
+    std::string mMapHash = Broodwar->mapHash();
+    std::string mOwnRace = Broodwar->self()->getRace().getName();
+    if (mMapHash == mapHash && mOwnRace == ownRace) {
+      Race oRace = Broodwar->enemy()->getRace();
+      if (oRace.getID() != Races::Unknown.getID()) {
+        //Opponent race is known. Match race as well.
+        if (oRace.getName() == opponentRace) {
+          return true;
+        }
+        else {
+          return false;
+        }
+      }
+      return true;
+    }
+    return false;
+  }
 };
 
 struct Strategy {
-	Race race;
-	string strategyId;
+  Race race;
+  std::string strategyId;
 
-	Strategy(Race mRace, string mId)
-	{
-		race = mRace;
-		strategyId = mId;
-	}
+  Strategy(Race mRace, std::string mId) {
+    race = mRace;
+    strategyId = mId;
+  }
 };
 
 /** When a game is started a strategy is selected depending on the map and, if known,
@@ -78,50 +70,48 @@ struct Strategy {
 class StrategySelector {
 
 private:
-	vector<Strategy> strategies;
-	vector<StrategyStats> stats;
-	
-	static StrategySelector* instance;
-	StrategySelector();
+  std::vector<Strategy> strategies;
+  std::vector<StrategyStats> stats;
 
-	string currentStrategyId;
-	
-	string getFilename();
-	string getWriteFilename();
-	void addEntry(string line);
-	int toInt(string &str);
+  static StrategySelector* instance;
+  StrategySelector();
 
-	void selectStrategy();
+  std::string currentStrategyId;
 
-	bool active;
+  std::string getFilename();
+  std::string getWriteFilename();
+  void addEntry(std::string line);
+  int toInt(std::string& str);
+
+  void selectStrategy();
+
+  bool active;
 
 public:
-	/** Returns the instance of the class. */
-	static StrategySelector* getInstance();
+  /** Returns the instance of the class. */
+  static StrategySelector* getInstance();
 
-	/** Destructor */
-	~StrategySelector();
+  /** Destructor */
+  ~StrategySelector();
 
-	/** Returns the selected strategy for this game. */
-	Commander* getStrategy();
+  /** Returns the selected strategy for this game. */
+  Commander* getStrategy();
 
-	/** Loads the stats file. */
-	void loadStats();
+  /** Loads the stats file. */
+  void loadStats();
 
-	/** Prints debug info to the screen. */
-	void printInfo();
+  /** Prints debug info to the screen. */
+  void printInfo();
 
-	/** Adds the result after a game is finished. */
-	void addResult(int win);
+  /** Adds the result after a game is finished. */
+  void addResult(int win);
 
-	/** Saves the stats file. */
-	void saveStats();
+  /** Saves the stats file. */
+  void saveStats();
 
-	/** Enable strategy updates. */
-	void enable();
+  /** Enable strategy updates. */
+  void enable();
 
-	/** Disable strategy updates. */
-	void disable();
+  /** Disable strategy updates. */
+  void disable();
 };
-
-#endif

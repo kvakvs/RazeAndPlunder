@@ -1,11 +1,11 @@
-#ifndef __STATISTICS_H__
-#define __STATISTICS_H__
+#pragma once
 
 #include "../Commander/Commander.h"
 #include <BWAPI.h>
 
 using namespace BWAPI;
-using namespace std;
+
+
 
 /** This class saves results (winner, building score, unit score, kill score) from
  * played games. The results are stored to a semicolon-separated csv file in the bwapi-data/AI/
@@ -16,27 +16,25 @@ using namespace std;
 class Statistics {
 
 private:
-	static Statistics* instance;
-	Statistics();
+  static Statistics* instance;
+  Statistics();
 
-	string getFilename();
-	bool active;
-	
+  std::string getFilename();
+  bool active;
+
 public:
-	/** Returns the instance of the class. */
-	static Statistics* getInstance();
+  /** Returns the instance of the class. */
+  static Statistics* getInstance();
 
-	/** Destructor */
-	~Statistics();
+  /** Destructor */
+  ~Statistics();
 
-	/** Saves result from a game to file. */
-	void saveResult(int win);
+  /** Saves result from a game to file. */
+  void saveResult(int win);
 
-	/** Enable statistics. */
-	void enable();
+  /** Enable statistics. */
+  void enable();
 
-	/** Disable statistics. */
-	void disable();
+  /** Disable statistics. */
+  void disable();
 };
-
-#endif

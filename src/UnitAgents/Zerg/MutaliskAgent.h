@@ -1,5 +1,4 @@
-#ifndef __MUTALISKAGENT_H__
-#define __MUTALISKAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -9,16 +8,10 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class MutaliskAgent : public UnitAgent {
-
-private:
-	
 public:
-	MutaliskAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "MutaliskAgent";
-	}
+  explicit MutaliskAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "MutaliskAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

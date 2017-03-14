@@ -1,5 +1,4 @@
-#ifndef __HYDRALISKAGENT_H__
-#define __HYDRALISKAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -9,16 +8,10 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class HydraliskAgent : public UnitAgent {
-
-private:
-
 public:
-	HydraliskAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "HydraliskAgent";
-	}
+  explicit HydraliskAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "HydraliskAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

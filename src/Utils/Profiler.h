@@ -1,10 +1,12 @@
-#include <windows.h>
+#pragma once
+
 #include <BWAPI.h>
-#include "../MainAgents/BaseAgent.h"
+//#include "../MainAgents/BaseAgent.h"
 #include "ProfilerObj.h"
 
 using namespace BWAPI;
-using namespace std;
+
+
 
 /** This class is used to measure the time (in milliseconds) it takes to execute a codeblock.
  * It also counts timeouts according to the rules from the AIIDE 2011 bot competition. If one of
@@ -22,36 +24,36 @@ using namespace std;
  */
 class Profiler {
 
-	private:
-		vector<ProfilerObj*> obj;
-		ProfilerObj* getObj(string mId);
+private:
+  std::vector<ProfilerObj*> obj;
+  ProfilerObj* getObj(std::string mId);
 
-		Profiler();
-		static Profiler* instance;
-		static bool instanceFlag;
-		bool active;
+  Profiler();
+  static Profiler* instance;
+  static bool instanceFlag;
+  bool active;
 
-	public:
-		/** Destructor */
-		~Profiler();
+public:
+  /** Destructor */
+  ~Profiler();
 
-		/** Returns the instance of the class. */
-		static Profiler* getInstance();
+  /** Returns the instance of the class. */
+  static Profiler* getInstance();
 
-		/** Starts measuring. Put at beginning of a codeblock. 
-		 * Make sure the startiId is the same as the end id. */
-		void start(string mId);
+  /** Starts measuring. Put at beginning of a codeblock. 
+   * Make sure the startiId is the same as the end id. */
+  void start(std::string mId);
 
-		/** Stops measuring. Put at the end of a codeblock.
-		 * Make sure the startiId is the same as the end id. */
-		void end(string mId);
+  /** Stops measuring. Put at the end of a codeblock.
+   * Make sure the startiId is the same as the end id. */
+  void end(std::string mId);
 
-		/** Stores all profiling data to file. */
-		void dumpToFile();
+  /** Stores all profiling data to file. */
+  void dumpToFile();
 
-		/** Enable profiling. */
-		void enable();
-		
-		/** Disable profiling. */
-		void disable();	
+  /** Enable profiling. */
+  void enable();
+
+  /** Disable profiling. */
+  void disable();
 };

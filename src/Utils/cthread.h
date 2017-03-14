@@ -9,8 +9,7 @@ DESCRIPTION:
 
 */
 
-#ifndef _CTHREADHEADER_
-#define _CTHREADHEADER_
+#pragma once
 
 //project dependencies
 
@@ -22,50 +21,56 @@ DESCRIPTION:
 class CThread {
 
 public:
-	//constructors
-	CThread ();
+  //constructors
+  CThread();
 
-	//destructor
-	virtual ~CThread ();
+  //destructor
+  virtual ~CThread();
 
-	bool CreateThread ();
+  bool CreateThread();
 
-	void StartThread();
+  void StartThread();
 
-	void PauseThread();
+  void PauseThread();
 
-	int	IsCreated ()
-	{	return (this->hThread != nullptr);	}
+  int IsCreated() {
+    return (this->hThread != nullptr);
+  }
 
-	DWORD		Timeout;
+  DWORD Timeout;
 
-	HANDLE	GetThreadHandle ()
-	{	return this->hThread;	}
-	DWORD	GetThreadId ()
-	{	return this->hThreadId;	}
-	HANDLE	GetMainThreadHandle ()
-	{	return this->hMainThread;	}
-	DWORD	GetMainThreadId ()
-	{	return this->hMainThreadId;	}
+  HANDLE GetThreadHandle() {
+    return this->hThread;
+  }
+
+  DWORD GetThreadId() {
+    return this->hThreadId;
+  }
+
+  HANDLE GetMainThreadHandle() {
+    return this->hMainThread;
+  }
+
+  DWORD GetMainThreadId() {
+    return this->hMainThreadId;
+  }
 
 protected:
 
-	//overrideable
-	virtual unsigned long Process (void* parameter);	
+  //overrideable
+  virtual unsigned long Process(void* parameter);
 
-	DWORD		hThreadId;
-	HANDLE		hThread;
-	DWORD		hMainThreadId;
-	HANDLE		hMainThread;
-	
+  DWORD hThreadId;
+  HANDLE hThread;
+  DWORD hMainThreadId;
+  HANDLE hMainThread;
+
 private:
 
-	static int runProcess (void* Param);
+  static int runProcess(void* Param);
 
 };
 
 struct param {
-	CThread*	pThread;
+  CThread* pThread;
 };
-
-#endif // _CTHREADHEADER_

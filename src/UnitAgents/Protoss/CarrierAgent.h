@@ -1,5 +1,4 @@
-#ifndef __CARRIERAGENT_H__
-#define __CARRIERAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -13,12 +12,9 @@ class CarrierAgent : public UnitAgent {
 private:
 
 public:
-	CarrierAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "CarrierAgent";
-	}
+  explicit CarrierAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "CarrierAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities();
 };
-
-#endif

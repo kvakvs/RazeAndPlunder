@@ -1,5 +1,3 @@
-#include <BWTA.h>
-
 #include "AIloop.h"
 #include "Managers/BuildingPlacer.h"
 #include "Utils/Profiler.h"
@@ -10,9 +8,8 @@
 #include "Managers/ExplorationManager.h"
 #include "Managers/Constructor.h"
 #include "Commander/StrategySelector.h"
-#include <BWTA2/PolygonImpl.h>
 
-AIloop::AIloop() {
+AIloop::AIloop(): bwem_(BWEM::Map::Instance()) {
   debugUnit = false;
   debugPF = false;
   debugBP = false;
@@ -104,7 +101,7 @@ void AIloop::unitDestroyed(Unit unit) {
 void AIloop::show_debug() {
   if (debug) {
     //Show timer
-    stringstream ss;
+    std::stringstream ss;
     ss << "\x0FTime: ";
     ss << Broodwar->elapsedTime() / 60;
     ss << ":";
@@ -116,7 +113,7 @@ void AIloop::show_debug() {
     //
 
     //Show pathfinder version
-    stringstream st;
+    std::stringstream st;
     st << "\x0FPathfinder: ";
     if (NavigationAgent::pathfinding_version == 0) {
       st << "Built-in";
@@ -197,10 +194,10 @@ void AIloop::show_debug() {
 }
 
 void AIloop::drawTerrainData() {
-  //we will iterate through all the base locations, and draw their outlines.
-  for (BaseLocation* base : getBaseLocations()) {
-    TilePosition p = base->getTilePosition();
-    Position c = base->getPosition();
+  // we will iterate through all the base locations, and draw their outlines.
+  for (auto base : rnp::get_bases(bwem_)) {
+    TilePosition p = base->Location();
+    Position c = base->Center();
 
     //Draw a progress bar at each resource
     for (auto& u : Broodwar->getStaticMinerals()) {
@@ -228,23 +225,23 @@ void AIloop::drawTerrainData() {
 
   if (debugBP) {
     //we will iterate through all the regions and draw the polygon outline of it in white.
-    for (BWTA::Region* r : BWTA::getRegions()) {
-      auto p = BWTA::PolygonImpl(r->getPolygon());
-      for (int j = 0; j < (int)p.size(); j++) {
-        Position point1 = p[j];
-        Position point2 = p[(j + 1) % p.size()];
-        Broodwar->drawLineMap(point1.x, point1.y, point2.x, point2.y, Colors::Orange);
-      }
-    }
+//    for (BWEM::Area* r : BWTA::getRegions()) {
+//      auto p = BWTA::PolygonImpl(r->getPolygon());
+//      for (int j = 0; j < (int)p.size(); j++) {
+//        Position point1 = p[j];
+//        Position point2 = p[(j + 1) % p.size()];
+//        Broodwar->drawLineMap(point1.x, point1.y, point2.x, point2.y, Colors::Orange);
+//      }
+//    }
 
     //we will visualize the chokepoints with yellow lines
-    for (BWTA::Region* r : BWTA::getRegions()) {
-      for (BWTA::Chokepoint* c : r->getChokepoints()) {
-        Position point1 = c->getSides().first;
-        Position point2 = c->getSides().second;
-        Broodwar->drawLineMap(point1.x, point1.y, point2.x, point2.y, Colors::Yellow);
-      }
-    }
+//    for (BWEM::Area* r : BWTA::getRegions()) {
+//      for (BWEM::ChokePoint* c : r->getChokepoints()) {
+//        Position point1 = c->getSides().first;
+//        Position point2 = c->getSides().second;
+//        Broodwar->drawLineMap(point1.x, point1.y, point2.x, point2.y, Colors::Yellow);
+//      }
+//    }
   }
 
   //locate zerg eggs and draw progress bars

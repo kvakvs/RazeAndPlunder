@@ -1,27 +1,24 @@
-#ifndef __FILEREADERUTILS_H__
-#define __FILEREADERUTILS_H__
+#pragma once
 
 #include <BWAPI.h>
 #include <vector>
 
 using namespace BWAPI;
-using namespace std;
+
 
 struct Tokens {
-	string key;
-	string value;
+  std::string key;
+  std::string value;
 
-	Tokens()
-	{
-		key = "";
-		value = "";
-	}
+  Tokens() {
+    key = "";
+    value = "";
+  }
 
-	Tokens(string mKey, string mValue)
-	{
-		key = mKey;
-		value = mValue;
-	}
+  Tokens(std::string mKey, std::string mValue) {
+    key = mKey;
+    value = mValue;
+  }
 };
 
 /** This class contains some common methods used by classes handling the
@@ -32,49 +29,47 @@ struct Tokens {
 class FileReaderUtils {
 
 private:
-	vector<Tokens> nameHash;
+  std::vector<Tokens> nameHash;
 
 public:
-	FileReaderUtils();
+  FileReaderUtils();
 
-	/** Returns the filename to use in sub folder squads, buildorder or upgrades.
-	 * The methods checks if for example PvZ is defined, and if not PvX is used. */
-	string getFilename(string subpath);
+  /** Returns the filename to use in sub folder squads, buildorder or upgrades.
+   * The methods checks if for example PvZ is defined, and if not PvX is used. */
+  std::string getFilename(std::string subpath);
 
-	/** Returns the path to the folder where the scripfiles are placed. */
-	string getScriptPath();
+  /** Returns the path to the folder where the scripfiles are placed. */
+  std::string getScriptPath();
 
-	/** Checks if a file in the specified subpath exists, for example PvZ.txt in
-	 * subfolder buildorder. */
-	bool fileExists(string subpath, string filename);
+  /** Checks if a file in the specified subpath exists, for example PvZ.txt in
+   * subfolder buildorder. */
+  bool fileExists(std::string subpath, std::string filename);
 
-	/** Returns a unit type from a textline, or Unknown if no type was found. */
-	UnitType getUnitType(string line);
+  /** Returns a unit type from a textline, or Unknown if no type was found. */
+  UnitType getUnitType(std::string line);
 
-	/** Returns an upgrade type from a textline, or Unknown if no type was found. */
-	UpgradeType getUpgradeType(string line);
+  /** Returns an upgrade type from a textline, or Unknown if no type was found. */
+  UpgradeType getUpgradeType(std::string line);
 
-	/** Returns a tech type from a textline, or Unknown if no type was found. */
-	TechType getTechType(string line);
+  /** Returns a tech type from a textline, or Unknown if no type was found. */
+  TechType getTechType(std::string line);
 
-	/** Replaces all underscores (_) with whitespaces in a string. */
-	void replace(string &line);
+  /** Replaces all underscores (_) with whitespaces in a string. */
+  void replace(std::string& line);
 
-	/** Splits a line into tokens. Delimiter is the characted to split at, for example = or :. */
-	Tokens split(string line, string delimiter);
+  /** Splits a line into tokens. Delimiter is the characted to split at, for example = or :. */
+  Tokens split(std::string line, std::string delimiter);
 
-	/** Converts a string to an int. */
-	int toInt(string &str);
+  /** Converts a string to an int. */
+  int toInt(std::string& str);
 
-	/** Gets the name for the current map. */
-	string getMapName();
+  /** Gets the name for the current map. */
+  std::string getMapName();
 
-	/** Returns the hash id for a map name. */
-	string nameToHash(string name);
+  /** Returns the hash id for a map name. */
+  std::string nameToHash(std::string name);
 
-	/** Returns the map name for a hash id. */
-	string hashToName(string hash);
+  /** Returns the map name for a hash id. */
+  std::string hashToName(std::string hash);
 
 };
-
-#endif

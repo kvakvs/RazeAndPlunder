@@ -1,5 +1,4 @@
-#ifndef __LURKERAGENT_H__
-#define __LURKERAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -9,16 +8,10 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class LurkerAgent : public UnitAgent {
-
-private:
-	
 public:
-	LurkerAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "LurkerAgent";
-	}
+  explicit LurkerAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "LurkerAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

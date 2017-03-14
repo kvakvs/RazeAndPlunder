@@ -1,5 +1,4 @@
-#ifndef __SIEGETANKAGENT_H__
-#define __SIEGETANKAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -9,14 +8,11 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class SiegeTankAgent : public UnitAgent {
-	
+
 public:
-	SiegeTankAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "SiegeTankAgent";
-	}
+  explicit SiegeTankAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "SiegeTankAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

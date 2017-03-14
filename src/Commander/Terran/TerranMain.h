@@ -1,11 +1,11 @@
-#ifndef __TERRANMAIN_H__
-#define __TERRANMAIN_H__
+#pragma once
 
 #include "../Commander.h"
 #include "../Squad.h"
 
 using namespace BWAPI;
-using namespace std;
+
+
 
 /**  This is the Commander class for a defensive Marine/Siege Tank/Goliath
  * based strategy.
@@ -15,27 +15,24 @@ using namespace std;
 class TerranMain : public Commander {
 
 private:
-	Squad* mainSquad;
-	Squad* secondarySquad;
-	Squad* backupSquad1;
-	Squad* backupSquad2;
-	Squad* sc1;
-	Squad* sc2;
-	
+  Squad* mainSquad;
+  Squad* secondarySquad;
+  Squad* backupSquad1;
+  Squad* backupSquad2;
+  Squad* sc1;
+  Squad* sc2;
+
 public:
-	TerranMain();
+  TerranMain();
 
-	/** Destructor. */
-	~TerranMain();
+  /** Destructor. */
+  ~TerranMain();
 
-	/** Called each update to issue orders. */
-	virtual void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions() override;
 
-	/** Returns the unique id for this strategy. */
-	static string getStrategyId()
-	{
-		return "TerranMain";
-	}
+  /** Returns the unique id for this strategy. */
+  static std::string getStrategyId() {
+    return "TerranMain";
+  }
 };
-
-#endif

@@ -1,14 +1,13 @@
-#ifndef __CONFIG_H__
-#define __CONFIG_H__
+#pragma once
 
 #include <BWAPI.h>
 
 using namespace BWAPI;
-using namespace std;
+
 
 struct CTokens {
-	string key;
-	string value;
+  std::string key;
+  std::string value;
 };
 
 /** This class handles some global settings for the bot.
@@ -18,29 +17,27 @@ struct CTokens {
 class Config {
 
 private:
-	string botName;
-	string version;
-	string info;
-	int w;
+  std::string botName;
+  std::string version;
+  std::string info;
+  int w;
 
-	static Config* instance;
-	
-	Config();
+  static Config* instance;
+
+  Config();
 
 public:
-	~Config();
+  ~Config();
 
-	/** Returns class instance. */
-	static Config* getInstance();
+  /** Returns class instance. */
+  static Config* getInstance();
 
-	/** Returns the name of the bot as specified in the config file. */
-	string getBotName();
+  /** Returns the name of the bot as specified in the config file. */
+  std::string getBotName() const;
 
-	/** Returns the current bot version. */
-	string getVersion();
+  /** Returns the current bot version. */
+  std::string getVersion() const;
 
-	/** Displays bot name in the game window. */
-	void displayBotName();
+  /** Displays bot name in the game window. */
+  void displayBotName() const;
 };
-
-#endif

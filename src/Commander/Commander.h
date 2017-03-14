@@ -1,28 +1,24 @@
-#ifndef __COMMANDER_H__
-#define __COMMANDER_H__
+#pragma once
 
 #include "Squad.h"
 #include "../MainAgents/BaseAgent.h"
 #include "../Managers/BuildplanEntry.h"
-#include <BWTA.h>
 
 using namespace BWAPI;
-using namespace BWTA;
-using namespace std;
+
+#include "bwem.h"
+
 
 struct SortSquadList {
-	bool operator()(Squad*& sq1, Squad*& sq2)
-	{
-		if (sq1->getPriority() != sq2->getPriority())
-		{
-			return sq1->getPriority() < sq2->getPriority();
-		}
-		else
-		{
-			if (sq1->isRequired() && !sq2->isRequired()) return true;
-			else return false;
-		}
-	}
+  bool operator()(Squad*& sq1, Squad*& sq2) const {
+    if (sq1->getPriority() != sq2->getPriority()) {
+      return sq1->getPriority() < sq2->getPriority();
+    }
+    else {
+      if (sq1->isRequired() && !sq2->isRequired()) return true;
+      else return false;
+    }
+  }
 };
 
 /** The Commander class is the base class for commanders. The Commander classes are responsible for
@@ -38,138 +34,136 @@ struct SortSquadList {
 class Commander {
 
 private:
-	bool chokePointFortified(TilePosition center);
-	void sortSquadList();
-	TilePosition findDefensePos(const Chokepoint* choke);
-	
-	void checkNoSquadUnits();
-	void assignUnit(BaseAgent* agent);
+  bool chokePointFortified(TilePosition center);
+  void sortSquadList();
+  TilePosition findDefensePos(const BWEM::ChokePoint* choke);
 
-	int lastCallFrame;
-	bool removalDone;
+  void checkNoSquadUnits();
+  void assignUnit(BaseAgent* agent);
+
+  int lastCallFrame;
+  bool removalDone;
 
 protected:
-	static Commander* instance;
-	int stage;
+  static Commander* instance;
+  int stage;
 
-	int currentState;
-	bool debug_bp;
-	bool debug_sq;
-	static const int DEFEND = 0;
-	static const int ATTACK = 1;
-	
-	vector<Squad*> squads;
-	vector<BuildplanEntry> buildplan;
-	int noWorkers;
-	int noWorkersPerRefinery;
+  int currentState;
+  bool debug_bp;
+  bool debug_sq;
+  static const int DEFEND = 0;
+  static const int ATTACK = 1;
 
-	Commander();	
+  std::vector<Squad*> squads;
+  std::vector<BuildplanEntry> buildplan;
+  int noWorkers;
+  int noWorkersPerRefinery;
 
-	/** Checks the Commander buildplan, and add buildings,
-	 * techs and upgrades to the planners. */
-	void checkBuildplan();
+  Commander();
 
-	/** Stops the production of workers. */
-	void cutWorkers();
+  /** Checks the Commander buildplan, and add buildings,
+   * techs and upgrades to the planners. */
+  void checkBuildplan();
+
+  /** Stops the production of workers. */
+  void cutWorkers();
 
 public:
-	/** Executes basic code for a commander. */
-	void computeActionsBase();
+  /** Executes basic code for a commander. */
+  void computeActionsBase();
 
-	/** Destructor. */
-	~Commander();
+  virtual ~Commander();
 
-	/** Returns the instance of the class. */
-	static Commander* getInstance();
+  /** Returns the instance of the class. */
+  static Commander* getInstance();
 
-	/** Switch on/off buildplan debug info printing to screen. */
-	void toggleBuildplanDebug();
+  /** Switch on/off buildplan debug info printing to screen. */
+  void toggleBuildplanDebug();
 
-	/** Switch on/off squads debug info printing to screen. */
-	void toggleSquadsDebug();
+  /** Switch on/off squads debug info printing to screen. */
+  void toggleSquadsDebug();
 
-	/** Called each update to issue orders. */
-	virtual void computeActions() {}
+  /** Called each update to issue orders. */
+  virtual void computeActions() {
+  }
 
-	/** Returns the number of preferred workers, i.e. the
-	 * number of workers should be built. */
-	int getNoWorkers();
+  /** Returns the number of preferred workers, i.e. the
+   * number of workers should be built. */
+  int getNoWorkers();
 
-	/** Returns the preferred number of workers for a refinery. */
-	int getWorkersPerRefinery();
+  /** Returns the preferred number of workers for a refinery. */
+  int getWorkersPerRefinery();
 
-	/** Used in debug modes to show goal of squads. */
-	virtual void debug_showGoal();
+  /** Used in debug modes to show goal of squads. */
+  virtual void debug_showGoal();
 
-	/** Checks if it is time to engage the enemy. This happens when all Required squads
-	 * are active. */
-	bool shallEngage();
+  /** Checks if it is time to engage the enemy. This happens when all Required squads
+   * are active. */
+  bool shallEngage();
 
-	/** Updates the goals for all squads. */
-	void updateGoals();
+  /** Updates the goals for all squads. */
+  void updateGoals();
 
-	/** Called each time a unit is created. The unit is then
-	 * placed in a Squad. */
-	void unitCreated(BaseAgent* agent);
+  /** Called each time a unit is created. The unit is then
+   * placed in a Squad. */
+  void unitCreated(BaseAgent* agent);
 
-	/** Called each time a unit is destroyed. The unit is then
-	 * removed from its Squad. */
-	void unitDestroyed(BaseAgent* agent);
+  /** Called each time a unit is destroyed. The unit is then
+   * removed from its Squad. */
+  void unitDestroyed(BaseAgent* agent);
 
-	/* Checks if the specified unittype needs to be built. */
-	bool needUnit(UnitType type);
+  /* Checks if the specified unittype needs to be built. */
+  bool needUnit(UnitType type);
 
-	/** Removes a squad. */
-	void removeSquad(int id);
+  /** Removes a squad. */
+  void removeSquad(int id);
 
-	/** Adds a new squad. */
-	void addSquad(Squad* sq);
+  /** Adds a new squad. */
+  void addSquad(Squad* sq);
 
-	/** Returns the Squad with the specified id, or nullptr if not found. */
-	Squad* getSquad(int id);
+  /** Returns the Squad with the specified id, or nullptr if not found. */
+  Squad* getSquad(int id);
 
-	/** Returns the position where to launch an attack at. */
-	TilePosition findAttackPosition();
-	
-	/** Checks if workers needs to attack. Happens if base is under attack and no offensive units
-	 * are available. */
-	bool checkWorkersAttack(BaseAgent* base);
+  /** Returns the position where to launch an attack at. */
+  TilePosition findAttackPosition();
 
-	/** Checks if we need to assist a building. */
-	bool assistBuilding();
+  /** Checks if workers needs to attack. Happens if base is under attack and no offensive units
+   * are available. */
+  bool checkWorkersAttack(BaseAgent* base);
 
-	/** Checks if we need to assist a worker that is under attack. */
-	bool assistWorker();
+  /** Checks if we need to assist a building. */
+  bool assistBuilding();
 
-	/** Checks if there are any removable obstacles nearby, i.e. minerals with less than 20 resources
-	 * left. */
-	void checkRemovableObstacles();
+  /** Checks if we need to assist a worker that is under attack. */
+  bool assistWorker();
 
-	/** Forces an attack, even if some squads are not full. */
-	void forceAttack();
+  /** Checks if there are any removable obstacles nearby, i.e. minerals with less than 20 resources
+   * left. */
+  void checkRemovableObstacles();
 
-	/** Shows some info on the screen. */
-	void printInfo();
+  /** Forces an attack, even if some squads are not full. */
+  void forceAttack();
 
-	/** Searches for and returns a good chokepoint position to defend the territory. */
-	TilePosition findChokePoint();
+  /** Shows some info on the screen. */
+  void printInfo();
 
-	/** Checks if there are any unfinished buildings that does not have an SCV working on them. Terran only. */
-	bool checkDamagedBuildings();
+  /** Searches for and returns a good chokepoint position to defend the territory. */
+  TilePosition findChokePoint();
 
-	/** Assigns a worker to finish constructing an interrupted building. Terran only. */
-	void finishBuild(BaseAgent* agent);
+  /** Checks if there are any unfinished buildings that does not have an SCV working on them. Terran only. */
+  bool checkDamagedBuildings();
 
-	/** Adds a bunker squad when a Terran Bunker has been created. Returns
-	 * the squadID of the bunker squad. */
-	int addBunkerSquad();
+  /** Assigns a worker to finish constructing an interrupted building. Terran only. */
+  void finishBuild(BaseAgent* agent);
 
-	/** Removes a bunker squad. Used when the bunker is destroyed
-	 * with units inside. */
-	bool removeBunkerSquad(int unitID);
+  /** Adds a bunker squad when a Terran Bunker has been created. Returns
+   * the squadID of the bunker squad. */
+  int addBunkerSquad();
 
-	/** Removes the race from a string, Terran Marine = Marine. */
-	static string format(string str);
+  /** Removes a bunker squad. Used when the bunker is destroyed
+   * with units inside. */
+  bool removeBunkerSquad(int unitID);
+
+  /** Removes the race from a string, Terran Marine = Marine. */
+  static std::string format(std::string str);
 };
-
-#endif

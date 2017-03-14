@@ -1,5 +1,4 @@
-#ifndef __CORSAIRAGENT_H__
-#define __CORSAIRAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -9,18 +8,13 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class CorsairAgent : public UnitAgent {
-
-private:
-	int lastUseFrame;
-	Unit getClosestEnemyAirDefense(int maxRange);
+  int lastUseFrame = 0;
+  Unit getClosestEnemyAirDefense(int maxRange);
 
 public:
-	CorsairAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "CorsairAgent";
-	}
+  explicit CorsairAgent(Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "CorsairAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

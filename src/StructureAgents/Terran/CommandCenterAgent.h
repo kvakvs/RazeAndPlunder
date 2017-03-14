@@ -1,9 +1,7 @@
-#ifndef __COMMANDCENTERAGENT_H__
-#define __COMMANDCENTERAGENT_H__
+#pragma once
 
 #include "../StructureAgent.h"
-using namespace BWAPI;
-using namespace std;
+//using namespace BWAPI;
 
 /** The CommandCenterAgent handles Terran Command Center buildings.
  *
@@ -17,13 +15,11 @@ using namespace std;
 class CommandCenterAgent : public StructureAgent {
 
 private:
-	bool hasSentWorkers;
+  bool hasSentWorkers;
 
 public:
-	CommandCenterAgent(Unit mUnit);
+  explicit CommandCenterAgent(BWAPI::Unit mUnit);
 
-	/** Called each update to issue orders. */
-	void computeActions();
+  /** Called each update to issue orders. */
+  void computeActions() override;
 };
-
-#endif
