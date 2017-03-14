@@ -1,0 +1,5 @@
+cmake-vs/*
+
+# IntelliJ/CLion projects
+.idea/
+*.iml
