@@ -4,6 +4,8 @@
 #include "Config.h"
 #include <fstream>
 
+using namespace BWAPI;
+
 FileReaderUtils::FileReaderUtils() {
   nameHash.push_back(Tokens("(2)Destination", "4e24f217d2fe4dbfa6799bc57f74d8dc939d425b"));
   nameHash.push_back(Tokens("(2)Benzene", "af618ea3ed8a8926ca7b17619eebcb9126f0d8b1"));
@@ -23,15 +25,15 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
   if (Constructor::isProtoss()) {
     if (ExplorationManager::enemyIsProtoss()) {
       filename = "PvP.txt";
-      if (!fileExists(subpath, filename)) filename = "PvX.txt";
+      if (not fileExists(subpath, filename)) filename = "PvX.txt";
     }
     else if (ExplorationManager::enemyIsTerran()) {
       filename = "PvT.txt";
-      if (!fileExists(subpath, filename)) filename = "PvX.txt";
+      if (not fileExists(subpath, filename)) filename = "PvX.txt";
     }
     else if (ExplorationManager::enemyIsZerg()) {
       filename = "PvZ.txt";
-      if (!fileExists(subpath, filename)) filename = "PvX.txt";
+      if (not fileExists(subpath, filename)) filename = "PvX.txt";
     }
     else {
       filename = "PvX.txt";
@@ -40,15 +42,15 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
   else if (Constructor::isTerran()) {
     if (ExplorationManager::enemyIsProtoss()) {
       filename = "TvP.txt";
-      if (!fileExists(subpath, filename)) filename = "TvX.txt";
+      if (not fileExists(subpath, filename)) filename = "TvX.txt";
     }
     else if (ExplorationManager::enemyIsTerran()) {
       filename = "TvT.txt";
-      if (!fileExists(subpath, filename)) filename = "TvX.txt";
+      if (not fileExists(subpath, filename)) filename = "TvX.txt";
     }
     else if (ExplorationManager::enemyIsZerg()) {
       filename = "TvZ.txt";
-      if (!fileExists(subpath, filename)) filename = "TvX.txt";
+      if (not fileExists(subpath, filename)) filename = "TvX.txt";
     }
     else {
       filename = "TvX.txt";
@@ -57,15 +59,15 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
   else if (Constructor::isZerg()) {
     if (ExplorationManager::enemyIsProtoss()) {
       filename = "ZvP.txt";
-      if (!fileExists(subpath, filename)) filename = "ZvX.txt";
+      if (not fileExists(subpath, filename)) filename = "ZvX.txt";
     }
     else if (ExplorationManager::enemyIsTerran()) {
       filename = "ZvT.txt";
-      if (!fileExists(subpath, filename)) filename = "ZvX.txt";
+      if (not fileExists(subpath, filename)) filename = "ZvX.txt";
     }
     else if (ExplorationManager::enemyIsZerg()) {
       filename = "ZvZ.txt";
-      if (!fileExists(subpath, filename)) filename = "ZvX.txt";
+      if (not fileExists(subpath, filename)) filename = "ZvX.txt";
     }
     else {
       filename = "ZvX.txt";
@@ -76,7 +78,7 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
   }
 
   //Check if file really exists
-  if (!fileExists(subpath, filename)) {
+  if (not fileExists(subpath, filename)) {
     filename = "N/A";
   }
 
@@ -99,7 +101,7 @@ bool FileReaderUtils::fileExists(std::string subpath, std::string filename) {
 
   inFile.open(filePath.c_str());
 
-  if (!inFile) {
+  if (not inFile) {
     return false;
   }
   else {

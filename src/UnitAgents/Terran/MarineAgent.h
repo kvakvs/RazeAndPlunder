@@ -12,7 +12,7 @@ class MarineAgent : public UnitAgent {
 private:
 
 public:
-  explicit MarineAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit MarineAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "MarineAgent";
   }
 

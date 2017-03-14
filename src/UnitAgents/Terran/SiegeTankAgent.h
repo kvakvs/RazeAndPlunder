@@ -10,7 +10,7 @@
 class SiegeTankAgent : public UnitAgent {
 
 public:
-  explicit SiegeTankAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit SiegeTankAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "SiegeTankAgent";
   }
 

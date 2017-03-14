@@ -1,5 +1,8 @@
 #include "MedicAgent.h"
 #include "../../Managers/AgentManager.h"
+#include <iso646.h>
+
+using namespace BWAPI;
 
 bool MedicAgent::useAbilities() {
   //Check heal
@@ -31,7 +34,7 @@ bool MedicAgent::useAbilities() {
 }
 
 bool MedicAgent::isMedicTarget(Unit mUnit) {
-  if (!mUnit->getType().isOrganic()) {
+  if (not mUnit->getType().isOrganic()) {
     //Can only heal organic units
     return false;
   }
@@ -42,7 +45,7 @@ bool MedicAgent::isMedicTarget(Unit mUnit) {
     return false;
   }
 
-  if (!mUnit->getType().canAttack()) {
+  if (not mUnit->getType().canAttack()) {
     //Dont follow units that cant attack
     return false;
   }

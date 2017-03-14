@@ -3,7 +3,10 @@
 #include "../Managers/ExplorationManager.h"
 #include "../MainAgents/BaseAgent.h"
 
-#include "cp.h"
+#include "bwem.h"
+#include "BWEMUtil.h"
+
+using namespace BWAPI;
 
 MapManager* MapManager::instance = nullptr;
 
@@ -37,24 +40,24 @@ const MRegion* MapManager::getMapRegion(const BWEM::Area* area) {
 bool MapManager::isValidChokepoint(const BWEM::ChokePoint* cp) {
   //Use this code to hard-code chokepoints that shall not be used.
   if (Broodwar->mapFileName() == "(4)Andromeda.scx") {
-    Position c = cp->Center();
+    auto c = Position(cp->Center());
     if (c.x == 2780 && c.y == 3604) return false;
     if (c.x == 2776 && c.y == 448) return false;
     if (c.x == 1292 && c.y == 436) return false;
     if (c.x == 1300 && c.y == 3584) return false;
   }
   if (Broodwar->mapFileName() == "(2)Benzene.scx") {
-    Position c = cp->getCenter();
+    auto c = Position(cp->Center());
     if (c.x == 4044 && c.y == 1088) return false;
     if (c.x == 44 && c.y == 1064) return false;
   }
   if (Broodwar->mapFileName() == "(2)Destination.scx") {
-    Position c = cp->getCenter();
+    auto c = Position(cp->Center());
     if (c.x == 1309 && c.y == 3851) return false;
     if (c.x == 1730 && c.y == 226) return false;
   }
   if (Broodwar->mapFileName() == "(4)Fortress.scx") {
-    Position c = cp->getCenter();
+    auto c = Position(cp->Center());
     if (c.x == 3132 && c.y == 912) return false;
     if (c.x == 764 && c.y == 3312) return false;
   }
@@ -109,9 +112,9 @@ const BWEM::ChokePoint* MapManager::getDefenseLocation() {
 }
 
 MRegion* MapManager::getMapFor(Position p) {
-  for (auto& mr : map) {
-    if (mr->region->getPolygon().isInside(p)) {
-      return mr;
+  for (auto& mreg : map) {
+    if (rnp::is_inside(*mreg->region, p)) {
+      return mreg;
     }
   }
   return nullptr;
@@ -196,7 +199,7 @@ void MapManager::update() {
       MRegion* mr = getMapFor(u->getPosition());
       if (mr != nullptr) {
         UnitType type = u->getType();
-        if (!type.isWorker() && type.canAttack()) {
+        if (not type.isWorker() && type.canAttack()) {
           if (type.groundWeapon().targetsGround() || type.airWeapon().targetsGround()) {
             mr->inf_en_ground += type.buildScore();
           }
@@ -211,7 +214,7 @@ void MapManager::update() {
 
 int MapManager::getOwnGroundInfluenceIn(TilePosition pos) {
   for (MRegion* cm : map) {
-    if (cm->region->getPolygon().isInside(Position(pos))) {
+    if (rnp::is_inside(*cm->region, Position(pos))) {
       return cm->inf_own_ground;
     }
   }
@@ -220,7 +223,7 @@ int MapManager::getOwnGroundInfluenceIn(TilePosition pos) {
 
 int MapManager::getEnemyGroundInfluenceIn(TilePosition pos) {
   for (MRegion* cm : map) {
-    if (cm->region->getPolygon().isInside(Position(pos))) {
+    if (rnp::is_inside(*cm->region, Position(pos))) {
       return cm->inf_en_ground;
     }
   }
@@ -229,7 +232,8 @@ int MapManager::getEnemyGroundInfluenceIn(TilePosition pos) {
 
 bool MapManager::hasOwnInfluenceIn(TilePosition pos) {
   for (MRegion* cm : map) {
-    if (cm->inf_own_buildings > 0 && cm->region->getPolygon().isInside(Position(pos))) {
+    if (cm->inf_own_buildings > 0 
+      && rnp::is_inside(*cm->region, Position(pos))) {
       return true;
     }
   }
@@ -238,7 +242,8 @@ bool MapManager::hasOwnInfluenceIn(TilePosition pos) {
 
 bool MapManager::hasEnemyInfluenceIn(TilePosition pos) {
   for (MRegion* cm : map) {
-    if (cm->inf_en_buildings > 0 && cm->region->getPolygon().isInside(Position(pos))) {
+    if (cm->inf_en_buildings > 0 
+      && rnp::is_inside(*cm->region, Position(pos))) {
       return true;
     }
   }
@@ -263,7 +268,7 @@ TilePosition MapManager::findAttackPosition() {
   }
 
   if (best != nullptr) {
-    return TilePosition(best->region->getCenter());
+    return TilePosition(rnp::get_center(best->region));
   }
   else {
     //No enemy building found. Move to starting positions.
@@ -301,8 +306,9 @@ MapManager* MapManager::getInstance() {
 
 void MapManager::printInfo() {
   for (MRegion* mr : map) {
-    int x1 = mr->region->getCenter().x;
-    int y1 = mr->region->getCenter().y;
+    auto mr_center = rnp::get_center(mr->region);
+    int x1 = mr_center.x;
+    int y1 = mr_center.y;
     int x2 = x1 + 110;
     int y2 = y1 + 90;
 
@@ -316,11 +322,12 @@ void MapManager::printInfo() {
 
     //Print location of each chokepoint, and also if it is blocked
     //as defense position.
-    for (Chokepoint* c : mr->region->getChokepoints()) {
-      x1 = c->getCenter().x;
-      y1 = c->getCenter().y;
+    for (auto c : mr->region->ChokePoints()) {
+      auto c_center = c->Center();
+      x1 = c_center.x;
+      y1 = c_center.y;
       Broodwar->drawTextMap(x1, y1, "(%d,%d)", x1, y1);
-      if (!isValidChokepoint(c)) Broodwar->drawTextMap(x1, y1 + 12, "Blocked");
+      if (not isValidChokepoint(c)) Broodwar->drawTextMap(x1, y1 + 12, "Blocked");
     }
     Broodwar->drawTextScreen(10, 120, "'%s'", Broodwar->mapFileName().c_str());
   }

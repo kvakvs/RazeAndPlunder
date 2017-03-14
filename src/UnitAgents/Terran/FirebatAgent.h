@@ -9,7 +9,7 @@
  */
 class FirebatAgent : public UnitAgent {
 public:
-  explicit FirebatAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit FirebatAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "FirebatAgent";
   }
 

@@ -3,9 +3,7 @@
 #include <BWAPI.h>
 //#include "../MainAgents/BaseAgent.h"
 #include "ProfilerObj.h"
-
-using namespace BWAPI;
-
+#include <memory>
 
 
 /** This class is used to measure the time (in milliseconds) it takes to execute a codeblock.
@@ -23,37 +21,29 @@ using namespace BWAPI;
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class Profiler {
-
 private:
   std::vector<ProfilerObj*> obj;
   ProfilerObj* getObj(std::string mId);
 
-  Profiler();
-  static Profiler* instance;
-  static bool instanceFlag;
   bool active;
 
 public:
-  /** Destructor */
+  Profiler();
   ~Profiler();
 
-  /** Returns the instance of the class. */
-  static Profiler* getInstance();
-
-  /** Starts measuring. Put at beginning of a codeblock. 
-   * Make sure the startiId is the same as the end id. */
+  // Starts measuring. Put at beginning of a codeblock.// Make sure the startiId is the same as the end id. 
   void start(std::string mId);
 
-  /** Stops measuring. Put at the end of a codeblock.
-   * Make sure the startiId is the same as the end id. */
+  // Stops measuring. Put at the end of a codeblock.
+  // Make sure the startiId is the same as the end id. 
   void end(std::string mId);
 
-  /** Stores all profiling data to file. */
+  // Stores all profiling data to file. 
   void dumpToFile();
 
-  /** Enable profiling. */
+  // Enable profiling. 
   void enable();
 
-  /** Disable profiling. */
+  // Disable profiling. 
   void disable();
 };

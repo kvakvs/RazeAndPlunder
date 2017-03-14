@@ -2,6 +2,9 @@
 #include "../../Pathfinding/NavigationAgent.h"
 #include "../../Managers/AgentManager.h"
 #include "../../Commander/Commander.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 bool HighTemplarAgent::useAbilities() {
   if (isOfType(unit->getType(), UnitTypes::Protoss_High_Templar)) {
@@ -43,13 +46,15 @@ bool HighTemplarAgent::useAbilities() {
     }
 
     //Morph to Archon	
-    if (!unit->isBeingConstructed()) {
-      Squad* sq = Commander::getInstance()->getSquad(squadID);
-      if (sq != nullptr) {
-        if (sq->morphsTo().getID() == UnitTypes::Protoss_Archon.getID() || unit->getEnergy() < 50) {
-          if (!enemyUnitsVisible() && !hasCastTransform) {
+    if (not  unit->isBeingConstructed()) {
+      auto sq = rnp::commander()->getSquad(squadID);
+      if (sq) {
+        if (sq->morphsTo().getID() == UnitTypes::Protoss_Archon.getID() 
+          || unit->getEnergy() < 50) 
+        {
+          if (not enemyUnitsVisible() && !hasCastTransform) {
             BaseAgent* target = findArchonTarget();
-            if (target != nullptr) {
+            if (target) {
               if (unit->useTech(TechTypes::Archon_Warp, target->getUnit())) {
                 hasCastTransform = true;
                 return true;
@@ -57,8 +62,8 @@ bool HighTemplarAgent::useAbilities() {
             }
           }
         }
-      }
-    }
+      } // if sq
+    } // if not constructed
   }
 
   return false;
@@ -77,7 +82,7 @@ BaseAgent* HighTemplarAgent::findHallucinationTarget() {
     if (a->isOfType(UnitTypes::Protoss_Reaver)) targetUnit = true;
 
     if (a->isAlive() && targetUnit) {
-      if (!a->getUnit()->isHallucination()) {
+      if (not a->getUnit()->isHallucination()) {
         return a;
       }
     }
@@ -87,8 +92,8 @@ BaseAgent* HighTemplarAgent::findHallucinationTarget() {
 }
 
 BaseAgent* HighTemplarAgent::findArchonTarget() {
-  Squad* mSquad = Commander::getInstance()->getSquad(squadID);
-  if (mSquad != nullptr) {
+  auto mSquad = rnp::commander()->getSquad(squadID);
+  if (mSquad) {
     Agentset agents = mSquad->getMembers();
     for (auto& a : agents) {
       if (a->isAlive() && a->getUnitID() != unitID && a->isOfType(UnitTypes::Protoss_High_Templar) && !a->getUnit()->isBeingConstructed()) {

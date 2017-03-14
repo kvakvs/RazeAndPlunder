@@ -4,12 +4,7 @@
 #include "PathObj.h"
 #include "../Utils/cthread.h"
 
-using namespace BWAPI;
-using namespace BWTA;
-
-
-
-class PathObjSet : public SetContainer<PathObj*, std::hash<void*>> {
+class PathObjSet : public BWAPI::SetContainer<PathObj*, std::hash<void*>> {
 public:
 
 };
@@ -31,31 +26,31 @@ private:
 
   PathObjSet pathObj;
 
-  PathObj* getPathObj(TilePosition start, TilePosition end);
+  PathObj* getPathObj(BWAPI::TilePosition start, BWAPI::TilePosition end);
 
   bool isRunning();
 
 public:
-  /** Destructor */
+  // Destructor 
   ~Pathfinder();
 
-  /** Returns the instance of the class. */
+  // Returns the instance of the class. 
   static Pathfinder* getInstance();
 
-  /** Returns the ground distance between two positions. */
-  int getDistance(TilePosition start, TilePosition end);
+  // Returns the ground distance between two positions. 
+  int getDistance(BWAPI::TilePosition start, BWAPI::TilePosition end);
 
-  void requestPath(TilePosition start, TilePosition end);
+  void requestPath(BWAPI::TilePosition start, BWAPI::TilePosition end);
 
-  bool isReady(TilePosition start, TilePosition end);
+  bool isReady(BWAPI::TilePosition start, BWAPI::TilePosition end);
 
-  /** Returns the path between two positions. */
-  std::vector<TilePosition> getPath(TilePosition start, TilePosition end);
+  // Returns the path between two positions. 
+  BWEM::CPPath getPath(BWAPI::TilePosition start, BWAPI::TilePosition end);
 
-  /** Stops the pathfinder thread. */
+  // Stops the pathfinder thread. 
   void stop();
 
-  /** Thread update method. */
-  unsigned long Process(void* parameter);
+  // Thread update method. 
+  unsigned long Process(void* parameter) override;
 };
 

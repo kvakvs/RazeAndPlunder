@@ -2,6 +2,9 @@
 #include "../../Commander/Commander.h"
 #include "../../Managers/AgentManager.h"
 #include "../../Managers/Constructor.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 CommandCenterAgent::CommandCenterAgent(Unit mUnit) {
   unit = mUnit;
@@ -19,8 +22,8 @@ CommandCenterAgent::CommandCenterAgent(Unit mUnit) {
 }
 
 void CommandCenterAgent::computeActions() {
-  if (!hasSentWorkers) {
-    if (!unit->isBeingConstructed()) {
+  if (not hasSentWorkers) {
+    if (not unit->isBeingConstructed()) {
       sendWorkers();
       hasSentWorkers = true;
 
@@ -28,7 +31,7 @@ void CommandCenterAgent::computeActions() {
     }
   }
 
-  if (!unit->isIdle()) return;
+  if (not unit->isIdle()) return;
 
   //Build comsat addon
   if (unit->getAddon() == nullptr) {
@@ -38,14 +41,14 @@ void CommandCenterAgent::computeActions() {
     }
   }
 
-  if (AgentManager::getInstance()->countNoUnits(Broodwar->self()->getRace().getWorker()) < Commander::getInstance()->getNoWorkers()) {
+  if (AgentManager::getInstance()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
     if (canBuild(worker)) {
       unit->train(worker);
     }
   }
 
-  if (Commander::getInstance()->needUnit(UnitTypes::Terran_SCV)) {
+  if (rnp::commander()->needUnit(UnitTypes::Terran_SCV)) {
     if (canBuild(UnitTypes::Terran_SCV)) {
       unit->train(UnitTypes::Terran_SCV);
     }

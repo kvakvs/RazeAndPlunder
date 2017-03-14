@@ -2,6 +2,8 @@
 //#include "../../MainAgents/TargetingAgent.h"
 #include "../../Managers/AgentManager.h"
 
+using namespace BWAPI;
+
 bool GhostAgent::useAbilities() {
   //Cloaking
   TechType cloak = TechTypes::Personnel_Cloaking;

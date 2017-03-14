@@ -11,7 +11,7 @@ class DefilerAgent : public UnitAgent {
   int darkSwarmFrame;
 
 public:
-  explicit DefilerAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit DefilerAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "DefilerAgent";
     darkSwarmFrame = 0;
   }

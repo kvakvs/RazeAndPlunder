@@ -2,7 +2,9 @@
 
 #include <BWAPI.h>
 #include "AIloop.h"
-#include "gridMap.h"
+
+#include "bwem.h"
+#include "Commander/Commander.h"
 
 #define TOURNAMENT_NAME "SSCAIT 2017"
 #define SPONSORS "the Sponsors!"
@@ -24,13 +26,25 @@ DWORD WINAPI AnalyzeThread();
 class OpprimoBot : public BWAPI::AIModule {
   bool running = false;
   bool profile = false;
-  BWEM::Map& bwem_; 
+  
+  // The singleton
+  static OpprimoBot* singleton_;
 
-private:
-  void gameStopped();
+  int speed = 1;
+  AIloop loop;
+
+  // Globally visible resources via the singleton
+  BWEM::Map& bwem_;
+  Commander::Ptr commander_;
 
 public:
   OpprimoBot();
+
+  static OpprimoBot* singleton() {
+    bwem_assert(singleton_);
+    return singleton_;
+  }
+  Commander::Ptr get_commander() { return commander_; }
 
   // Virtual functions for callbacks, leave these as they are.
   void onStart() override;
@@ -50,8 +64,7 @@ public:
   void onUnitRenegade(BWAPI::Unit unit) override;
   void onSaveGame(std::string gameName) override;
   void onUnitComplete(BWAPI::Unit unit) override;
-  // Everything below this line is safe to modify.
 
-  int speed = 1;
-  AIloop loop;
+private:
+  void gameStopped();
 };

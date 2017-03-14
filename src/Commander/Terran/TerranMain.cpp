@@ -3,146 +3,146 @@
 #include "../../Managers/AgentManager.h"
 #include "../ExplorationSquad.h"
 #include "../RushSquad.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 TerranMain::TerranMain() {
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Supply_Depot, 9));
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Barracks, 9));
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Refinery, 12));
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Bunker, 14));
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Supply_Depot, 16));
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Bunker, 16));
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Factory, 18));
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Academy, 20));
-  buildplan.push_back(BuildplanEntry(TechTypes::Tank_Siege_Mode, 22));
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Supply_Depot, 23));
-  buildplan.push_back(BuildplanEntry(TechTypes::Stim_Packs, 29));
-  buildplan.push_back(BuildplanEntry(UpgradeTypes::U_238_Shells, 30));
-  buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Supply_Depot, 31));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Supply_Depot, 9));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Barracks, 9));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Refinery, 12));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Bunker, 14));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Supply_Depot, 16));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Bunker, 16));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Factory, 18));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Academy, 20));
+  buildplan_.push_back(BuildplanEntry(TechTypes::Tank_Siege_Mode, 22));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Supply_Depot, 23));
+  buildplan_.push_back(BuildplanEntry(TechTypes::Stim_Packs, 29));
+  buildplan_.push_back(BuildplanEntry(UpgradeTypes::U_238_Shells, 30));
+  buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Supply_Depot, 31));
 
-  mainSquad = new Squad(1, Squad::OFFENSIVE, "MainSquad", 10);
-  mainSquad->addSetup(UnitTypes::Terran_Marine, 10);
-  mainSquad->setRequired(true);
-  mainSquad->setBuildup(true);
-  squads.push_back(mainSquad);
+  main_sq_ = std::make_shared<Squad>(1, Squad::SquadType::OFFENSIVE, "MainSquad", 10);
+  main_sq_->addSetup(UnitTypes::Terran_Marine, 10);
+  main_sq_->setRequired(true);
+  main_sq_->setBuildup(true);
+  squads_.push_back(main_sq_);
 
-  secondarySquad = new Squad(2, Squad::OFFENSIVE, "SecondarySquad", 10);
-  secondarySquad->setRequired(false);
-  secondarySquad->setBuildup(true);
-  squads.push_back(secondarySquad);
+  secondary_sq_ = std::make_shared<Squad>(2, Squad::SquadType::OFFENSIVE, "SecondarySquad", 10);
+  secondary_sq_->setRequired(false);
+  secondary_sq_->setBuildup(true);
+  squads_.push_back(secondary_sq_);
 
-  sc1 = new RushSquad(10, "ScoutingSquad1", 11);
-  sc1->setRequired(false);
+  scout1_sq_ = std::make_shared<RushSquad>(10, "RushSquad1", 11);
+  scout1_sq_->setRequired(false);
+  squads_.push_back(scout1_sq_);
 
-  sc2 = new ExplorationSquad(11, "ScoutingSquad2", 11);
-  sc2->setRequired(false);
-  squads.push_back(sc2);
+  scout2_sc_ = std::make_shared<ExplorationSquad>(11, "ScoutingSquad2", 11);
+  scout2_sc_->setRequired(false);
+  squads_.push_back(scout2_sc_);
 
-  backupSquad1 = new Squad(5, Squad::OFFENSIVE, "BackupSquad1", 11);
-  backupSquad1->setRequired(false);
-  backupSquad1->setBuildup(true);
-  squads.push_back(backupSquad1);
+  backup1_sq_ = std::make_shared<Squad>(5, Squad::SquadType::OFFENSIVE, "BackupSquad1", 11);
+  backup1_sq_->setRequired(false);
+  backup1_sq_->setBuildup(true);
+  squads_.push_back(backup1_sq_);
 
-  backupSquad2 = new Squad(6, Squad::OFFENSIVE, "BackupSquad2", 12);
-  backupSquad2->setRequired(false);
-  backupSquad2->setBuildup(true);
-  squads.push_back(backupSquad2);
+  backup2_sq_ = std::make_shared<Squad>(6, Squad::SquadType::OFFENSIVE, "BackupSquad2", 12);
+  backup2_sq_->setRequired(false);
+  backup2_sq_->setBuildup(true);
+  squads_.push_back(backup2_sq_);
 
-  noWorkers = 16;
-  noWorkersPerRefinery = 2;
+  workers_num_ = 16;
+  workers_per_refinery_ = 2;
 }
 
 TerranMain::~TerranMain() {
-  for (Squad* s : squads) {
-    delete s;
-  }
-  instance = nullptr;
 }
 
 void TerranMain::computeActions() {
   computeActionsBase();
 
-  noWorkers = 12 * AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Command_Center) + 2 * AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Refinery);
-  if (noWorkers > 30) noWorkers = 30;
+  workers_num_ = 12 * AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Command_Center) + 2 * AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Refinery);
+  if (workers_num_ > 30) workers_num_ = 30;
 
   int cSupply = Broodwar->self()->supplyUsed() / 2;
   int min = Broodwar->self()->minerals();
-  int gas = Broodwar->self()->gas();
+//  int gas = Broodwar->self()->gas();
 
-  if (cSupply >= 20 && stage == 0) {
-    mainSquad->addSetup(UnitTypes::Terran_Siege_Tank_Tank_Mode, 4);
-    mainSquad->addSetup(UnitTypes::Terran_SCV, 1);
-    mainSquad->addSetup(UnitTypes::Terran_Marine, 6);
-    mainSquad->addSetup(UnitTypes::Terran_Medic, 4);
+  if (cSupply >= 20 && stage_ == 0) {
+    main_sq_->addSetup(UnitTypes::Terran_Siege_Tank_Tank_Mode, 4);
+    main_sq_->addSetup(UnitTypes::Terran_SCV, 1);
+    main_sq_->addSetup(UnitTypes::Terran_Marine, 6);
+    main_sq_->addSetup(UnitTypes::Terran_Medic, 4);
 
-    stage++;
+    stage_++;
   }
-  if (cSupply >= 30 && min > 200 && stage == 1) {
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Factory, cSupply));
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Armory, cSupply));
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Engineering_Bay, cSupply));
+  if (cSupply >= 30 && min > 200 && stage_ == 1) {
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Factory, cSupply));
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Armory, cSupply));
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Engineering_Bay, cSupply));
 
-    mainSquad->addSetup(UnitTypes::Terran_Goliath, 3);
-    mainSquad->setBuildup(false);
+    main_sq_->addSetup(UnitTypes::Terran_Goliath, 3);
+    main_sq_->setBuildup(false);
 
-    stage++;
+    stage_++;
   }
-  if (cSupply >= 45 && min > 200 && stage == 2) {
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Barracks, cSupply));
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Missile_Turret, cSupply));
+  if (cSupply >= 45 && min > 200 && stage_ == 2) {
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Barracks, cSupply));
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Missile_Turret, cSupply));
 
-    sc1->addSetup(UnitTypes::Terran_Vulture, 1);
-    sc1->setPriority(1);
-    sc1->setActivePriority(1000);
-    squads.push_back(sc1);
+    scout1_sq_->addSetup(UnitTypes::Terran_Vulture, 1);
+    scout1_sq_->setPriority(1);
+    scout1_sq_->setActivePriority(1000);
+    squads_.push_back(scout1_sq_);
 
-    secondarySquad->addSetup(UnitTypes::Terran_Siege_Tank_Tank_Mode, 2);
-    secondarySquad->addSetup(UnitTypes::Terran_Marine, 8);
-    secondarySquad->addSetup(UnitTypes::Terran_Goliath, 2);
-    secondarySquad->setBuildup(false);
+    secondary_sq_->addSetup(UnitTypes::Terran_Siege_Tank_Tank_Mode, 2);
+    secondary_sq_->addSetup(UnitTypes::Terran_Marine, 8);
+    secondary_sq_->addSetup(UnitTypes::Terran_Goliath, 2);
+    secondary_sq_->setBuildup(false);
 
-    stage++;
+    stage_++;
   }
-  if (Commander::getInstance()->getSquad(1)->isActive() && stage == 3) {
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Command_Center, cSupply));
+  if (rnp::commander()->getSquad(1)->isActive() && stage_ == 3) {
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Command_Center, cSupply));
 
-    sc2->addSetup(UnitTypes::Terran_Vulture, 2);
-    sc2->setBuildup(false);
+    scout2_sc_->addSetup(UnitTypes::Terran_Vulture, 2);
+    scout2_sc_->setBuildup(false);
 
-    stage++;
+    stage_++;
   }
 
-  if (stage == 4 && AgentManager::getInstance()->countNoUnits(UnitTypes::Terran_Command_Center) >= 2) {
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Missile_Turret, cSupply));
-    buildplan.push_back(BuildplanEntry(UpgradeTypes::Terran_Vehicle_Weapons, cSupply));
-    buildplan.push_back(BuildplanEntry(UpgradeTypes::Terran_Infantry_Weapons, cSupply));
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Starport, cSupply));
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Science_Facility, cSupply));
+  if (stage_ == 4 && AgentManager::getInstance()->countNoUnits(UnitTypes::Terran_Command_Center) >= 2) {
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Missile_Turret, cSupply));
+    buildplan_.push_back(BuildplanEntry(UpgradeTypes::Terran_Vehicle_Weapons, cSupply));
+    buildplan_.push_back(BuildplanEntry(UpgradeTypes::Terran_Infantry_Weapons, cSupply));
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Starport, cSupply));
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Science_Facility, cSupply));
 
-    stage++;
+    stage_++;
   }
-  if (stage == 5 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Science_Facility) > 0) {
-    buildplan.push_back(BuildplanEntry(UnitTypes::Terran_Missile_Turret, cSupply));
+  if (stage_ == 5 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Science_Facility) > 0) {
+    buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Missile_Turret, cSupply));
 
-    mainSquad->addSetup(UnitTypes::Terran_Science_Vessel, 1);
+    main_sq_->addSetup(UnitTypes::Terran_Science_Vessel, 1);
 
-    buildplan.push_back(BuildplanEntry(TechTypes::Cloaking_Field, cSupply));
+    buildplan_.push_back(BuildplanEntry(TechTypes::Cloaking_Field, cSupply));
 
-    backupSquad1->addSetup(UnitTypes::Terran_Wraith, 5);
-    backupSquad1->setBuildup(false);
+    backup1_sq_->addSetup(UnitTypes::Terran_Wraith, 5);
+    backup1_sq_->setBuildup(false);
 
-    stage++;
+    stage_++;
   }
-  if (stage == 6 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Science_Vessel) > 0) {
-    buildplan.push_back(BuildplanEntry(TechTypes::EMP_Shockwave, cSupply));
-    buildplan.push_back(BuildplanEntry(UpgradeTypes::Terran_Vehicle_Weapons, cSupply));
+  if (stage_ == 6 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Science_Vessel) > 0) {
+    buildplan_.push_back(BuildplanEntry(TechTypes::EMP_Shockwave, cSupply));
+    buildplan_.push_back(BuildplanEntry(UpgradeTypes::Terran_Vehicle_Weapons, cSupply));
 
-    stage++;
+    stage_++;
   }
-  if (stage == 7 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Physics_Lab) > 0) {
-    backupSquad2->addSetup(UnitTypes::Terran_Battlecruiser, 2);
-    backupSquad2->setBuildup(false);
-    buildplan.push_back(BuildplanEntry(TechTypes::Yamato_Gun, cSupply));
+  if (stage_ == 7 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Physics_Lab) > 0) {
+    backup2_sq_->addSetup(UnitTypes::Terran_Battlecruiser, 2);
+    backup2_sq_->setBuildup(false);
+    buildplan_.push_back(BuildplanEntry(TechTypes::Yamato_Gun, cSupply));
 
-    stage++;
+    stage_++;
   }
 }

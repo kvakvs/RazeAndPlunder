@@ -1,6 +1,8 @@
 #include "DefilerAgent.h"
 #include "../../Managers/AgentManager.h"
 
+using namespace BWAPI;
+
 bool DefilerAgent::useAbilities() {
   //Consume
   if (unit->getEnergy() >= 125 && Broodwar->self()->hasResearched(TechTypes::Consume)) {

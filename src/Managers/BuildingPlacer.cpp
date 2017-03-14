@@ -6,13 +6,14 @@
 #include "../Influencemap/MapManager.h"
 #include "../Commander/Commander.h"
 #include "../Utils/Profiler.h"
+#include "BWEMUtil.h"
+#include "Glob.h"
 
-#include <BWTA.h>
-using namespace BWTA;
+using namespace BWAPI;
 
 BuildingPlacer* BuildingPlacer::instance = nullptr;
 
-BuildingPlacer::BuildingPlacer() {
+BuildingPlacer::BuildingPlacer() : bwem_(BWEM::Map::Instance()) {
   w = Broodwar->mapWidth();
   h = Broodwar->mapHeight();
   range = 40;
@@ -26,7 +27,7 @@ BuildingPlacer::BuildingPlacer() {
     //Fill from static map and Region connectability
     for (int j = 0; j < h; j++) {
       int ok = BUILDABLE;
-      if (!Broodwar->isBuildable(i, j)) {
+      if (not Broodwar->isBuildable(i, j)) {
         ok = BLOCKED;
       }
 
@@ -67,11 +68,11 @@ BuildingPlacer::BuildingPlacer() {
     cover_map[c.x1 + 2][c.y1 + 2] = GAS;
   }
 
-  //Fill from narrow chokepoints
-  for (BWEM::Area* r : getRegions()) {
-    for (Chokepoint* choke : r->getChokepoints()) {
-      if (choke->getWidth() <= 4 * 32) {
-        TilePosition center = TilePosition(choke->getCenter());
+  // Fill from narrow chokepoints
+  for (auto& area : bwem_.Areas()) {
+    for (auto choke : area.ChokePoints()) {
+      if (rnp::choke_width(choke) <= 4 * 32) {
+        TilePosition center = TilePosition(choke->Center());
         Corners c;
         c.x1 = center.x - 1;
         c.x2 = center.x + 1;
@@ -151,7 +152,7 @@ bool BuildingPlacer::canBuild(UnitType toBuild, TilePosition buildSpot) {
   }
 
   //Step 2: Check if path is available
-  if (!ExplorationManager::canReach(Broodwar->self()->getStartLocation(), buildSpot)) {
+  if (not ExplorationManager::canReach(Broodwar->self()->getStartLocation(), buildSpot)) {
     return false;
   }
 
@@ -171,7 +172,7 @@ bool BuildingPlacer::canBuild(UnitType toBuild, TilePosition buildSpot) {
   //Step 5: If Protoss, check PSI coverage
   if (Constructor::isProtoss()) {
     if (toBuild.requiresPsi()) {
-      if (!Broodwar->hasPower(buildSpot, toBuild)) {
+      if (not Broodwar->hasPower(buildSpot, toBuild)) {
         return false;
       }
     }
@@ -191,7 +192,7 @@ bool BuildingPlacer::canBuild(UnitType toBuild, TilePosition buildSpot) {
     if (toBuild.requiresCreep()) {
       for (int x = buildSpot.x; x < buildSpot.x + toBuild.tileWidth(); x++) {
         for (int y = buildSpot.y; y < buildSpot.y + toBuild.tileHeight(); y++) {
-          if (!Broodwar->hasCreep(TilePosition(x, y))) {
+          if (not Broodwar->hasCreep(TilePosition(x, y))) {
             return false;
           }
         }
@@ -201,7 +202,7 @@ bool BuildingPlacer::canBuild(UnitType toBuild, TilePosition buildSpot) {
 
   //Step 7: If detector, check if spot is already covered by a detector
   if (toBuild.isDetector()) {
-    if (!suitableForDetector(buildSpot)) {
+    if (not suitableForDetector(buildSpot)) {
       return false;
     }
   }
@@ -226,7 +227,7 @@ TilePosition BuildingPlacer::findBuildSpot(UnitType toBuild) {
     for (auto& a : agents) {
       if (a->isAlive()) {
         Unit cUnit = a->getUnit();
-        if (!cUnit->isPowered()) {
+        if (not cUnit->isPowered()) {
           TilePosition spot = findBuildSpot(toBuild, cUnit->getTilePosition());
           return spot;
         }
@@ -235,8 +236,10 @@ TilePosition BuildingPlacer::findBuildSpot(UnitType toBuild) {
   }
 
   //Build near chokepoints: Bunker, Photon Cannon, Creep Colony
-  if (BaseAgent::isOfType(toBuild, UnitTypes::Terran_Bunker) || BaseAgent::isOfType(toBuild, UnitTypes::Protoss_Photon_Cannon) || BaseAgent::isOfType(toBuild, UnitTypes::Zerg_Creep_Colony)) {
-    TilePosition cp = Commander::getInstance()->findChokePoint();
+  if (BaseAgent::isOfType(toBuild, UnitTypes::Terran_Bunker) 
+    || BaseAgent::isOfType(toBuild, UnitTypes::Protoss_Photon_Cannon) 
+    || BaseAgent::isOfType(toBuild, UnitTypes::Zerg_Creep_Colony)) {
+    TilePosition cp = rnp::commander()->findChokePoint();
     if (cp.x != -1) {
       TilePosition spot = findBuildSpot(toBuild, cp);
       return spot;
@@ -571,7 +574,7 @@ TilePosition BuildingPlacer::searchRefinerySpot() {
           }
         }
 
-        if (!found) {
+        if (not found) {
           BaseAgent* agent = AgentManager::getInstance()->getClosestBase(cPos);
           if (agent != nullptr) {
             TilePosition bPos = agent->getUnit()->getTilePosition();
@@ -597,28 +600,32 @@ TilePosition BuildingPlacer::findExpansionSite() {
   TilePosition bestPos = TilePosition(-1, -1);
 
   //Iterate through all base locations
-  for (BaseLocation* base : getBaseLocations()) {
-    TilePosition pos = base->getTilePosition();
-    if (pos.x != Broodwar->self()->getStartLocation().x || pos.y != Broodwar->self()->getStartLocation().y) {
-      bool taken = false;
+  for (auto& area : bwem_.Areas()) {
+    for (auto& base : area.Bases()) {
+      TilePosition pos(base.Center());
 
-      //Check if own buildings are close
-      if (MapManager::getInstance()->hasOwnInfluenceIn(pos)) taken = true;
-      //Check if enemy buildings are close
-      if (MapManager::getInstance()->hasEnemyInfluenceIn(pos)) taken = true;
+      if (pos.x != Broodwar->self()->getStartLocation().x 
+        || pos.y != Broodwar->self()->getStartLocation().y) {
+        bool taken = false;
 
-      //Not taken, calculate ground distance
-      if (!taken) {
-        if (ExplorationManager::canReach(Broodwar->self()->getStartLocation(), pos)) {
-          double dist = Pathfinder::getInstance()->getDistance(Broodwar->self()->getStartLocation(), pos);
-          if (dist <= bestDist && dist > 0) {
-            bestDist = dist;
-            bestPos = pos;
+        //Check if own buildings are close
+        if (MapManager::getInstance()->hasOwnInfluenceIn(pos)) taken = true;
+        //Check if enemy buildings are close
+        if (MapManager::getInstance()->hasEnemyInfluenceIn(pos)) taken = true;
+
+        //Not taken, calculate ground distance
+        if (not taken) {
+          if (ExplorationManager::canReach(Broodwar->self()->getStartLocation(), pos)) {
+            double dist = Pathfinder::getInstance()->getDistance(Broodwar->self()->getStartLocation(), pos);
+            if (dist <= bestDist && dist > 0) {
+              bestDist = dist;
+              bestPos = pos;
+            }
           }
-        }
-      }
-    }
-  }
+        } // not taken
+      } // if pos not start location
+    } // for bases
+  } // for areas
 
   //Don't build expansions too far away!
   BaseAgent* base = AgentManager::getInstance()->getClosestBase(bestPos);
@@ -640,26 +647,29 @@ Unit BuildingPlacer::findClosestMineral(TilePosition workerPos) {
   Unit mineral = nullptr;
   double bestDist = 10000;
 
-  for (BaseLocation* base : getBaseLocations()) {
-    TilePosition pos = base->getTilePosition();
-    double cDist = pos.getDistance(workerPos);
-    if (cDist < bestDist) {
-      //Find closest base
-      BaseAgent* base = AgentManager::getInstance()->getClosestBase(pos);
-      if (base != nullptr) {
-        double dist = pos.getDistance(base->getUnit()->getTilePosition());
-        if (dist <= 12) {
-          //We have a base near this base location
-          //Check if we have minerals available
-          Unit cMineral = hasMineralNear(pos);
-          if (cMineral != nullptr) {
-            mineral = cMineral;
-            bestDist = cDist;
+  for (auto& area : bwem_.Areas()) {
+    for (auto& base : area.Bases()) {
+      TilePosition pos(base.Center());
+      double cDist = pos.getDistance(workerPos);
+      
+      if (cDist < bestDist) {
+        //Find closest base
+        BaseAgent* base = AgentManager::getInstance()->getClosestBase(pos);
+        if (base != nullptr) {
+          double dist = pos.getDistance(base->getUnit()->getTilePosition());
+          if (dist <= 12) {
+            //We have a base near this base location
+            //Check if we have minerals available
+            Unit cMineral = hasMineralNear(pos);
+            if (cMineral != nullptr) {
+              mineral = cMineral;
+              bestDist = cDist;
+            }
           }
         }
-      }
-    }
-  }
+      } // if cdist better than bestdist
+    } // for bases
+  } // for areas
 
   //We have no base with minerals, do nothing
   return mineral;

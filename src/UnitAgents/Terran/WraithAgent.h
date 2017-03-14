@@ -9,7 +9,7 @@
  */
 class WraithAgent : public UnitAgent {
 public:
-  explicit WraithAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit WraithAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "WraithAgent";
   }
 

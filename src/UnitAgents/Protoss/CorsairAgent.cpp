@@ -2,6 +2,8 @@
 #include "../../Pathfinding/NavigationAgent.h"
 #include "../../MainAgents/TargetingAgent.h"
 
+using namespace BWAPI;
+
 bool CorsairAgent::useAbilities() {
   //Disruption Web
   TechType web = TechTypes::Disruption_Web;

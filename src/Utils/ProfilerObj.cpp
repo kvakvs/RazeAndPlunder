@@ -2,6 +2,8 @@
 #include <windows.h>
 #include <profileapi.h>
 
+using namespace BWAPI;
+
 ProfilerObj::ProfilerObj(std::string mId) {
   PCFreq = 0.0;
   CounterStart = 0;

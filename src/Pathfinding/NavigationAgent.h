@@ -3,9 +3,6 @@
 #include "../MainAgents/BaseAgent.h"
 #include "bwem.h"
 
-//using namespace BWAPI;
-//
-
 /** The bot uses two techniques for navigation: if no enemy units are close units navigate using the built in pathfinder in
  * Starcraft. If enemy units are close, own units uses potential fields to engage and surround the enemy.
  * The NavigationAgent class is the main class for the navigation system, and it switches between built in pathfinder and
@@ -25,21 +22,21 @@ private:
 
   NavigationAgent();
 
-  /** Moves a unit to the specified goal using the pathfinder, and stops at a distance where the
-  * potential field navigation system should be used instead. */
-  bool moveToGoal(BaseAgent* agent, TilePosition checkpoint, TilePosition goal);
+  // Moves a unit to the specified goal using the pathfinder, and stops at a distance where the
+ // potential field navigation system should be used instead. 
+  bool moveToGoal(BaseAgent* agent, BWAPI::TilePosition checkpoint, BWAPI::TilePosition goal);
 
-  /** Calculates the potential field values for an attacking unit. */
-  float getAttackingUnitP(BaseAgent* agent, WalkPosition wp);
-  float getDefendingUnitP(BaseAgent* agent, WalkPosition wp);
+  // Calculates the potential field values for an attacking unit. 
+  float getAttackingUnitP(BaseAgent* agent, BWAPI::WalkPosition wp);
+  float getDefendingUnitP(BaseAgent* agent, BWAPI::WalkPosition wp);
 
-  int getMaxUnitSize(UnitType type);
+  int getMaxUnitSize(BWAPI::UnitType type);
 
   int checkRange;
   int mapW;
   int mapH;
 
-  Color getColor(float p);
+  BWAPI::Color getColor(float p);
 
 public:
   /** 
@@ -50,25 +47,25 @@ public:
   */
   static int pathfinding_version;
 
-  /** Destructor */
+  // Destructor 
   ~NavigationAgent();
 
-  /** Returns the instance to the class. */
+  // Returns the instance to the class. 
   static NavigationAgent* getInstance();
 
-  /** Is used to compute and execute movement commands for attacking units using the potential field
-   * navigation system. */
-  bool computeMove(BaseAgent* agent, TilePosition goal);
+  // Is used to compute and execute movement commands for attacking units using the potential field
+  // navigation system. 
+  bool computeMove(BaseAgent* agent, BWAPI::TilePosition goal);
 
-  /** Computes a pathfinding move (no enemy units in range) */
-  bool computePathfindingMove(BaseAgent* agent, TilePosition goal);
+  // Computes a pathfinding move (no enemy units in range) 
+  bool computePathfindingMove(BaseAgent* agent, BWAPI::TilePosition goal);
 
-  /** Computes a PF move (enemy units within range) */
+  // Computes a PF move (enemy units within range) 
   bool computePotentialFieldMove(BaseAgent* agent);
 
-  /** Computes a boids move (enemy units within range) */
+  // Computes a boids move (enemy units within range) 
   bool computeBoidsMove(BaseAgent* agent);
 
-  /** Displays a debug view of the potential fields for an agent. */
+  // Displays a debug view of the potential fields for an agent. 
   void displayPF(BaseAgent* agent);
 };

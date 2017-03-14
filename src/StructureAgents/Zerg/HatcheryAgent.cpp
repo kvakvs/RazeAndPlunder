@@ -4,6 +4,9 @@
 #include "../../Commander/Commander.h"
 #include "../../Managers/Upgrader.h"
 #include "../../Managers/ResourceManager.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 HatcheryAgent::HatcheryAgent(Unit mUnit) {
   unit = mUnit;
@@ -25,15 +28,15 @@ HatcheryAgent::HatcheryAgent(Unit mUnit) {
 }
 
 void HatcheryAgent::computeActions() {
-  if (!hasSentWorkers) {
-    if (!unit->isBeingConstructed()) {
+  if (not hasSentWorkers) {
+    if (not unit->isBeingConstructed()) {
       sendWorkers();
       hasSentWorkers = true;
       Constructor::getInstance()->addRefinery();
     }
   }
 
-  if (!unit->isIdle()) return;
+  if (not unit->isIdle()) return;
 
   //Check for base upgrades
   if (isOfType(UnitTypes::Zerg_Hatchery) && AgentManager::getInstance()->countNoUnits(UnitTypes::Zerg_Lair) == 0) {
@@ -79,7 +82,7 @@ void HatcheryAgent::computeActions() {
   if (checkBuildUnit(UnitTypes::Zerg_Scourge)) return;
 
   //Create workers
-  if (AgentManager::getInstance()->countNoUnits(Broodwar->self()->getRace().getWorker()) < Commander::getInstance()->getNoWorkers()) {
+  if (AgentManager::getInstance()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
     if (canBuild(worker)) {
       unit->train(worker);

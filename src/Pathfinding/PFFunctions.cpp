@@ -1,4 +1,7 @@
 #include "PFFunctions.h"
+#include <iso646.h>
+
+using namespace BWAPI;
 
 float PFFunctions::getDistance(WalkPosition w1, WalkPosition w2) {
   return static_cast<float>(w1.getDistance(w2));
@@ -62,7 +65,7 @@ float PFFunctions::calcOwnUnitP(float d, WalkPosition wt, Unit unit, Unit otherO
     }
   }
 
-  if (!unit->getType().isBuilding()) {
+  if (not unit->getType().isBuilding()) {
     if (d <= 2) {
       p = -25.0;
     }
@@ -102,7 +105,7 @@ float PFFunctions::getTrailP(BaseAgent* agent, WalkPosition wt) {
 
 float PFFunctions::getTerrainP(BaseAgent* agent, WalkPosition wt) {
   if (agent->getUnitType().isFlyer()) return 0;
-  if (!Broodwar->isWalkable(wt)) return -1000.0;
+  if (not Broodwar->isWalkable(wt)) return -1000.0;
 
   return 0;
 }
@@ -158,10 +161,10 @@ float PFFunctions::getGoalP(BaseAgent* agent, WalkPosition wt) {
 
 float PFFunctions::calcOffensiveUnitP(float d, Unit attacker, Unit enemy) {
   //Check if enemy unit exists and is visible.
-  if (!enemy->exists()) {
+  if (not enemy->exists()) {
     return 0;
   }
-  if (!enemy->isVisible()) {
+  if (not enemy->isVisible()) {
     return 0;
   }
   if (enemy->isCloaked()) {
@@ -182,7 +185,7 @@ float PFFunctions::calcOffensiveUnitP(float d, Unit attacker, Unit enemy) {
   if (enemy->getType().isFlyer() && !attacker->getType().airWeapon().targetsAir()) {
     return 0;
   }
-  if (!enemy->getType().isFlyer() && !attacker->getType().groundWeapon().targetsGround()) {
+  if (not enemy->getType().isFlyer() && !attacker->getType().groundWeapon().targetsGround()) {
     return 0;
   }
 
@@ -195,7 +198,7 @@ float PFFunctions::calcOffensiveUnitP(float d, Unit attacker, Unit enemy) {
     myMSD = getGroundRange(attacker) - 1;
   }
 
-  if (!attacker->getType().canAttack()) {
+  if (not attacker->getType().canAttack()) {
     //Unit cannot attack, use sightrange instead
     myMSD = 4;//attacker->getType().sightRange() / 8;
   }
@@ -256,7 +259,7 @@ float PFFunctions::calcOffensiveUnitP(float d, Unit attacker, Unit enemy) {
 
 float PFFunctions::calcDefensiveUnitP(float d, Unit attacker, Unit enemy) {
   //Check if enemy unit exists and is visible.
-  if (!enemy->exists()) {
+  if (not enemy->exists()) {
     return 0;
   }
 

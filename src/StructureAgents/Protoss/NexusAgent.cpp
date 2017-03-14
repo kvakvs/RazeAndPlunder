@@ -2,6 +2,9 @@
 #include "../../Managers/AgentManager.h"
 #include "../../Managers/Constructor.h"
 #include "../../Commander/Commander.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 NexusAgent::NexusAgent(Unit mUnit) {
   unit = mUnit;
@@ -19,8 +22,8 @@ NexusAgent::NexusAgent(Unit mUnit) {
 }
 
 void NexusAgent::computeActions() {
-  if (!hasSentWorkers) {
-    if (!unit->isBeingConstructed()) {
+  if (not hasSentWorkers) {
+    if (not unit->isBeingConstructed()) {
       sendWorkers();
       hasSentWorkers = true;
 
@@ -28,9 +31,9 @@ void NexusAgent::computeActions() {
     }
   }
 
-  if (!unit->isIdle()) return;
+  if (not unit->isIdle()) return;
 
-  if (AgentManager::getInstance()->countNoUnits(Broodwar->self()->getRace().getWorker()) < Commander::getInstance()->getNoWorkers()) {
+  if (AgentManager::getInstance()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
     if (canBuild(worker)) {
       unit->train(worker);

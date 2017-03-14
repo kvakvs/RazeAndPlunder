@@ -1,25 +1,23 @@
 #pragma once
 
 #include "../StructureAgent.h"
-using namespace BWAPI;
-
 
 /** The ComsatAgent handles Terran Comsat Station buildings.
  *
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class ComsatAgent : public StructureAgent {
-  int friendlyUnitsWithinRange(Position pos);
+  int friendlyUnitsWithinRange(BWAPI::Position pos);
   int lastSweepFrame;
-  TilePosition lastSweepPos;
-  bool anyHasSweeped(TilePosition pos);
+  BWAPI::TilePosition lastSweepPos;
+  bool anyHasSweeped(BWAPI::TilePosition pos);
 
 public:
-  explicit ComsatAgent(Unit mUnit);
+  explicit ComsatAgent(BWAPI::Unit mUnit);
 
-  /** Called each update to issue orders. */
+  // Called each update to issue orders. 
   void computeActions() override;
 
-  /** Checks if this Comsat has sweeped the specified position within the previos 100 frames. */
-  bool hasSweeped(TilePosition pos);
+  // Checks if this Comsat has sweeped the specified position within the previos 100 frames. 
+  bool hasSweeped(BWAPI::TilePosition pos);
 };

@@ -3,6 +3,8 @@
 #include "../../Influencemap/MapManager.h"
 //#include "../../Commander/Commander.h"
 
+using namespace BWAPI;
+
 ComsatAgent::ComsatAgent(Unit mUnit) {
   unit = mUnit;
   type = unit->getType();
@@ -13,7 +15,7 @@ ComsatAgent::ComsatAgent(Unit mUnit) {
 }
 
 void ComsatAgent::computeActions() {
-  if (!unit->isIdle()) return;
+  if (not unit->isIdle()) return;
 
   if (Broodwar->getFrameCount() - lastSweepFrame > 100 && unit->getEnergy() >= 50) {
     for (auto& u : Broodwar->enemy()->getUnits()) {
@@ -37,7 +39,7 @@ void ComsatAgent::computeActions() {
     }
 
     //Uncomment if you want the Comsat to scan for enemy location.
-    /*if (Commander::getInstance()->isAttacking())
+    /*if (rnp::commander()->isAttacking())
     {
       TilePosition pos = MapManager::getInstance()->findAttackPosition();
       if (pos.x == -1)
@@ -45,7 +47,7 @@ void ComsatAgent::computeActions() {
         //No attack position found. Sweep a base area
         for (BWTA::BaseLocation* r : BWTA::getBaseLocations())
         {
-          if (!anyHasSweeped(r->getTilePosition()) && !Broodwar->isVisible(r->getTilePosition()))
+          if (not anyHasSweeped(r->getTilePosition()) && !Broodwar->isVisible(r->getTilePosition()))
           {
             bool ok = unit->useTech(TechTypes::Scanner_Sweep, r->getPosition());
             if (ok)

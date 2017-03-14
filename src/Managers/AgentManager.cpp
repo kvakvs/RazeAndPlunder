@@ -9,6 +9,9 @@
 #include <windows.h>
 
 #include "../Utils/Sets.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 int AgentManager::StartFrame = 0;
 AgentManager* AgentManager::instance = nullptr;
@@ -104,7 +107,7 @@ void AgentManager::addAgent(Unit unit) {
     }
   }
 
-  if (!found) {
+  if (not found) {
     BaseAgent* newAgent = AgentFactory::getInstance()->createAgent(unit);
     agents.insert(newAgent);
 
@@ -114,7 +117,7 @@ void AgentManager::addAgent(Unit unit) {
       ResourceManager::getInstance()->unlockResources(unit->getType());
     }
     else {
-      Commander::getInstance()->unitCreated(newAgent);
+      rnp::commander()->unitCreated(newAgent);
     }
   }
 }
@@ -127,13 +130,13 @@ void AgentManager::removeAgent(Unit unit) {
       }
 
       a->destroyed();
-      Commander::getInstance()->unitDestroyed(a);
+      rnp::commander()->unitDestroyed(a);
 
       //Special case: If a bunker is destroyed, we need to remove
       //the bunker squad.
       if (unit->getType().getID() == UnitTypes::Terran_Bunker.getID()) {
         int squadID = a->getSquadID();
-        Commander::getInstance()->removeSquad(squadID);
+        rnp::commander()->removeSquad(squadID);
       }
 
       return;
@@ -157,7 +160,7 @@ void AgentManager::morphDrone(Unit unit) {
 
 void AgentManager::cleanup() {
   for (auto& a : agents) {
-    if (!a->isAlive()) {
+    if (not a->isAlive()) {
       agents.erase(a);
       //delete a;
       return cleanup();
@@ -252,7 +255,7 @@ int AgentManager::noInProduction(UnitType type) {
 bool AgentManager::hasBuilding(UnitType type) {
   for (auto& a : agents) {
     if (a->isOfType(type) && a->isAlive()) {
-      if (!a->getUnit()->isBeingConstructed()) {
+      if (not a->getUnit()->isBeingConstructed()) {
         return true;
       }
     }

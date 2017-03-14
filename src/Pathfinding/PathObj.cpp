@@ -1,4 +1,7 @@
 #include "PathObj.h"
+#include "gridMap.h"
+
+using namespace BWAPI;
 
 PathObj::PathObj(TilePosition cStart, TilePosition cEnd) {
   start = cStart;
@@ -26,10 +29,15 @@ bool PathObj::isFinished() {
 }
 
 void PathObj::calculatePath() {
-  path = getShortestPath(start, end);
+  auto& bwem = BWEM::Map::Instance();
+  auto pstart = BWAPI::Position(start);
+  auto pend = BWAPI::Position(end);
+  // TODO: Assert/check if bwem.GetArea(a) and (b) are not NULL (see bwem.GetPath comment)
+
+  path = bwem.GetPath(pstart, pend);
   finished = true;
 }
 
-std::vector<TilePosition> PathObj::getPath() {
+const BWEM::CPPath& PathObj::getPath() {
   return path;
 }

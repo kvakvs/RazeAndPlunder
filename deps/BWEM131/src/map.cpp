@@ -28,11 +28,11 @@ namespace BWEM {
   namespace utils {
 
     bool seaSide(WalkPosition p, const Map* pMap) {
-      if (!pMap->GetMiniTile(p).Sea()) return false;
+      if (not pMap->GetMiniTile(p).Sea()) return false;
 
       for (WalkPosition delta : {WalkPosition(0, -1), WalkPosition(-1, 0), WalkPosition(+1, 0), WalkPosition(0, +1)})
         if (pMap->Valid(p + delta))
-          if (!pMap->GetMiniTile(p + delta, check_t::no_check).Sea())
+          if (not pMap->GetMiniTile(p + delta, check_t::no_check).Sea())
             return true;
 
       return false;
@@ -51,7 +51,7 @@ namespace BWEM {
 
 
   Map& Map::Instance() {
-    if (!m_gInstance) m_gInstance = make_unique<MapImpl>();
+    if (not m_gInstance) m_gInstance = make_unique<MapImpl>();
 
     return *m_gInstance.get();
   }

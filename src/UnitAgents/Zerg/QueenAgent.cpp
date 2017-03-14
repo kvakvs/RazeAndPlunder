@@ -1,5 +1,7 @@
 #include "QueenAgent.h"
 
+using namespace BWAPI;
+
 bool QueenAgent::useAbilities() {
   //Spawn Broodlings
   if (unit->getEnergy() >= 150) {

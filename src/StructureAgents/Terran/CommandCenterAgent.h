@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../StructureAgent.h"
-//using namespace BWAPI;
 
 /** The CommandCenterAgent handles Terran Command Center buildings.
  *
@@ -20,6 +19,6 @@ private:
 public:
   explicit CommandCenterAgent(BWAPI::Unit mUnit);
 
-  /** Called each update to issue orders. */
+  // Called each update to issue orders. 
   void computeActions() override;
 };

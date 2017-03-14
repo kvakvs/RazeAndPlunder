@@ -1,9 +1,12 @@
 #include "HydraliskAgent.h"
 #include "../../Commander/Commander.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 bool HydraliskAgent::useAbilities() {
   if (Broodwar->self()->hasResearched(TechTypes::Lurker_Aspect)) {
-    Squad* sq = Commander::getInstance()->getSquad(squadID);
+    auto sq = rnp::commander()->getSquad(squadID);
     if (sq != nullptr
       && sq->morphsTo().getID() == UnitTypes::Zerg_Lurker.getID()
       && !enemyUnitsVisible()

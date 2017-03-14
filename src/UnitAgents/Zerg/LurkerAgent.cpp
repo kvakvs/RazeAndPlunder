@@ -2,6 +2,8 @@
 #include "../../Pathfinding/NavigationAgent.h"
 #include "../../MainAgents/TargetingAgent.h"
 
+using namespace BWAPI;
+
 bool LurkerAgent::useAbilities() {
   //Check if enemy units are visible
   bool enemyVisible = false;
@@ -19,7 +21,7 @@ bool LurkerAgent::useAbilities() {
       return true;
     }
   }
-  if (!enemyVisible && unit->isBurrowed()) {
+  if (not enemyVisible && unit->isBurrowed()) {
     if (unit->unburrow()) {
       return true;
     }

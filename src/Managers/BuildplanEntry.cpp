@@ -1,5 +1,7 @@
 #include "BuildplanEntry.h"
 
+using namespace BWAPI;
+
 BuildplanEntry::BuildplanEntry(UnitType cType, int cSupply) {
   unittype = cType;
   supply = cSupply;

@@ -12,16 +12,16 @@ class ScienceVesselAgent : public UnitAgent {
 private:
   BaseAgent* findImportantUnit();
   bool isImportantUnit(BaseAgent* agent);
-  bool isEMPtarget(Unit e);
+  bool isEMPtarget(BWAPI::Unit e);
   int lastIrradiateFrame;
   int lastShieldFrame;
 
 public:
-  ScienceVesselAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit ScienceVesselAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "ScienceVesselAgent";
     lastIrradiateFrame = 0;
     lastShieldFrame = 0;
   }
 
-  bool useAbilities();
+  bool useAbilities() override;
 };

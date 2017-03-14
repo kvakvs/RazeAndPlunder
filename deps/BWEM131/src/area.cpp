@@ -158,7 +158,7 @@ namespace BWEM {
           Distances[i] = int(0.5 + currentDist * 32 / 10000.0);
           --remainingTargets;
         }
-      if (!remainingTargets) break;
+      if (not remainingTargets) break;
 
       for (TilePosition delta : {TilePosition(-1, -1), TilePosition(0, -1), TilePosition(+1, -1),
              TilePosition(-1, 0), TilePosition(+1, 0),
@@ -169,7 +169,7 @@ namespace BWEM {
         TilePosition next = current + delta;
         if (pMap->Valid(next)) {
           const Tile& nextTile = pMap->GetTile(next, check_t::no_check);
-          if (!nextTile.Marked()) {
+          if (not nextTile.Marked()) {
             if (nextTile.InternalData()) // next already in ToVisit
             {
               if (newNextDist < nextTile.InternalData()) // nextNewDist < nextOldDist
@@ -251,7 +251,7 @@ namespace BWEM {
     for (int dy = 0; dy < dimCC.y; ++dy)
       for (int dx = 0; dx < dimCC.x; ++dx) {
         const Tile& tile = pMap->GetTile(location + TilePosition(dx, dy), check_t::no_check);
-        if (!tile.Buildable()) return -1;
+        if (not tile.Buildable()) return -1;
         if (tile.InternalData() == -1) return -1; // The special value InternalData() == -1 means there is some ressource at maximum 3 tiles, which Starcraft rules forbid.
         // Unfortunately, this is guaranteed only for the ressources in this Area, which is the very reason of ValidateBaseLocation
         if (tile.AreaId() != Id()) return -1;
@@ -376,7 +376,7 @@ namespace BWEM {
             if (pMap->Valid(t)) pMap->GetTile(t, check_t::no_check).SetInternalData(0);
           }
 
-      if (!bestScore) break;
+      if (not bestScore) break;
 
       // 6) Create a new Base at bestLocation, assign to it the relevant ressources and remove them from RemainingRessources:
       vector<Ressource *> AssignedRessources;

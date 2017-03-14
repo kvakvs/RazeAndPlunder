@@ -1,9 +1,6 @@
 #include "Profiler.h"
-#include <iostream>
 #include <fstream>
-
-bool Profiler::instanceFlag = false;
-Profiler* Profiler::instance = nullptr;
+#include <iso646.h>
 
 Profiler::Profiler() {
   active = true;
@@ -13,14 +10,6 @@ Profiler::~Profiler() {
   for (ProfilerObj* o : obj) {
     delete o;
   }
-}
-
-Profiler* Profiler::getInstance() {
-  if (!instanceFlag) {
-    instance = new Profiler();
-    instanceFlag = true;
-  }
-  return instance;
 }
 
 void Profiler::enable() {
@@ -42,7 +31,7 @@ ProfilerObj* Profiler::getObj(std::string mId) {
 
 
 void Profiler::start(std::string mId) {
-  if (!active) return;
+  if (not active) return;
 
   ProfilerObj* cObj = getObj(mId);
   if (cObj != nullptr) {
@@ -56,14 +45,14 @@ void Profiler::start(std::string mId) {
 }
 
 void Profiler::end(std::string mId) {
-  if (!active) return;
+  if (not active) return;
 
   ProfilerObj* cObj = getObj(mId);
   if (cObj != nullptr) cObj->end();
 }
 
 void Profiler::dumpToFile() {
-  if (!active) return;
+  if (not active) return;
 
   std::ofstream ofile;
   ofile.open("bwapi-data\\AI\\Profiling_OpprimoBot.html");

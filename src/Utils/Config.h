@@ -2,9 +2,6 @@
 
 #include <BWAPI.h>
 
-using namespace BWAPI;
-
-
 struct CTokens {
   std::string key;
   std::string value;
@@ -29,15 +26,15 @@ private:
 public:
   ~Config();
 
-  /** Returns class instance. */
+  // Returns class instance. 
   static Config* getInstance();
 
-  /** Returns the name of the bot as specified in the config file. */
+  // Returns the name of the bot as specified in the config file. 
   std::string getBotName() const;
 
-  /** Returns the current bot version. */
+  // Returns the current bot version. 
   std::string getVersion() const;
 
-  /** Displays bot name in the game window. */
+  // Displays bot name in the game window. 
   void displayBotName() const;
 };

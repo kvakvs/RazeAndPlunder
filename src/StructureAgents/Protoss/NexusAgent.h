@@ -10,8 +10,8 @@ class NexusAgent : public StructureAgent {
   bool hasSentWorkers = false;
 
 public:
-  explicit NexusAgent(Unit mUnit);
+  explicit NexusAgent(BWAPI::Unit mUnit);
 
-  /** Called each update to issue orders. */
+  // Called each update to issue orders. 
   void computeActions() override;
 };

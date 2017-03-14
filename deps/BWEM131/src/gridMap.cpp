@@ -13,8 +13,8 @@
 using namespace std;
 
 namespace BWEM {
-namespace utils {
+  namespace utils {
 
 
-}} // namespace BWEM::utils
-
+  }
+} // namespace BWEM::utils

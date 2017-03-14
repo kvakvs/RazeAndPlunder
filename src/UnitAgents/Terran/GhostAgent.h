@@ -8,12 +8,12 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class GhostAgent : public UnitAgent {
-  Unit findLockdownTarget();
-  /** Returns the number of own units that are within maxRange of the agent. */
+  BWAPI::Unit findLockdownTarget();
+  // Returns the number of own units that are within maxRange of the agent. 
   int friendlyUnitsWithinRange(int maxRange);
 
 public:
-  explicit GhostAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit GhostAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "GhostAgent";
   }
 

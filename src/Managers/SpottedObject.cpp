@@ -1,5 +1,7 @@
 #include "SpottedObject.h"
 
+using namespace BWAPI;
+
 SpottedObject::SpottedObject(Unit mUnit) {
   type = mUnit->getType();
   position = mUnit->getPosition();

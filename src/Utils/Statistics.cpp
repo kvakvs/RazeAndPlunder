@@ -1,6 +1,8 @@
 #include "Statistics.h"
 #include <fstream>
 
+using namespace BWAPI;
+
 Statistics* Statistics::instance = nullptr;
 
 Statistics::Statistics() {
@@ -36,7 +38,7 @@ std::string Statistics::getFilename() {
 }
 
 void Statistics::saveResult(int win) {
-  if (!active) return;
+  if (not active) return;
 
   std::stringstream ss;
   ss << Broodwar->self()->getRace().getName();
@@ -67,7 +69,7 @@ void Statistics::saveResult(int win) {
 
   std::ofstream outFile;
   outFile.open(filename.c_str(), std::ios::out | std::ios::app);
-  if (!outFile) {
+  if (not outFile) {
     Broodwar << "Error writing to stats file!" << std::endl;
   }
   else {

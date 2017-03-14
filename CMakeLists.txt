@@ -5,13 +5,11 @@ set(CMAKE_CXX_STANDARD 14)
 
 set(BOOST_VER       1_63)
 set(BOOST_DIR       f:/boost_1_63_0)
-set(BOOST_GEOM_EXT  j:/SSCAIT/boost_geometry_ext)
 
 include_directories(
         ${CMAKE_SOURCE_DIR}/include
         ${CMAKE_SOURCE_DIR}/src
         ${BOOST_DIR}/
-        ${BOOST_GEOM_EXT}/include
         )
 
 add_definitions(
@@ -19,15 +17,14 @@ add_definitions(
 	/MD /Gy
 	/DNOMINMAX
 	)
-# /DDEBUG_DRAW=1
 
 set(SRC_SRC
+        src/Glob.cpp src/Glob.h 
         src/BWEMUtil.cpp src/BWEMUtil.h
-	src/Geometry.cpp src/Geometry.h
         src/AIloop.cpp src/AIloop.h
         src/Dll.cpp
         src/Influencemap/MapManager.cpp src/Influencemap/MapManager.h
-        src/OpprimoBot.cpp src/OpprimoBot.h
+        src/RnpBot.cpp src/RnpBot.h
         )
 set(SRC_PATHING
         src/Pathfinding/NavigationAgent.cpp src/Pathfinding/NavigationAgent.h

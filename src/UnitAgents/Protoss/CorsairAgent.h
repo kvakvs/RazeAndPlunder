@@ -9,10 +9,10 @@
  */
 class CorsairAgent : public UnitAgent {
   int lastUseFrame = 0;
-  Unit getClosestEnemyAirDefense(int maxRange);
+  BWAPI::Unit getClosestEnemyAirDefense(int maxRange);
 
 public:
-  explicit CorsairAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit CorsairAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "CorsairAgent";
   }
 

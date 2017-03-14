@@ -1,5 +1,7 @@
 #include "ResourceManager.h"
 
+using namespace BWAPI;
+
 ResourceManager* ResourceManager::instance = nullptr;
 
 ResourceManager::ResourceManager() {

@@ -7,9 +7,7 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
-
-#ifndef BWEM_MAP_DRAWER_H
-#define BWEM_MAP_DRAWER_H
+#pragma once
 
 #include <BWAPI.h>
 #include <memory>
@@ -18,61 +16,58 @@
 
 
 class BMP;
+
 namespace BWEM {
-class Map;
-namespace utils {
+  class Map;
+
+  namespace utils {
 
 
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                          //
-//                                  class MapDrawer
-//                                                                                          //
-//////////////////////////////////////////////////////////////////////////////////////////////
-//
-
-
-class MapDrawer
-{
-public:
-
-	static bool ProcessCommand(const std::string & command);
-
-	static bool		showSeas;
-	static bool		showLakes;
-	static bool		showUnbuildable;
-	static bool		showHighGround;
-	static bool		showMinerals;
-	static bool		showGeysers;
-	static bool		showStaticBuildings;
-	static bool		showBases;
-	static bool		showAssignedRessources;
-	static bool		showFrontier;
-	static bool		showCP;
-
-	struct Color
-	{
-		static const BWAPI::Color	sea;
-		static const BWAPI::Color	lakes;
-		static const BWAPI::Color	unbuildable;
-		static const BWAPI::Color	highGround;
-		static const BWAPI::Color	veryHighGround;
-		static const BWAPI::Color	minerals;
-		static const BWAPI::Color	geysers;
-		static const BWAPI::Color	staticBuildings;
-		static const BWAPI::Color	bases;
-		static const BWAPI::Color	assignedRessources;
-		static const BWAPI::Color	frontier;
-		static const BWAPI::Color	cp;
-	};
-
-private:
-	static bool ProcessCommandVariants(const std::string & command, const std::string & attributName, bool & attribut);
-};
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //                                                                                          //
+    //                                  class MapDrawer
+    //                                                                                          //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //
 
 
-}} // namespace BWEM::detail::detail
+    class MapDrawer {
+    public:
+
+      static bool ProcessCommand(const std::string& command);
+
+      static bool showSeas;
+      static bool showLakes;
+      static bool showUnbuildable;
+      static bool showHighGround;
+      static bool showMinerals;
+      static bool showGeysers;
+      static bool showStaticBuildings;
+      static bool showBases;
+      static bool showAssignedRessources;
+      static bool showFrontier;
+      static bool showCP;
+
+      struct Color {
+        static const BWAPI::Color sea;
+        static const BWAPI::Color lakes;
+        static const BWAPI::Color unbuildable;
+        static const BWAPI::Color highGround;
+        static const BWAPI::Color veryHighGround;
+        static const BWAPI::Color minerals;
+        static const BWAPI::Color geysers;
+        static const BWAPI::Color staticBuildings;
+        static const BWAPI::Color bases;
+        static const BWAPI::Color assignedRessources;
+        static const BWAPI::Color frontier;
+        static const BWAPI::Color cp;
+      };
+
+    private:
+      static bool ProcessCommandVariants(const std::string& command, const std::string& attributName, bool& attribut);
+    };
 
 
-#endif
+  }
+} // namespace BWEM::detail::detail
 

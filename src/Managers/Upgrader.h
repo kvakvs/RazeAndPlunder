@@ -1,9 +1,6 @@
 #pragma once
 
 #include "../MainAgents/BaseAgent.h"
-using namespace BWAPI;
-
-
 
 /** Upgrader handles upgrades and techs. Add the requested upgrade and/or tech
  * to the upgrader and the bot executes it when enough resources are available.
@@ -23,32 +20,32 @@ private:
 
   bool debug;
 
-  std::vector<UpgradeType> upgrades;
-  std::vector<TechType> techs;
+  std::vector<BWAPI::UpgradeType> upgrades;
+  std::vector<BWAPI::TechType> techs;
 
-  bool canUpgrade(UpgradeType type, Unit unit);
-  bool canResearch(TechType type, Unit unit);
+  bool canUpgrade(BWAPI::UpgradeType type, BWAPI::Unit unit);
+  bool canResearch(BWAPI::TechType type, BWAPI::Unit unit);
   std::string format(std::string str);
 
 public:
-  /** Destructor. */
+  // Destructor. 
   ~Upgrader();
 
-  /** Returns the instance to the Upgrader that is currently used. */
+  // Returns the instance to the Upgrader that is currently used. 
   static Upgrader* getInstance();
 
-  /** Checks if there is an upgrade the specified agent need to upgrade/research. */
+  // Checks if there is an upgrade the specified agent need to upgrade/research. 
   bool checkUpgrade(BaseAgent* agent);
 
-  /** Switch on/off debug info printing to screen. */
+  // Switch on/off debug info printing to screen. 
   void toggleDebug();
 
-  /** Prints debug info to screen. */
+  // Prints debug info to screen. 
   void printInfo();
 
-  /** Adds an upgrade to the upgrade queue. */
-  void addUpgrade(UpgradeType type);
+  // Adds an upgrade to the upgrade queue. 
+  void addUpgrade(BWAPI::UpgradeType type);
 
-  /** Adds a tech to the tech queue. */
-  void addTech(TechType tech);
+  // Adds a tech to the tech queue. 
+  void addTech(BWAPI::TechType tech);
 };

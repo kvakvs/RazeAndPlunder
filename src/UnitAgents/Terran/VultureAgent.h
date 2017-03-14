@@ -13,7 +13,7 @@ private:
   int mineDropFrame;
 
 public:
-  explicit VultureAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit VultureAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "VultureAgent";
     mineDropFrame = 0;
   }

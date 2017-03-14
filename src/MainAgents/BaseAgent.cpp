@@ -4,6 +4,8 @@
 //#include "../Managers/ResourceManager.h"
 #include "../Managers/ExplorationManager.h"
 
+using namespace BWAPI;
+
 BaseAgent::BaseAgent() {
   alive = true;
   squadID = -1;
@@ -116,7 +118,7 @@ bool BaseAgent::isUnit() {
 
 bool BaseAgent::isUnderAttack() {
   if (unit == nullptr) return false;
-  if (!unit->exists()) return false;
+  if (not unit->exists()) return false;
 
   if (unit->isAttacking()) return true;
   if (unit->isStartingAttack()) return true;
@@ -141,7 +143,7 @@ void BaseAgent::destroyed() {
 }
 
 bool BaseAgent::isAlive() {
-  if (!unit->exists()) {
+  if (not unit->exists()) {
     return false;
   }
   return alive;

@@ -35,11 +35,11 @@
 #ifndef EasyBMP
 #define EasyBMP
 
-#ifdef __BCPLUSPLUS__ 
+#ifdef __BCPLUSPLUS__
 // The Borland compiler must use this because something
 // is wrong with their cstdio file. 
 #include <stdio.h>
-#else 
+#else
 #include <cstdio>
 #endif
 
@@ -79,8 +79,8 @@
 #define _EasyBMPwarnings_
 #endif
 
-void SetEasyBMPwarningsOff( void );
-void SetEasyBMPwarningsOn( void );
-bool GetEasyBMPwarningState( void );
+void SetEasyBMPwarningsOff(void);
+void SetEasyBMPwarningsOn(void);
+bool GetEasyBMPwarningState(void);
 
 #endif

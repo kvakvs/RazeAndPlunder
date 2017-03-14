@@ -1,5 +1,7 @@
 #include "WraithAgent.h"
 
+using namespace BWAPI;
+
 bool WraithAgent::useAbilities() {
   //Cloaking
   TechType cloak = TechTypes::Cloaking_Field;

@@ -1,9 +1,6 @@
 #pragma once
 
 #include "UnitAgent.h"
-using namespace BWAPI;
-
-
 
 /** The TransportAgent handles transport units (Terran Dropship and Protoss Shuttle).
  *
@@ -20,8 +17,8 @@ private:
   BaseAgent* findUnitToLoad(int spaceLimit);
 
 public:
-  explicit TransportAgent(Unit mUnit);
+  explicit TransportAgent(BWAPI::Unit mUnit);
 
-  /** Called each update to issue orders. */
+  // Called each update to issue orders. 
   void computeActions() override;
 };

@@ -1,5 +1,8 @@
 #include "SiegeTankAgent.h"
 #include "../../Commander/Commander.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 bool SiegeTankAgent::useAbilities() {
   //Siege Mode
@@ -18,9 +21,9 @@ bool SiegeTankAgent::useAbilities() {
 
     //If we are defending and are at the defense position, go
     //in siege mode
-    Squad* sq = Commander::getInstance()->getSquad(squadID);
-    if (sq != nullptr) {
-      if (!sq->isActive()) {
+    auto sq = rnp::commander()->getSquad(squadID);
+    if (sq) {
+      if (not sq->isActive()) {
         double d = unit->getDistance(Position(goal));
         if (d <= range * 0.5) goSiege = true;
       }
@@ -30,7 +33,7 @@ bool SiegeTankAgent::useAbilities() {
       unit->siege();
       return true;
     }
-    if (!goSiege && unit->isSieged()) {
+    if (not goSiege && unit->isSieged()) {
       unit->unsiege();
       return true;
     }

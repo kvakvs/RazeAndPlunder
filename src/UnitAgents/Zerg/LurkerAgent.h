@@ -9,7 +9,7 @@
  */
 class LurkerAgent : public UnitAgent {
 public:
-  explicit LurkerAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit LurkerAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "LurkerAgent";
   }
 

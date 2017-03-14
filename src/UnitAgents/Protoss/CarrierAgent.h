@@ -12,7 +12,7 @@ class CarrierAgent : public UnitAgent {
 private:
 
 public:
-  explicit CarrierAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit CarrierAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "CarrierAgent";
   }
 

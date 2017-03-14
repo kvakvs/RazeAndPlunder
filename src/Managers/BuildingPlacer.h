@@ -1,6 +1,7 @@
 #pragma once
 
 #include "../MainAgents/BaseAgent.h"
+#include "bwem.h"
 
 struct Corners {
   int x1;
@@ -23,98 +24,97 @@ struct Corners {
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class BuildingPlacer {
-
-private:
-  BuildingPlacer();
   static BuildingPlacer* instance;
-
   int range;
   int w;
   int h;
   int** cover_map;
+  BWEM::Map& bwem_;
 
-  Corners getCorners(Unit unit);
-  Corners getCorners(UnitType type, TilePosition center);
+  BuildingPlacer();
 
-  TilePosition findSpotAtSide(UnitType toBuild, TilePosition start, TilePosition end);
-  bool canBuildAt(UnitType toBuild, TilePosition pos);
+  Corners getCorners(BWAPI::Unit unit);
+  Corners getCorners(BWAPI::UnitType type, BWAPI::TilePosition center);
+
+  BWAPI::TilePosition findSpotAtSide(BWAPI::UnitType toBuild, BWAPI::TilePosition start, BWAPI::TilePosition end);
+  bool canBuildAt(BWAPI::UnitType toBuild, BWAPI::TilePosition pos);
 
   void fill(Corners c);
   void clear(Corners c);
 
-  Unit findWorker(TilePosition spot);
+  BWAPI::Unit findWorker(BWAPI::TilePosition spot);
 
-  bool suitableForDetector(TilePosition pos);
+  bool suitableForDetector(BWAPI::TilePosition pos);
 
   bool baseUnderConstruction(BaseAgent* base);
-  bool isDefenseBuilding(UnitType toBuild);
-  TilePosition findBuildSpot(UnitType toBuild, TilePosition start);
+  bool isDefenseBuilding(BWAPI::UnitType toBuild);
+  BWAPI::TilePosition findBuildSpot(BWAPI::UnitType toBuild, BWAPI::TilePosition start);
 
-  Unit hasMineralNear(TilePosition pos);
+  BWAPI::Unit hasMineralNear(BWAPI::TilePosition pos);
 
 public:
-  /** Destructor */
+  // Destructor 
   ~BuildingPlacer();
 
-  /** Returns the instance of the class. */
+  // Returns the instance of the class. 
   static BuildingPlacer* getInstance();
 
-  /** Adds a newly constructed building to the cover map. */
-  void addConstructedBuilding(Unit unit);
+  // Adds a newly constructed building to the cover map. 
+  void addConstructedBuilding(BWAPI::Unit unit);
 
-  /** Used by WorkerAgent when constructing builds. */
-  void fillTemp(UnitType toBuild, TilePosition buildSpot);
+  // Used by WorkerAgent when constructing builds. 
+  void fillTemp(BWAPI::UnitType toBuild, BWAPI::TilePosition buildSpot);
 
-  /** Used by WorkerAgent when constructing builds. */
-  void clearTemp(UnitType toBuild, TilePosition buildSpot);
+  // Used by WorkerAgent when constructing builds. 
+  void clearTemp(BWAPI::UnitType toBuild, BWAPI::TilePosition buildSpot);
 
-  /** Called when a building is destroyed, to free up the space. */
-  void buildingDestroyed(Unit unit);
+  // Called when a building is destroyed, to free up the space. 
+  void buildingDestroyed(BWAPI::Unit unit);
 
-  /** Checks if the specified building type can be built at the buildSpot. True if it can,
-   * false otherwise. */
-  bool canBuild(UnitType toBuild, TilePosition buildSpot);
+  // Checks if the specified building type can be built at the buildSpot. True if it can,
+  // false otherwise. 
+  bool canBuild(BWAPI::UnitType toBuild, BWAPI::TilePosition buildSpot);
 
-  /** Checks if a position is free. */
-  bool positionFree(TilePosition pos);
+  // Checks if a position is free. 
+  bool positionFree(BWAPI::TilePosition pos);
 
-  /** Blocks a position from being used as a valid buildSpot. Used when a worker is timedout when
-   * moving towards the buildSpot. */
-  void blockPosition(TilePosition buildSpot);
+  // Blocks a position from being used as a valid buildSpot. Used when a worker is timedout when
+  // moving towards the buildSpot. 
+  void blockPosition(BWAPI::TilePosition buildSpot);
 
-  /** Finds and returns a buildSpot for the specified building type.
-   * If no buildspot is found, a TilePosition(-1,-1) is returned. */
-  TilePosition findBuildSpot(UnitType toBuild);
+  // Finds and returns a buildSpot for the specified building type.
+  // If no buildspot is found, a TilePosition(-1,-1) is returned. 
+  BWAPI::TilePosition findBuildSpot(BWAPI::UnitType toBuild);
 
-  /** Searches for the closest vespene gas that is not in use. If no gas is sighted,
-   * the ExplorationManager is queried. */
-  TilePosition findRefineryBuildSpot(UnitType toBuild, TilePosition start);
+  // Searches for the closest vespene gas that is not in use. If no gas is sighted,
+  // the ExplorationManager is queried. 
+  BWAPI::TilePosition findRefineryBuildSpot(BWAPI::UnitType toBuild, BWAPI::TilePosition start);
 
-  /** Finds and returns the position of the closest free vespene gas around the specified start position.
-   * If no gas vein is found, a TilePosition(-1, -1) is returned. */
-  TilePosition findClosestGasWithoutRefinery(UnitType toBuild, TilePosition start);
+  // Finds and returns the position of the closest free vespene gas around the specified start position.
+  // If no gas vein is found, a TilePosition(-1, -1) is returned. 
+  BWAPI::TilePosition findClosestGasWithoutRefinery(BWAPI::UnitType toBuild, BWAPI::TilePosition start);
 
-  /** Searches for a spot to build a refinery at. Returns TilePosition(-1, -1) if no spot was found.*/
-  TilePosition searchRefinerySpot();
+  // Searches for a spot to build a refinery at. Returns TilePosition(-1, -1) if no spot was found.
+  BWAPI::TilePosition searchRefinerySpot();
 
-  /** Returns a position of a suitable site for expansion, i.e. new bases. */
-  TilePosition findExpansionSite();
+  // Returns a position of a suitable site for expansion, i.e. new bases. 
+  BWAPI::TilePosition findExpansionSite();
 
-  /** Finds a mineral to gather from. */
-  Unit findClosestMineral(TilePosition workerPos);
+  // Finds a mineral to gather from. 
+  BWAPI::Unit findClosestMineral(BWAPI::TilePosition workerPos);
 
-  /** Shows debug info on screen. */
+  // Shows debug info on screen. 
   void debug();
 
-  /** Tile is buildable. */
+  // Tile is buildable. 
   static const int BUILDABLE = 1;
-  /** Tile is blocked and cannot be built on. */
+  // Tile is blocked and cannot be built on. 
   static const int BLOCKED = 0;
-  /** Tile is temporary blocked and cannot be built on. */
+  // Tile is temporary blocked and cannot be built on. 
   static const int TEMPBLOCKED = 4;
-  /** Tile contains a mineral vein. */
+  // Tile contains a mineral vein. 
   static const int MINERAL = 2;
-  /** Tile contains a gas vein. */
+  // Tile contains a gas vein. 
   static const int GAS = 3;
 };
 

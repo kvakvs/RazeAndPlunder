@@ -5,8 +5,6 @@
 
 #include "bwem.h"
 
-using namespace BWAPI;
-
 struct MRegion {
   const BWEM::Area* region;
   int inf_own_ground;
@@ -26,7 +24,7 @@ struct MRegion {
   }
 };
 
-class MRegionSet : public SetContainer<MRegion*, std::hash<void*>> {
+class MRegionSet : public BWAPI::SetContainer<MRegion*, std::hash<void*>> {
 public:
 
 };
@@ -46,43 +44,43 @@ class MapManager {
 private:
   MapManager();
 
-  MRegion* getMapFor(Position p);
+  MRegion* getMapFor(BWAPI::Position p);
 
   const MRegion* getMapRegion(const BWEM::Area* r);
   const BWEM::ChokePoint* findGuardChokepoint(const MRegion* mr);
   bool isValidChokepoint(const BWEM::ChokePoint* cp);
 
 public:
-  /** Destructor */
+  // Destructor 
   ~MapManager();
 
-  /** Returns the instance of the class. */
+  // Returns the instance of the class. 
   static MapManager* getInstance();
 
-  /** Updates the influence map. */
+  // Updates the influence map. 
   void update();
 
-  /** Returns a good chokepoint to place defensive forces at. */
+  // Returns a good chokepoint to place defensive forces at. 
   const BWEM::ChokePoint* getDefenseLocation();
 
-  /** Checks if any region with enemy influence has been found. */
+  // Checks if any region with enemy influence has been found. 
   bool hasEnemyInfluence();
 
-  /** Returns a suitable position to attack the enemy at. */
-  TilePosition findAttackPosition();
+  // Returns a suitable position to attack the enemy at. 
+  BWAPI::TilePosition findAttackPosition();
 
-  /** Checks if the player has infuence in the specified position. */
-  bool hasOwnInfluenceIn(TilePosition pos);
+  // Checks if the player has infuence in the specified position. 
+  bool hasOwnInfluenceIn(BWAPI::TilePosition pos);
 
-  /** Checks if the enemy has influence in the specified position. */
-  bool hasEnemyInfluenceIn(TilePosition pos);
+  // Checks if the enemy has influence in the specified position. 
+  bool hasEnemyInfluenceIn(BWAPI::TilePosition pos);
 
-  /** Returns the player ground unit infuence in the specified position. */
-  int getOwnGroundInfluenceIn(TilePosition pos);
+  // Returns the player ground unit infuence in the specified position. 
+  int getOwnGroundInfluenceIn(BWAPI::TilePosition pos);
 
-  /** Returns the enemy ground influence in the specified position. */
-  int getEnemyGroundInfluenceIn(TilePosition pos);
+  // Returns the enemy ground influence in the specified position. 
+  int getEnemyGroundInfluenceIn(BWAPI::TilePosition pos);
 
-  /** Prints debug info to screen. */
+  // Prints debug info to screen. 
   void printInfo();
 };

@@ -7,6 +7,8 @@
 #include "BuildingPlacer.h"
 #include "ResourceManager.h"
 
+using namespace BWAPI;
+
 Constructor* Constructor::instance = nullptr;
 
 Constructor::Constructor() {
@@ -54,7 +56,7 @@ void Constructor::computeActions() {
   }
 
   //Check if we need to expand
-  if (!hasResourcesLeft()) {
+  if (not hasResourcesLeft()) {
     expand(Broodwar->self()->getRace().getCenter());
   }
 
@@ -269,7 +271,7 @@ bool Constructor::executeOrder(UnitType type) {
   //Check if we meet requirements for the building
   std::map<UnitType, int> reqs = type.requiredUnits();
   for (std::map<UnitType, int>::iterator j = reqs.begin(); j != reqs.end(); j++) {
-    if (!AgentManager::getInstance()->hasBuilding((*j).first)) {
+    if (not AgentManager::getInstance()->hasBuilding((*j).first)) {
       return false;
     }
   }
@@ -304,7 +306,7 @@ bool Constructor::executeOrder(UnitType type) {
   }
 
   //Check if we have resources
-  if (!ResourceManager::getInstance()->hasResources(type)) {
+  if (not ResourceManager::getInstance()->hasResources(type)) {
     return false;
   }
 
@@ -365,7 +367,7 @@ void Constructor::addRefinery() {
 
   UnitType refinery = Broodwar->self()->getRace().getRefinery();
 
-  if (!this->nextIsOfType(refinery)) {
+  if (not this->nextIsOfType(refinery)) {
     buildPlan.insert(buildPlan.begin(), refinery);
   }
 }
@@ -427,10 +429,10 @@ void Constructor::handleNoBuildspotFound(UnitType toBuild) {
     remove(toBuild);
   }
 
-  if (!removeOrder) {
+  if (not removeOrder) {
     if (isProtoss() && !supplyBeingBuilt()) {
       //Insert a pylon to increase PSI coverage
-      if (!nextIsOfType(UnitTypes::Protoss_Pylon)) {
+      if (not nextIsOfType(UnitTypes::Protoss_Pylon)) {
         buildPlan.insert(buildPlan.begin(), UnitTypes::Protoss_Pylon);
       }
     }

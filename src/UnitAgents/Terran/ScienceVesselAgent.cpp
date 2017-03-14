@@ -2,6 +2,8 @@
 #include "../../Managers/AgentManager.h"
 #include "../../MainAgents/TargetingAgent.h"
 
+using namespace BWAPI;
+
 bool ScienceVesselAgent::useAbilities() {
   //Shielding
   if (unit->getEnergy() >= 100 && Broodwar->getFrameCount() - lastShieldFrame > 100) {

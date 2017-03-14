@@ -9,7 +9,7 @@
  */
 class HydraliskAgent : public UnitAgent {
 public:
-  explicit HydraliskAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit HydraliskAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "HydraliskAgent";
   }
 

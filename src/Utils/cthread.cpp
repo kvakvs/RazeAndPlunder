@@ -1,5 +1,6 @@
 //project dependencies
 #include "cthread.h"
+#include <iso646.h>
 //end project dependencies
 
 //*********************************************************
@@ -47,7 +48,7 @@ unsigned long CThread::Process(void* parameter) {
 //*********************************************************
 bool CThread::CreateThread() {
 
-  if (!this->IsCreated()) {
+  if (not this->IsCreated()) {
     param* this_param = new param;
     this_param->pThread = this;
     this->hThread = ::CreateThread(nullptr, 0, (unsigned long (__stdcall *)(void*))this->runProcess, (void *)(this_param), 0, &this->hThreadId);

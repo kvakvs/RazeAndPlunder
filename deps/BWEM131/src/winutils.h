@@ -7,9 +7,7 @@
 //
 //////////////////////////////////////////////////////////////////////////
 
-
-#ifndef BWEM_WINUTILS_H
-#define BWEM_WINUTILS_H
+#pragma once
 
 #include "defs.h"
 #if BWEM_USE_WINUTILS
@@ -17,41 +15,41 @@
 #include "utils.h"
 
 namespace BWEM {
-namespace utils {
+  namespace utils {
 
 
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //                                                                                          //
+    //                                  class Timer
+    //                                                                                          //
+    //////////////////////////////////////////////////////////////////////////////////////////////
+    //
+    // High resolution timer - uses Windows's QueryPerformanceCounter
+    //
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                          //
-//                                  class Timer
-//                                                                                          //
-//////////////////////////////////////////////////////////////////////////////////////////////
-//
-// High resolution timer - uses Windows's QueryPerformanceCounter
-//
+    class Timer {
+    public:
+      Timer(); // calls Reset()
 
-class Timer
-{
-public:
-						Timer();		// calls Reset()
+      void Reset() {
+        m_start = Now();
+      }
 
-	void				Reset()							{ m_start = Now(); }
-	double				ElapsedMilliseconds() const		{ return (Now() - m_start) / m_freq; }
+      double ElapsedMilliseconds() const {
+        return (Now() - m_start) / m_freq;
+      }
 
-private:
-	int64_t				Now() const;
+    private:
+      int64_t Now() const;
 
-	int64_t				m_start;
+      int64_t m_start;
 
-	static double		m_freq;		// counts per millisecond
-};
+      static double m_freq; // counts per millisecond
+    };
 
 
-}} // namespace BWEM::utils
+  }
+} // namespace BWEM::utils
 
 
 #endif // BWEM_USE_WINUTILS
-
-
-#endif
-

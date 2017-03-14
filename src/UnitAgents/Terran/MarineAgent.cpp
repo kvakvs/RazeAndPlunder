@@ -1,12 +1,15 @@
 #include "MarineAgent.h"
 #include "../../Managers/AgentManager.h"
 #include "../../Commander/Commander.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 bool MarineAgent::useAbilities() {
   //Load into a Bunker
-  if (!unit->isLoaded()) {
-    Squad* sq = Commander::getInstance()->getSquad(squadID);
-    if (sq != nullptr) {
+  if (not unit->isLoaded()) {
+    auto sq = rnp::commander()->getSquad(squadID);
+    if (sq) {
       if (sq->isBunkerDefend()) {
         Agentset agents = AgentManager::getInstance()->getAgents();
         for (auto& a : agents) {

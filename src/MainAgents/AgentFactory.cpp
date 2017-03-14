@@ -5,7 +5,7 @@
 #include "../Commander/Commander.h"
 #include "../UnitAgents/TransportAgent.h"
 
-/** Terran agents */
+// Terran agents 
 #include "../StructureAgents/Terran/CommandCenterAgent.h"
 #include "../StructureAgents/Terran/ComsatAgent.h"
 #include "../UnitAgents/Terran/SiegeTankAgent.h"
@@ -19,20 +19,23 @@
 #include "../UnitAgents/Terran/WraithAgent.h"
 #include "../UnitAgents/Terran/GhostAgent.h"
 
-/** Protoss agents */
+// Protoss agents 
 #include "../StructureAgents/Protoss/NexusAgent.h"
 #include "../UnitAgents/Protoss/ReaverAgent.h"
 #include "../UnitAgents/Protoss/CorsairAgent.h"
 #include "../UnitAgents/Protoss/CarrierAgent.h"
 #include "../UnitAgents/Protoss/HighTemplarAgent.h"
 
-/** Zerg agents */
+// Zerg agents 
 #include "../StructureAgents/Zerg/HatcheryAgent.h"
 #include "../UnitAgents/Zerg/HydraliskAgent.h"
 #include "../UnitAgents/Zerg/LurkerAgent.h"
 #include "../UnitAgents/Zerg/MutaliskAgent.h"
 #include "../UnitAgents/Zerg/QueenAgent.h"
 #include "../UnitAgents/Zerg/DefilerAgent.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 bool AgentFactory::instanceFlag = false;
 AgentFactory* AgentFactory::instance = nullptr;
@@ -47,7 +50,7 @@ AgentFactory::~AgentFactory() {
 }
 
 AgentFactory* AgentFactory::getInstance() {
-  if (!instanceFlag) {
+  if (not instanceFlag) {
     instance = new AgentFactory();
     instanceFlag = true;
   }
@@ -165,7 +168,7 @@ BaseAgent* AgentFactory::createTerranAgent(Unit unit) {
     else if (isOfType(unit, UnitTypes::Terran_Bunker)) {
       //Make sure we set the squad id to the bunker, so we
       //can remove the squad if the bunker is destroyed.
-      int squadID = Commander::getInstance()->addBunkerSquad();
+      int squadID = rnp::commander()->addBunkerSquad();
       BaseAgent* a = new StructureAgent(unit);
       a->setSquadID(squadID);
       return a;

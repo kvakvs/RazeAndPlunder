@@ -2,10 +2,6 @@
 
 #include "Commander.h"
 
-using namespace BWAPI;
-
-
-
 struct StrategyStats {
   std::string mapHash;
   std::string mapName;
@@ -29,31 +25,14 @@ struct StrategyStats {
     return total;
   }
 
-  bool matches() {
-    std::string mMapHash = Broodwar->mapHash();
-    std::string mOwnRace = Broodwar->self()->getRace().getName();
-    if (mMapHash == mapHash && mOwnRace == ownRace) {
-      Race oRace = Broodwar->enemy()->getRace();
-      if (oRace.getID() != Races::Unknown.getID()) {
-        //Opponent race is known. Match race as well.
-        if (oRace.getName() == opponentRace) {
-          return true;
-        }
-        else {
-          return false;
-        }
-      }
-      return true;
-    }
-    return false;
-  }
+  bool matches();
 };
 
 struct Strategy {
-  Race race;
+  BWAPI::Race race;
   std::string strategyId;
 
-  Strategy(Race mRace, std::string mId) {
+  Strategy(BWAPI::Race mRace, std::string mId) {
     race = mRace;
     strategyId = mId;
   }
@@ -88,30 +67,30 @@ private:
   bool active;
 
 public:
-  /** Returns the instance of the class. */
+  // Returns the instance of the class. 
   static StrategySelector* getInstance();
 
-  /** Destructor */
+  // Destructor 
   ~StrategySelector();
 
-  /** Returns the selected strategy for this game. */
-  Commander* getStrategy();
+  // Returns the selected strategy for this game. 
+  Commander::Ptr getStrategy();
 
-  /** Loads the stats file. */
+  // Loads the stats file. 
   void loadStats();
 
-  /** Prints debug info to the screen. */
+  // Prints debug info to the screen. 
   void printInfo();
 
-  /** Adds the result after a game is finished. */
+  // Adds the result after a game is finished. 
   void addResult(int win);
 
-  /** Saves the stats file. */
+  // Saves the stats file. 
   void saveStats();
 
-  /** Enable strategy updates. */
+  // Enable strategy updates. 
   void enable();
 
-  /** Disable strategy updates. */
+  // Disable strategy updates. 
   void disable();
 };

@@ -9,7 +9,7 @@
  */
 class MutaliskAgent : public UnitAgent {
 public:
-  explicit MutaliskAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit MutaliskAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "MutaliskAgent";
   }
 

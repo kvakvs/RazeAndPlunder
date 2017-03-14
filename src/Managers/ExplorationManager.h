@@ -4,23 +4,19 @@
 #include "../Commander/Squad.h"
 
 #include "bwem.h"
-#include "BWEMUtil.h"
 
-using namespace BWAPI;
-
-
-class SpottedObjectSet : public SetContainer<SpottedObject*, std::hash<void*>> {
+class SpottedObjectSet : public BWAPI::SetContainer<SpottedObject*, std::hash<void*>> {
 };
 
 class RegionItem {
 public:
   explicit RegionItem(const BWEM::Area* region);
 
-  TilePosition location;
+  BWAPI::TilePosition location;
   int frameVisited;
 };
 
-class RegionSet : public SetContainer<RegionItem*, std::hash<void*>> {
+class RegionSet : public BWAPI::SetContainer<RegionItem*, std::hash<void*>> {
 public:
 
 };
@@ -44,71 +40,70 @@ private:
   int lastCallFrame;
 
   int siteSetFrame;
-  TilePosition expansionSite;
+  BWAPI::TilePosition expansionSite;
 
 private:
   ExplorationManager();
   void cleanup();
 
 public:
-  /** Destructor */
+  // Destructor 
   ~ExplorationManager();
 
-  /** Returns the instance of the class. */
+  // Returns the instance of the class. 
   static ExplorationManager* getInstance();
 
-  /** Called each update to issue orders. */
+  // Called each update to issue orders. 
   void computeActions();
 
-  /** Returns the next position to explore for this squad. */
-  TilePosition getNextToExplore(Squad* squad);
+  // Returns the next position to explore for this squad. 
+  BWAPI::TilePosition getNextToExplore(Squad* squad);
 
-  /** Searches for the next position to expand the base to. */
-  TilePosition searchExpansionSite();
+  // Searches for the next position to expand the base to. 
+  BWAPI::TilePosition searchExpansionSite();
 
-  /** Returns the next position to expand the base to. */
-  TilePosition getExpansionSite();
+  // Returns the next position to expand the base to. 
+  BWAPI::TilePosition getExpansionSite();
 
-  /** Sets the next position to expand the base to. */
-  void setExpansionSite(TilePosition pos);
+  // Sets the next position to expand the base to. 
+  void setExpansionSite(BWAPI::TilePosition pos);
 
-  /** Shows all spotted objects as squares on the SC map. Use for debug purpose. */
+  // Shows all spotted objects as squares on the SC map. Use for debug purpose. 
   void printInfo();
 
-  /** Notifies about an enemy unit that has been spotted. */
-  void addSpottedUnit(Unit unit);
+  // Notifies about an enemy unit that has been spotted. 
+  void addSpottedUnit(BWAPI::Unit unit);
 
-  /** Notifies that an enemy unit has been destroyed. If the destroyed unit was among
-   * the spotted units, it is removed from the list. */
-  void unitDestroyed(Unit unit);
+  // Notifies that an enemy unit has been destroyed. If the destroyed unit was among
+  // the spotted units, it is removed from the list. 
+  void unitDestroyed(BWAPI::Unit unit);
 
-  /** Returns the closest enemy spotted building from a start position, or TilePosition(-1,-1) if 
-   * none was found. */
-  TilePosition getClosestSpottedBuilding(TilePosition start);
+  // Returns the closest enemy spotted building from a start position, or TilePosition(-1,-1) if// none was found. 
+  BWAPI::TilePosition getClosestSpottedBuilding(BWAPI::TilePosition start);
 
-  /** Calculates the influence of spotted enemy buildings within a specified region. */
+  // Calculates the influence of spotted enemy buildings within a specified region. 
   int getSpottedInfluenceInRegion(const BWEM::Area* region);
 
-  /** Returns true if a ground unit can reach position b from position a.
-   * Uses BWTA. */
-  static bool canReach(TilePosition a, TilePosition b);
+  // Returns true if a ground unit can reach position b from position a.
+  // Uses BWTA. 
+  static bool canReach(BWAPI::TilePosition a, BWAPI::TilePosition b);
 
-  /** Returns true if an agent can reach position b. */
-  static bool canReach(BaseAgent* agent, TilePosition b);
+  // Returns true if an agent can reach position b. 
+  static bool canReach(BaseAgent* agent, BWAPI::TilePosition b);
 
-  /** Sets that a region is explored. The position must be the TilePosition for the center of the
-   * region. */
-  void setExplored(TilePosition goal);
+  // Sets that a region is explored. The position must be the TilePosition for the center of the
+  // region. 
+  void setExplored(BWAPI::TilePosition goal);
 
-  /** Returns true if an enemy is Protoss. */
+  // Returns true if an enemy is Protoss. 
   static bool enemyIsProtoss();
 
-  /** Returns true if an enemy is Zerg. */
+  // Returns true if an enemy is Zerg. 
   static bool enemyIsZerg();
 
-  /** Returns true if an enemy is Terran. */
+  // Returns true if an enemy is Terran. 
   static bool enemyIsTerran();
 
-  /** All enemy races are currently unknown. */
+  // All enemy races are currently unknown. 
   static bool enemyIsUnknown();
 };

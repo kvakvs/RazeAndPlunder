@@ -1,9 +1,6 @@
 #pragma once
 
 #include "BaseAgent.h"
-using namespace BWAPI;
-
-
 
 /** The WorkerAgent class handles all tasks that a worker, for example a Terran SCV, can perform. The tasks
  * involves gathering minerals and gas, move to a selected buildspot and construct the specified building,
@@ -16,9 +13,9 @@ class WorkerAgent : public BaseAgent {
 private:
   int currentState;
 
-  UnitType toBuild;
-  TilePosition buildSpot;
-  TilePosition startSpot;
+  BWAPI::UnitType toBuild;
+  BWAPI::TilePosition buildSpot;
+  BWAPI::TilePosition startSpot;
   bool buildSpotExplored();
   bool isBuilt();
   int startBuildFrame;
@@ -29,65 +26,64 @@ private:
   int lastFrame;
 
 public:
-  /** Worker is gathering minerals. */
+  // Worker is gathering minerals. 
   static const int GATHER_MINERALS = 0;
-  /** Worker is gathering gas. */
+  // Worker is gathering gas. 
   static const int GATHER_GAS = 1;
-  /** Worker is trying to find a buildspot for a requested building. */
+  // Worker is trying to find a buildspot for a requested building. 
   static const int FIND_BUILDSPOT = 2;
-  /** Worker is moving to a found buildspot. */
+  // Worker is moving to a found buildspot. 
   static const int MOVE_TO_SPOT = 3;
-  /** Worker is constructing a building. */
+  // Worker is constructing a building. 
   static const int CONSTRUCT = 4;
-  /** Worker is repairing a building (Terran only). */
+  // Worker is repairing a building (Terran only). 
   static const int REPAIRING = 5;
-  /** Worker is needed to attack an enemy intruder in a base. */
+  // Worker is needed to attack an enemy intruder in a base. 
   static const int ATTACKING = 6;
 
-  /** Constructor. */
-  explicit WorkerAgent(Unit mUnit);
+  // Constructor. 
+  explicit WorkerAgent(BWAPI::Unit mUnit);
 
-  /** Called each update to issue orders. */
+  // Called each update to issue orders. 
   void computeActions() override;
 
-  /** Returns true if this agent is a free worker, i.e. is idle or is gathering minerals. */
+  // Returns true if this agent is a free worker, i.e. is idle or is gathering minerals. 
   bool isFreeWorker() override;
 
-  /** Used to print info about this agent to the screen. */
+  // Used to print info about this agent to the screen. 
   void printInfo() override;
 
-  /** Used in debug modes to show a line to the agents' goal. */
+  // Used in debug modes to show a line to the agents' goal. 
   void debug_showGoal() override;
 
-  /** Set the state of the worker. I.e. what does it do right now. 
-   * Should only be set if the worker is getting a task not through the functions in this class. Then it is automatic. */
+  // Set the state of the worker. I.e. what does it do right now.// Should only be set if the worker is getting a task not through the functions in this class. Then it is automatic. 
   void setState(int state);
 
-  /** Returns the current state of the worker. */
+  // Returns the current state of the worker. 
   int getState();
 
-  /** Returns true if the Worker agent can create units of the specified type. */
-  bool canBuild(UnitType type);
+  // Returns true if the Worker agent can create units of the specified type. 
+  bool canBuild(BWAPI::UnitType type);
 
-  /** Assigns the unit to construct a building of the specified type. */
-  bool assignToBuild(UnitType type);
+  // Assigns the unit to construct a building of the specified type. 
+  bool assignToBuild(BWAPI::UnitType type);
 
-  /** Returns the state of the agent as text. Good for printouts. */
+  // Returns the state of the agent as text. Good for printouts. 
   std::string getStateAsText();
 
-  /** Called when the unit assigned to this agent is destroyed. */
+  // Called when the unit assigned to this agent is destroyed. 
   void destroyed();
 
-  /** Resets a worker to gathering minerals. */
+  // Resets a worker to gathering minerals. 
   void reset();
 
-  /** Returns true if this worker is in any of the build states, and is constructing
-   * the specified building. */
-  bool isConstructing(UnitType type);
+  // Returns true if this worker is in any of the build states, and is constructing
+  // the specified building. 
+  bool isConstructing(BWAPI::UnitType type);
 
-  /** Assigns this worker to finish an unfinished building. */
-  bool assignToFinishBuild(Unit building);
+  // Assigns this worker to finish an unfinished building. 
+  bool assignToFinishBuild(BWAPI::Unit building);
 
-  /** Assigns this worker to repair a building. */
-  bool assignToRepair(Unit building);
+  // Assigns this worker to repair a building. 
+  bool assignToRepair(BWAPI::Unit building);
 };

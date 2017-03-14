@@ -1,4 +1,7 @@
 #include "TargetingAgent.h"
+#include <iso646.h>
+
+using namespace BWAPI;
 
 bool TargetingAgent::canAttack(UnitType type) {
   if (type.isBuilding()) {
@@ -38,12 +41,12 @@ int TargetingAgent::getNoAttackers(BaseAgent* agent) {
 }
 
 bool TargetingAgent::checkTarget(BaseAgent* agent) {
-  if (!agent->getUnit()->isIdle() && !agent->getUnit()->isMoving()) return false;
+  if (not agent->getUnit()->isIdle() && !agent->getUnit()->isMoving()) return false;
 
   Unit pTarget = findTarget(agent);
   if (pTarget != nullptr && pTarget->getPlayer()->isEnemy(Broodwar->self())) {
     bool ok = agent->getUnit()->attack(pTarget, true);
-    if (!ok) {
+    if (not ok) {
       //Broodwar << "Switch target failed: " << Broodwar->getLastError() << endl;
     }
     return ok;
@@ -77,7 +80,7 @@ Unit TargetingAgent::findHighprioTarget(BaseAgent* agent, int maxDist, bool targ
       UnitType t = u->getType();
       bool targets = isHighprioTarget(t);
       if (t.isFlyer() && !targetsAir) targets = false;
-      if (!t.isFlyer() && !targetsGround) targets = false;
+      if (not t.isFlyer() && !targetsGround) targets = false;
 
       if (targets) {
         double dist = cPos.getDistance(u->getPosition());
@@ -111,7 +114,7 @@ Unit TargetingAgent::findTarget(BaseAgent* agent) {
     UnitType t = u->getType();
 
     bool canAttack = false;
-    if (!t.isFlyer() && targetsGround) canAttack = true;
+    if (not t.isFlyer() && targetsGround) canAttack = true;
     if ((t.isFlyer() || u->isLifted()) && targetsAir) canAttack = true;
     if (u->isCloaked() && !u->isDetected()) {
       canAttack = false;
@@ -175,7 +178,7 @@ double TargetingAgent::getTargetModifier(UnitType attacker, UnitType target) {
     return 0.1;
   }
 
-  if (!attacker.isFlyer() && !target.groundWeapon().targetsGround()) {
+  if (not attacker.isFlyer() && !target.groundWeapon().targetsGround()) {
     //Target cannot attack back. Set to low prio
     return 0.1;
   }

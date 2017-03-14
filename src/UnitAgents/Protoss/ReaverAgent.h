@@ -1,5 +1,4 @@
-#ifndef __REAVERAGENT_H__
-#define __REAVERAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -13,12 +12,9 @@ class ReaverAgent : public UnitAgent {
 private:
 
 public:
-	ReaverAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "ReaverAgent";
-	}
+  explicit ReaverAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "ReaverAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

@@ -8,6 +8,9 @@
 #include "Managers/ExplorationManager.h"
 #include "Managers/Constructor.h"
 #include "Commander/StrategySelector.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 AIloop::AIloop(): bwem_(BWEM::Map::Instance()) {
   debugUnit = false;
@@ -46,21 +49,21 @@ void AIloop::setDebugSQ(int squadID) {
 }
 
 void AIloop::computeActions() {
-  Profiler::getInstance()->start("OnFrame_MapManager");
+  rnp::profiler()->start("OnFrame_MapManager");
   MapManager::getInstance()->update();
-  Profiler::getInstance()->end("OnFrame_MapManager");
-  Profiler::getInstance()->start("OnFrame_Constructor");
+  rnp::profiler()->end("OnFrame_MapManager");
+  rnp::profiler()->start("OnFrame_Constructor");
   Constructor::getInstance()->computeActions();
-  Profiler::getInstance()->end("OnFrame_Constructor");
-  Profiler::getInstance()->start("OnFrame_Commander");
-  Commander::getInstance()->computeActions();
-  Profiler::getInstance()->end("OnFrame_Commander");
-  Profiler::getInstance()->start("OnFrame_ExplorationManager");
+  rnp::profiler()->end("OnFrame_Constructor");
+  rnp::profiler()->start("OnFrame_Commander");
+  rnp::commander()->computeActions();
+  rnp::profiler()->end("OnFrame_Commander");
+  rnp::profiler()->start("OnFrame_ExplorationManager");
   ExplorationManager::getInstance()->computeActions();
-  Profiler::getInstance()->end("OnFrame_ExplorationManager");
-  Profiler::getInstance()->start("OnFrame_AgentManager");
+  rnp::profiler()->end("OnFrame_ExplorationManager");
+  rnp::profiler()->start("OnFrame_AgentManager");
   AgentManager::getInstance()->computeActions();
-  Profiler::getInstance()->end("OnFrame_AgentManager");
+  rnp::profiler()->end("OnFrame_AgentManager");
 }
 
 void AIloop::addUnit(Unit unit) {
@@ -82,7 +85,7 @@ void AIloop::unitDestroyed(Unit unit) {
     //Remove bunker squads if the destroyed unit
     //is a bunker
     if (unit->getType().getID() == UnitTypes::Terran_Bunker.getID()) {
-      Commander::getInstance()->removeBunkerSquad(unit->getID());
+      rnp::commander()->removeBunkerSquad(unit->getID());
     }
 
     AgentManager::getInstance()->removeAgent(unit);
@@ -135,7 +138,7 @@ void AIloop::show_debug() {
     }
     drawTerrainData();
 
-    Commander::getInstance()->debug_showGoal();
+    rnp::commander()->debug_showGoal();
 
     Agentset agents = AgentManager::getInstance()->getAgents();
     for (auto& a : agents) {
@@ -182,46 +185,48 @@ void AIloop::show_debug() {
     }
 
     if (debugSQ >= 0) {
-      Squad* squad = Commander::getInstance()->getSquad(debugSQ);
-      if (squad != nullptr) {
+      auto squad = rnp::commander()->getSquad(debugSQ);
+      if (squad) {
         squad->printInfo();
       }
     }
 
     Upgrader::getInstance()->printInfo();
-    Commander::getInstance()->printInfo();
+    rnp::commander()->printInfo();
   }
 }
 
 void AIloop::drawTerrainData() {
   // we will iterate through all the base locations, and draw their outlines.
-  for (auto base : rnp::get_bases(bwem_)) {
-    TilePosition p = base->Location();
-    Position c = base->Center();
+  for (auto& area : bwem_.Areas()) {
+    for (auto& base : area.Bases()) {
+      TilePosition p = base.Location();
+      Position c = base.Center();
 
-    //Draw a progress bar at each resource
-    for (auto& u : Broodwar->getStaticMinerals()) {
-      if (u->getResources() > 0) {
+      //Draw a progress bar at each resource
+      for (auto& u : Broodwar->getStaticMinerals()) {
+        if (u->getResources() > 0) {
 
-        int total = u->getInitialResources();
-        int done = u->getResources();
+          int total = u->getInitialResources();
+          int done = u->getResources();
 
-        int w = 60;
-        int h = 64;
+          int w = 60;
+          int h = 64;
 
-        //Start 
-        Position s = Position(u->getPosition().x - w / 2 + 2, u->getPosition().y - 4);
-        //End
-        Position e = Position(s.x + w, s.y + 8);
-        //Progress
-        int prg = (int)((double)done / (double)total * w);
-        Position p = Position(s.x + prg, s.y + 8);
+          //Start 
+          Position s(u->getPosition().x - w / 2 + 2, u->getPosition().y - 4);
+          //End
+          Position e(s.x + w, s.y + 8);
+          //Progress
+          int prg = (int)((double)done / (double)total * w);
+          Position p(s.x + prg, s.y + 8);
 
-        Broodwar->drawBoxMap(s.x, s.y, e.x, e.y, Colors::Orange, false);
-        Broodwar->drawBoxMap(s.x, s.y, p.x, p.y, Colors::Orange, true);
-      }
-    }
-  }
+          Broodwar->drawBoxMap(s.x, s.y, e.x, e.y, Colors::Orange, false);
+          Broodwar->drawBoxMap(s.x, s.y, p.x, p.y, Colors::Orange, true);
+        }
+      } // for static minerals
+    } // for bases
+  } // for areas
 
   if (debugBP) {
     //we will iterate through all the regions and draw the polygon outline of it in white.

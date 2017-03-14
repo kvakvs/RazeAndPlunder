@@ -12,6 +12,21 @@ Main dependencies are added as sources to reduce project setup time.
 * Razing and Plundering are implemented.
 * Kittens are TODO.
 
+## Building
+
+You will need these things at hand:
+
+* Visual Studio 2013 Community (get at https://www.visualstudio.com/en-us/news/releasenotes/vs2013-community-vs )
+* CMake 3.5 or something (get at https://cmake.org )
+* Boost libraries 32bit for Visual Studio 2013 (version 120) (get at http://www.boost.org )
+
+Your actions:
+
+* Install dependencies to some nice short directory paths, like C:/VS2013, C:/Boost, etc for your convenience.
+* Modify included `CMakeLists.txt` to let it know Boost directory location
+* Run the included script `cmake-vs2013.bat`, a new directory `cmake-vs/` will be created which contains
+    the Visual Studio solution.
+
 ## Opprimo Readme
 
 OpprimoBot is an AI bot for Starcraft:Broodwar. It uses the BWAPI project to communicate with the Starcraft engine. 

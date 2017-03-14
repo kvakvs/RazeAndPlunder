@@ -16,45 +16,42 @@
 
 using namespace BWAPI;
 using namespace BWAPI::UnitTypes::Enum;
-namespace { auto & bw = Broodwar; }
+
+namespace { auto& bw = Broodwar; }
 
 using namespace std;
 
 
 namespace BWEM {
 
-using namespace detail;
-using namespace BWAPI_ext;
+  using namespace detail;
+  using namespace BWAPI_ext;
 
-namespace {	enum {sizeof_Tile = sizeof(Tile), sizeof_MiniTile = sizeof(MiniTile)}; }
+  namespace { enum {sizeof_Tile = sizeof(Tile), sizeof_MiniTile = sizeof(MiniTile)}; }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                          //
-//                                  class MiniTile
-//                                                                                          //
-//////////////////////////////////////////////////////////////////////////////////////////////
+  //////////////////////////////////////////////////////////////////////////////////////////////
+  //                                                                                          //
+  //                                  class MiniTile
+  //                                                                                          //
+  //////////////////////////////////////////////////////////////////////////////////////////////
 
-const Area::id MiniTile::blockingCP = std::numeric_limits<Area::id>::min();
-
-
-//////////////////////////////////////////////////////////////////////////////////////////////
-//                                                                                          //
-//                                  class Tile
-//                                                                                          //
-//////////////////////////////////////////////////////////////////////////////////////////////
+  const Area::id MiniTile::blockingCP = std::numeric_limits<Area::id>::min();
 
 
-int Tile::StackedNeutrals() const
-{
-	int stackSize = 0;
-	for (Neutral * pStacked = GetNeutral() ; pStacked ; pStacked = pStacked->NextStacked())
-		++stackSize;
+  //////////////////////////////////////////////////////////////////////////////////////////////
+  //                                                                                          //
+  //                                  class Tile
+  //                                                                                          //
+  //////////////////////////////////////////////////////////////////////////////////////////////
 
-	return stackSize;
-};
+
+  int Tile::StackedNeutrals() const {
+    int stackSize = 0;
+    for (Neutral* pStacked = GetNeutral(); pStacked; pStacked = pStacked->NextStacked())
+      ++stackSize;
+
+    return stackSize;
+  };
 
 
 } // namespace BWEM
-
-
-

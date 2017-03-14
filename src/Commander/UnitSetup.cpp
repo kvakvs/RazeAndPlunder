@@ -1,5 +1,7 @@
 #include "UnitSetup.h"
 
+using namespace BWAPI;
+
 UnitSetup::UnitSetup() {
 
 }

@@ -2,7 +2,6 @@
 
 #include "../UnitAgent.h"
 
-
 /** 
  * The BattlecruiserAgent handles abilities for Terran Battlecruiser flying units.
  *
@@ -11,12 +10,12 @@
 class BattlecruiserAgent : public UnitAgent {
 
 private:
-  int lastUseFrame;
+  int lastUseFrame = 0;
 
 public:
-  BattlecruiserAgent(Unit mUnit) : UnitAgent(mUnit) {
+  explicit BattlecruiserAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agentType = "BattlecruiserAgent";
   }
 
-  bool useAbilities();
+  bool useAbilities() override;
 };

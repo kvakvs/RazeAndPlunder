@@ -3,9 +3,6 @@
 #include "../Commander.h"
 #include "../Squad.h"
 
-using namespace BWAPI;
-
-
 
 /**  This is the Commander class for a defensive Protoss tactics.
  *
@@ -14,20 +11,20 @@ using namespace BWAPI;
 class ProtossMain : public Commander {
 
 private:
-  Squad* mainSquad;
-  Squad* stealthSquad;
-  Squad* detectorSquad;
+  Squad::Ptr mainSquad;
+  Squad::Ptr stealthSquad;
+  Squad::Ptr detectorSquad;
 
 public:
   ProtossMain();
 
-  /** Destructor. */
+  // Destructor. 
   ~ProtossMain();
 
-  /** Called each update to issue orders. */
+  // Called each update to issue orders. 
   void computeActions() override;
 
-  /** Returns the unique id for this strategy. */
+  // Returns the unique id for this strategy. 
   static std::string getStrategyId() {
     return "ProtossMain";
   }

@@ -1,5 +1,7 @@
 #include "VultureAgent.h"
 
+using namespace BWAPI;
+
 bool VultureAgent::useAbilities() {
   //Mines
   if (unit->getSpiderMineCount() > 0 && Broodwar->getFrameCount() - mineDropFrame >= 100) {

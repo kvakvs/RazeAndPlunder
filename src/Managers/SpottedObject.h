@@ -1,9 +1,6 @@
 #pragma once
 
 #include <BWAPI.h>
-using namespace BWAPI;
-
-
 
 /** The SpottedObject class is a help class for the ExplorationManager. It contains all details about a spotted
  * enemy unit or neutral resource. 
@@ -13,28 +10,28 @@ using namespace BWAPI;
 class SpottedObject {
 
 private:
-  UnitType type;
-  Position position;
-  TilePosition tilePosition;
+  BWAPI::UnitType type;
+  BWAPI::Position position;
+  BWAPI::TilePosition tilePosition;
   int unitID;
 
 public:
-  /** Creates an object from a unit reference. */
-  explicit SpottedObject(Unit mUnit);
+  // Creates an object from a unit reference. 
+  explicit SpottedObject(BWAPI::Unit mUnit);
 
-  /** Returns the unique id of the spotted unit. */
+  // Returns the unique id of the spotted unit. 
   int getUnitID();
 
-  /** Returns the type of the spotted unit. */
-  UnitType getType();
+  // Returns the type of the spotted unit. 
+  BWAPI::UnitType getType();
 
-  /** Returns the position of the spotted unit. */
-  Position getPosition();
+  // Returns the position of the spotted unit. 
+  BWAPI::Position getPosition();
 
-  /** Returns the tileposition of the spotted unit. */
-  TilePosition getTilePosition();
+  // Returns the tileposition of the spotted unit. 
+  BWAPI::TilePosition getTilePosition();
 
-  /** Returns true if the SpottedObject is at this TilePosition. */
-  bool isAt(TilePosition tilePos);
+  // Returns true if the SpottedObject is at this TilePosition. 
+  bool isAt(BWAPI::TilePosition tilePos);
 
 };

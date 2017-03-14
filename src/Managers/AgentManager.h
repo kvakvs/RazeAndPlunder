@@ -1,7 +1,6 @@
 #pragma once
 
 #include "../MainAgents/BaseAgent.h"
-using namespace BWAPI;
 
 #include "../Utils/Sets.h"
 
@@ -28,72 +27,72 @@ public:
 
   ~AgentManager();
 
-  /** Returns the instance to the AgentManager. */
+  // Returns the instance to the AgentManager. 
   static AgentManager* getInstance();
 
-  /** Adds an agent to the container. Is called each time a new
-   * unit is built. */
-  void addAgent(Unit unit);
+  // Adds an agent to the container. Is called each time a new
+  // unit is built. 
+  void addAgent(BWAPI::Unit unit);
 
   /** Removes an agent from the container. Is called each time
    * a unit is destroyed. The agents are not directly removed, but
    * set to inactive and are removed during the cleanup. */
-  void removeAgent(Unit unit);
+  void removeAgent(BWAPI::Unit unit);
 
-  /** Called when a Zerg Drone is morphed into another unit. */
-  void morphDrone(Unit unit);
+  // Called when a Zerg Drone is morphed into another unit. 
+  void morphDrone(BWAPI::Unit unit);
 
-  /** Called each update to issue commands from all active agents. */
+  // Called each update to issue commands from all active agents. 
   void computeActions();
 
-  /** Returns the current number of active worker units. */
+  // Returns the current number of active worker units. 
   int getNoWorkers();
 
-  /** Returns the current number of active workers gathering minerals. */
+  // Returns the current number of active workers gathering minerals. 
   int noMiningWorkers();
 
-  /** Returns the closest free worker from the specified position, or nullptr if not found. */
-  BaseAgent* findClosestFreeWorker(TilePosition pos);
+  // Returns the closest free worker from the specified position, or nullptr if not found. 
+  BaseAgent* findClosestFreeWorker(BWAPI::TilePosition pos);
 
-  /** Checks if any agent has the task to repair this specified agent. */
+  // Checks if any agent has the task to repair this specified agent. 
   bool isAnyAgentRepairingThisAgent(BaseAgent* repairedAgent);
 
-  /** Checks if we have a completed building of the specified type */
-  bool hasBuilding(UnitType type);
+  // Checks if we have a completed building of the specified type 
+  bool hasBuilding(BWAPI::UnitType type);
 
-  /** Returns the number of own units of a specific type. Includes units
-   * currently being constructed. */
-  int countNoUnits(UnitType type);
+  // Returns the number of own units of a specific type. Includes units
+  // currently being constructed. 
+  int countNoUnits(BWAPI::UnitType type);
 
-  /** Returns the number of own units of a specific type. Does not include units
-   * in construction. */
-  int countNoFinishedUnits(UnitType type);
+  // Returns the number of own units of a specific type. Does not include units
+  // in construction. 
+  int countNoFinishedUnits(BWAPI::UnitType type);
 
-  /** Returns the number of units or buildings of the specified type
-   * that currently is in production. */
-  int noInProduction(UnitType type);
+  // Returns the number of units or buildings of the specified type
+  // that currently is in production. 
+  int noInProduction(BWAPI::UnitType type);
 
-  /** Returns the number of bases the player has. */
+  // Returns the number of bases the player has. 
   int countNoBases();
 
-  /** Returns a list of all agents in the container. */
+  // Returns a list of all agents in the container. 
   const Agentset& getAgents() const;
 
-  /** Returns a reference to the agent associated with a specific unit,
-   * or nullptr if the unit doesn't exist. */
+  // Returns a reference to the agent associated with a specific unit,
+  // or nullptr if the unit doesn't exist. 
   BaseAgent* getAgent(int unitID);
 
-  /** Returns the closest agent in the list of the specified type, or nullptr if not found. */
-  BaseAgent* getClosestAgent(TilePosition pos, UnitType type);
+  // Returns the closest agent in the list of the specified type, or nullptr if not found. 
+  BaseAgent* getClosestAgent(BWAPI::TilePosition pos, BWAPI::UnitType type);
 
-  /** Returns the closest base agent (Terran Command Center, Protoss Nexus), in the list,
-   * or nullptr if not found. */
-  BaseAgent* getClosestBase(TilePosition pos);
+  // Returns the closest base agent (Terran Command Center, Protoss Nexus), in the list,
+  // or nullptr if not found. 
+  BaseAgent* getClosestBase(BWAPI::TilePosition pos);
 
-  /** Checks if a worker is targeting the specified target. */
-  bool workerIsTargeting(Unit target);
+  // Checks if a worker is targeting the specified target. 
+  bool workerIsTargeting(BWAPI::Unit target);
 
-  /** Removes inactive agents from the container. Shouldn't be called too often. */
+  // Removes inactive agents from the container. Shouldn't be called too often. 
   void cleanup();
 };
 

@@ -2,6 +2,9 @@
 #include "../Pathfinding/NavigationAgent.h"
 #include "../Commander/Commander.h"
 #include "../Commander/Squad.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 TransportAgent::TransportAgent(Unit mUnit) {
   unit = mUnit;
@@ -15,8 +18,8 @@ TransportAgent::TransportAgent(Unit mUnit) {
 }
 
 int TransportAgent::getCurrentLoad() {
-  Squad* sq = Commander::getInstance()->getSquad(squadID);
-  if (sq != nullptr) {
+  auto sq = rnp::commander()->getSquad(squadID);
+  if (sq) {
     int load = 0;
     Agentset agents = sq->getMembers();
     for (auto& a : agents) {
@@ -46,8 +49,8 @@ BaseAgent* TransportAgent::findUnitToLoad(int spaceLimit) {
   BaseAgent* agent = nullptr;
   double bestDist = 100000;
 
-  Squad* sq = Commander::getInstance()->getSquad(squadID);
-  if (sq != nullptr) {
+  auto sq = rnp::commander()->getSquad(squadID);
+  if (sq) {
     Agentset agents = sq->getMembers();
     for (auto& a : agents) {
       if (isValidLoadUnit(a)) {

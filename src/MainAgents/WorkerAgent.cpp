@@ -5,6 +5,9 @@
 #include "../Managers/Constructor.h"
 #include "../Commander/Commander.h"
 #include "../Managers/ResourceManager.h"
+#include "Glob.h"
+
+using namespace BWAPI;
 
 WorkerAgent::WorkerAgent(Unit mUnit) {
   unit = mUnit;
@@ -20,7 +23,7 @@ WorkerAgent::WorkerAgent(Unit mUnit) {
 
 void WorkerAgent::destroyed() {
   if (currentState == MOVE_TO_SPOT || currentState == CONSTRUCT || currentState == FIND_BUILDSPOT) {
-    if (!Constructor::isZerg()) {
+    if (not Constructor::isZerg()) {
       Constructor::getInstance()->handleWorkerDestroyed(toBuild, unitID);
       BuildingPlacer::getInstance()->clearTemp(toBuild, buildSpot);
       setState(GATHER_MINERALS);
@@ -51,8 +54,8 @@ void WorkerAgent::printInfo() {
 }
 
 void WorkerAgent::debug_showGoal() {
-  if (!isAlive()) return;
-  if (!unit->isCompleted()) return;
+  if (not isAlive()) return;
+  if (not unit->isCompleted()) return;
 
   if (currentState == GATHER_MINERALS || currentState == GATHER_GAS) {
     Unit target = unit->getTarget();
@@ -131,11 +134,11 @@ void WorkerAgent::computeSquadWorkerActions() {
   if (checkRepair()) return;
 
   //No repairing. Gather minerals
-  Squad* sq = Commander::getInstance()->getSquad(squadID);
-  if (sq != nullptr) {
+  auto sq = rnp::commander()->getSquad(squadID);
+  if (sq) {
     //If squad is not ative, let the worker gather
     //minerals while not doing any repairs
-    if (!sq->isActive()) {
+    if (not sq->isActive()) {
       if (unit->isIdle()) {
         Unit mineral = BuildingPlacer::getInstance()->findClosestMineral(unit->getTilePosition());
         if (mineral != nullptr) {
@@ -207,7 +210,7 @@ void WorkerAgent::computeActions() {
     if (target == nullptr) cont = false;
     if (target != nullptr && target->getHitPoints() >= target->getInitialHitPoints()) cont = false;
 
-    if (!cont) {
+    if (not cont) {
       reset();
     }
     return;
@@ -230,13 +233,13 @@ void WorkerAgent::computeActions() {
       setState(MOVE_TO_SPOT);
       startBuildFrame = Broodwar->getFrameCount();
       if (toBuild.isResourceDepot()) {
-        Commander::getInstance()->updateGoals();
+        rnp::commander()->updateGoals();
       }
     }
   }
 
   if (currentState == MOVE_TO_SPOT) {
-    if (!buildSpotExplored()) {
+    if (not buildSpotExplored()) {
       Position toMove = Position(buildSpot.x * 32 + 16, buildSpot.y * 32 + 16);
       if (toBuild.isRefinery()) toMove = Position(buildSpot);
       unit->rightClick(toMove);
@@ -244,7 +247,7 @@ void WorkerAgent::computeActions() {
 
     if (buildSpotExplored() && !unit->isConstructing()) {
       bool ok = unit->build(toBuild, buildSpot);
-      if (!ok) {
+      if (not ok) {
         BuildingPlacer::getInstance()->blockPosition(buildSpot);
         BuildingPlacer::getInstance()->clearTemp(toBuild, buildSpot);
         //Cant build at selected spot, get a new one.
@@ -364,7 +367,7 @@ bool WorkerAgent::isConstructing(UnitType type) {
   return false;
 }
 
-/** Returns the state of the agent as text. Good for printouts. */
+// Returns the state of the agent as text. Good for printouts. 
 std::string WorkerAgent::getStateAsText() {
   std::string strReturn = "";
   switch (currentState) {

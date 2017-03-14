@@ -4,28 +4,26 @@
 #include <BWAPI/SetContainer.h>
 #include "../MainAgents/BaseAgent.h"
 
-using namespace BWAPI;
-
 /** Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 
 class BaseLocationItem {
 public:
-  explicit BaseLocationItem(TilePosition pos) {
+  explicit BaseLocationItem(BWAPI::TilePosition pos) {
     baseLocation = pos;
-    frameVisited = Broodwar->getFrameCount();
+    frameVisited = BWAPI::Broodwar->getFrameCount();
   };
 
-  TilePosition baseLocation;
+  BWAPI::TilePosition baseLocation;
   int frameVisited;
 };
 
-class BaseLocationSet : public SetContainer<BaseLocationItem*, std::hash<void*>> {
+class BaseLocationSet : public BWAPI::SetContainer<BaseLocationItem*, std::hash<void*>> {
 public:
 
 };
 
-class Agentset : public SetContainer<BaseAgent*, std::hash<void*>> {
+class Agentset : public BWAPI::SetContainer<BaseAgent*, std::hash<void*>> {
 public:
 
 };

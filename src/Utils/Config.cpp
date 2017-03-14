@@ -2,6 +2,8 @@
 #include "../Managers/Constructor.h"
 #include "../Managers/ExplorationManager.h"
 
+using namespace BWAPI;
+
 Config* Config::instance = nullptr;
 
 Config::Config() {

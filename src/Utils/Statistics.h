@@ -3,9 +3,6 @@
 #include "../Commander/Commander.h"
 #include <BWAPI.h>
 
-using namespace BWAPI;
-
-
 
 /** This class saves results (winner, building score, unit score, kill score) from
  * played games. The results are stored to a semicolon-separated csv file in the bwapi-data/AI/
@@ -23,18 +20,18 @@ private:
   bool active;
 
 public:
-  /** Returns the instance of the class. */
+  // Returns the instance of the class. 
   static Statistics* getInstance();
 
-  /** Destructor */
+  // Destructor 
   ~Statistics();
 
-  /** Saves result from a game to file. */
+  // Saves result from a game to file. 
   void saveResult(int win);
 
-  /** Enable statistics. */
+  // Enable statistics. 
   void enable();
 
-  /** Disable statistics. */
+  // Disable statistics. 
   void disable();
 };

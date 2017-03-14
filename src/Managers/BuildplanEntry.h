@@ -1,8 +1,6 @@
 #pragma once
 
 #include <BWAPI.h>
-using namespace BWAPI;
-
 
 /** Helper class for storing buildings/techs/upgrades to construct.
  *
@@ -13,14 +11,14 @@ class BuildplanEntry {
 private:
 
 public:
-  BuildplanEntry(UnitType cType, int cSupply);
-  BuildplanEntry(UpgradeType cType, int cSupply);
-  BuildplanEntry(TechType cType, int cSupply);
+  BuildplanEntry(BWAPI::UnitType cType, int cSupply);
+  BuildplanEntry(BWAPI::UpgradeType cType, int cSupply);
+  BuildplanEntry(BWAPI::TechType cType, int cSupply);
 
   int type;
-  UnitType unittype;
-  UpgradeType upgradetype;
-  TechType techtype;
+  BWAPI::UnitType unittype;
+  BWAPI::UpgradeType upgradetype;
+  BWAPI::TechType techtype;
   int supply;
 
   static const int BUILDING = 0;

@@ -17,12 +17,14 @@
 
 #include <Shlwapi.h>
 #include "mapPrinter.h"
+#include "Glob.h"
 
 using namespace BWAPI;
 
 //bool analyzed;
 //bool analysis_just_finished;
 bool leader = false;
+OpprimoBot* OpprimoBot::singleton_ = nullptr;
 
 void OpprimoBot::onStart() {
   try {
@@ -49,7 +51,7 @@ void OpprimoBot::onStart() {
     bool startingLocationsOK = bwem_.FindBasesForStartingLocations();
     assert(startingLocationsOK);
 
-    BWEM::utils::MapPrinter::Initialize(&bwem_);
+//    BWEM::utils::MapPrinter::Initialize(&bwem_);
 //    BWEM::utils::printMap(theMap);      // will print the map into the file <StarCraftFolder>bwapi-data/map.bmp
 //    BWEM::utils::pathExample(theMap);   // add to the printed map a path between two starting locations
 
@@ -66,11 +68,16 @@ void OpprimoBot::onStart() {
     Upgrader::getInstance();
     ResourceManager::getInstance();
     Pathfinder::getInstance();
+    commander_ = StrategySelector::getInstance()->getStrategy();
 
     //Fill pathfinder
-    for (auto base : getBaseLocations()) {
-      auto pos = base->getTilePosition();
-      Pathfinder::getInstance()->requestPath(Broodwar->self()->getStartLocation(), pos);
+    for (auto& area : bwem_.Areas()) {
+      for (auto& base : area.Bases()) {
+        auto pos = base.Center();
+        Pathfinder::getInstance()->requestPath(
+          Broodwar->self()->getStartLocation(), 
+          TilePosition(pos));
+      }
     }
 
     MapManager::getInstance();
@@ -85,8 +92,8 @@ void OpprimoBot::onStart() {
     Broodwar->setCommandOptimizationLevel(2); //0--3
 
     //Debug mode. Active panels.
-    Commander::getInstance()->toggleSquadsDebug();
-    Commander::getInstance()->toggleBuildplanDebug();
+    commander_->toggleSquadsDebug();
+    commander_->toggleBuildplanDebug();
     Upgrader::getInstance()->toggleDebug();
     loop.toggleUnitDebug();
     //loop.toggleBPDebug();
@@ -115,7 +122,6 @@ void OpprimoBot::gameStopped() {
   delete BuildingPlacer::getInstance();
   delete ResourceManager::getInstance();
   delete Constructor::getInstance();
-  delete Commander::getInstance();
   delete ExplorationManager::getInstance();
   delete NavigationAgent::getInstance();
   delete StrategySelector::getInstance();
@@ -123,6 +129,7 @@ void OpprimoBot::gameStopped() {
 }
 
 OpprimoBot::OpprimoBot(): BWAPI::AIModule(), bwem_(BWEM::Map::Instance()) {
+  singleton_ = this;
 }
 
 void OpprimoBot::onEnd(bool isWinner) {
@@ -142,11 +149,11 @@ void OpprimoBot::onEnd(bool isWinner) {
 void OpprimoBot::onFrame() {
   Profiler::getInstance()->start("OnFrame");
 
-  if (!running) {
+  if (not running) {
     //Game over. Do nothing.
     return;
   }
-  if (!Broodwar->isInGame()) {
+  if (not Broodwar->isInGame()) {
     //Not in game. Do nothing.
     gameStopped();
     return;
@@ -172,7 +179,7 @@ void OpprimoBot::onFrame() {
 
 void OpprimoBot::onSendText(std::string text) {
   if (text == "a") {
-    Commander::getInstance()->forceAttack();
+    rnp::commander()->forceAttack();
   }
   else if (text == "p") {
     profile = !profile;
@@ -226,10 +233,10 @@ void OpprimoBot::onSendText(std::string text) {
     Upgrader::getInstance()->toggleDebug();
   }
   else if (text == "s") {
-    Commander::getInstance()->toggleSquadsDebug();
+    rnp::commander()->toggleSquadsDebug();
   }
   else if (text == "b") {
-    Commander::getInstance()->toggleBuildplanDebug();
+    rnp::commander()->toggleBuildplanDebug();
   }
   else if (text == "i") {
     loop.toggleUnitDebug();
@@ -261,7 +268,7 @@ void OpprimoBot::onUnitDiscover(BWAPI::Unit unit) {
   if (Broodwar->isReplay() || Broodwar->getFrameCount() <= 1) return;
 
   if (unit->getPlayer()->getID() != Broodwar->self()->getID()) {
-    if (!unit->getPlayer()->isNeutral() && !unit->getPlayer()->isAlly(Broodwar->self())) {
+    if (not unit->getPlayer()->isNeutral() && !unit->getPlayer()->isAlly(Broodwar->self())) {
       ExplorationManager::getInstance()->addSpottedUnit(unit);
     }
   }
@@ -275,7 +282,7 @@ void OpprimoBot::onUnitShow(BWAPI::Unit unit) {
   if (Broodwar->isReplay() || Broodwar->getFrameCount() <= 1) return;
 
   if (unit->getPlayer()->getID() != Broodwar->self()->getID()) {
-    if (!unit->getPlayer()->isNeutral() && !unit->getPlayer()->isAlly(Broodwar->self())) {
+    if (not unit->getPlayer()->isNeutral() && !unit->getPlayer()->isAlly(Broodwar->self())) {
       ExplorationManager::getInstance()->addSpottedUnit(unit);
     }
   }
@@ -297,6 +304,18 @@ void OpprimoBot::onUnitComplete(BWAPI::Unit unit) {
 
 void OpprimoBot::onUnitDestroy(BWAPI::Unit unit) {
   if (Broodwar->isReplay() || Broodwar->getFrameCount() <= 1) return;
+
+  try {
+    if (unit->getType().isMineralField()) {
+      bwem_.OnMineralDestroyed(unit);
+    }
+    else if (unit->getType().isSpecialBuilding()) {
+      bwem_.OnStaticBuildingDestroyed(unit);
+    }
+  }
+  catch (const std::exception& e) {
+    Broodwar << "EXCEPTION: " << e.what() << std::endl;
+  }
 
   loop.unitDestroyed(unit);
 }

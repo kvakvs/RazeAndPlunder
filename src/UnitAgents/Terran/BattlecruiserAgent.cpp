@@ -1,6 +1,8 @@
 #include "BattlecruiserAgent.h"
 #include "../../MainAgents/TargetingAgent.h"
 
+using namespace BWAPI;
+
 bool BattlecruiserAgent::useAbilities() {
   //To prevent order spamming
   lastOrderFrame = Broodwar->getFrameCount();

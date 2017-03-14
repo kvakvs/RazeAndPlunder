@@ -1,8 +1,6 @@
 #pragma once
 
 #include "../StructureAgent.h"
-using namespace BWAPI;
-
 
 /** The HatcheryAgent handles Zerg Hatchery/Lair/Hive buildings.
  *
@@ -14,11 +12,11 @@ using namespace BWAPI;
  */
 class HatcheryAgent : public StructureAgent {
   bool hasSentWorkers = false;
-  bool checkBuildUnit(UnitType type);
+  bool checkBuildUnit(BWAPI::UnitType type);
 
 public:
-  explicit HatcheryAgent(Unit mUnit);
+  explicit HatcheryAgent(BWAPI::Unit mUnit);
 
-  /** Called each update to issue orders. */
+  // Called each update to issue orders. 
   void computeActions() override;
 };

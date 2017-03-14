@@ -1,5 +1,4 @@
-#ifndef __QUEENAGENT_H__
-#define __QUEENAGENT_H__
+#pragma once
 
 #include "../UnitAgent.h"
 
@@ -11,14 +10,11 @@
 class QueenAgent : public UnitAgent {
 
 private:
-	
+
 public:
-	QueenAgent(Unit mUnit) : UnitAgent(mUnit)
-	{
-		agentType = "QueenAgent";
-	}
+  explicit QueenAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
+    agentType = "QueenAgent";
+  }
 
-	bool useAbilities();
+  bool useAbilities() override;
 };
-
-#endif

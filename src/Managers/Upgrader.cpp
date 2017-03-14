@@ -2,6 +2,9 @@
 #include "AgentManager.h"
 #include "ResourceManager.h"
 #include <sstream>
+#include <iso646.h>
+
+using namespace BWAPI;
 
 Upgrader* Upgrader::instance = nullptr;
 
@@ -37,7 +40,7 @@ std::string Upgrader::format(std::string str) {
 }
 
 void Upgrader::printInfo() {
-  if (!debug) return;
+  if (not debug) return;
 
   //Precalc total lines
   int totalLines = 1;
@@ -124,17 +127,17 @@ bool Upgrader::checkUpgrade(BaseAgent* agent) {
 
 bool Upgrader::canUpgrade(UpgradeType type, Unit unit) {
   //1. Check if unit is idle
-  if (!unit->isIdle()) {
+  if (not unit->isIdle()) {
     return false;
   }
 
   //2. Check if unit can do this upgrade
-  if (!Broodwar->canUpgrade(type, unit)) {
+  if (not Broodwar->canUpgrade(type, unit)) {
     return false;
   }
 
   //3. Check if we have enough resources
-  if (!ResourceManager::getInstance()->hasResources(type)) {
+  if (not ResourceManager::getInstance()->hasResources(type)) {
     return false;
   }
 
@@ -168,17 +171,17 @@ bool Upgrader::canResearch(TechType type, Unit unit) {
   }
 
   //1. Check if unit can do this upgrade
-  if (!Broodwar->canResearch(type, unit)) {
+  if (not Broodwar->canResearch(type, unit)) {
     return false;
   }
 
   //2. Check if we have enough resources
-  if (!ResourceManager::getInstance()->hasResources(type)) {
+  if (not ResourceManager::getInstance()->hasResources(type)) {
     return false;
   }
 
   //3. Check if unit is idle
-  if (!unit->isIdle()) {
+  if (not unit->isIdle()) {
     return false;
   }
 

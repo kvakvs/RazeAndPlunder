@@ -1,5 +1,8 @@
 #include "ExplorationManager.h"
 #include "BuildingPlacer.h"
+#include "BWEMUtil.h"
+
+using namespace BWAPI;
 
 ExplorationManager* ExplorationManager::instance = nullptr;
 
@@ -127,7 +130,7 @@ void ExplorationManager::addSpottedUnit(Unit unit) {
       }
     }
 
-    if (!found) {
+    if (not found) {
       enemy.insert(new SpottedObject(unit));
     }
   }
@@ -162,7 +165,7 @@ void ExplorationManager::cleanup() {
             }
           }
         }
-        if (!found) {
+        if (not found) {
           enemy.erase(a);
           cont = true;
           break;
@@ -172,11 +175,11 @@ void ExplorationManager::cleanup() {
   }
 }
 
-int ExplorationManager::getSpottedInfluenceInRegion(const BWEM::Area* region) {
+int ExplorationManager::getSpottedInfluenceInRegion(const BWEM::Area* area) {
   int im = 0;
-  for (auto& a : enemy) {
-    if (region->getPolygon().isInside(a->getPosition())) {
-      im += a->getType().buildScore();
+  for (auto& spotted_object : enemy) {
+    if (rnp::is_inside(*area, spotted_object->getPosition())) {
+      im += spotted_object->getType().buildScore();
     }
   }
   return im;
@@ -200,9 +203,11 @@ TilePosition ExplorationManager::getClosestSpottedBuilding(TilePosition start) {
 }
 
 bool ExplorationManager::canReach(TilePosition a, TilePosition b) {
-  BWEM::Area* ra = BWTA::getRegion(a);
-  BWEM::Area* rb = BWTA::getRegion(b);
-  return (ra->isReachable(rb));
+//  auto ra = bwem_.GetNearestArea(a);
+//  auto rb = bwem_.GetNearestArea(b);
+  auto& bwem = BWEM::Map::Instance();
+  auto possible_path = bwem.GetPath(BWAPI::Position(a), BWAPI::Position(b));
+  return possible_path.empty() == false;
 }
 
 bool ExplorationManager::canReach(BaseAgent* agent, TilePosition b) {
@@ -243,7 +248,7 @@ bool ExplorationManager::enemyIsTerran() {
 }
 
 bool ExplorationManager::enemyIsUnknown() {
-  if (!enemyIsTerran() && !enemyIsProtoss() && !enemyIsZerg()) {
+  if (not enemyIsTerran() && !enemyIsProtoss() && !enemyIsZerg()) {
     return true;
   }
   return false;

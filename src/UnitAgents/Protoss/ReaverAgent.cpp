@@ -1,20 +1,18 @@
 #include "ReaverAgent.h"
 
-bool ReaverAgent::useAbilities()
-{
-	int maxLoad = 5;
-	if (Broodwar->self()->getUpgradeLevel(UpgradeTypes::Reaver_Capacity) > 0)
-	{
-		maxLoad = 10;
-	}
+using namespace BWAPI;
 
-	if(unit->getScarabCount() < maxLoad)
-	{
-		if (unit->train(UnitTypes::Protoss_Scarab))
-		{
-			return true;
-		}
-	}
+bool ReaverAgent::useAbilities() {
+  int maxLoad = 5;
+  if (Broodwar->self()->getUpgradeLevel(UpgradeTypes::Reaver_Capacity) > 0) {
+    maxLoad = 10;
+  }
 
-	return false;
+  if (unit->getScarabCount() < maxLoad) {
+    if (unit->train(UnitTypes::Protoss_Scarab)) {
+      return true;
+    }
+  }
+
+  return false;
 }

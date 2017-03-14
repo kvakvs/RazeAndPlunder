@@ -5,7 +5,29 @@
 #include "Zerg/ZergMain.h"
 #include <fstream>
 
+using namespace BWAPI;
+
 StrategySelector* StrategySelector::instance = nullptr;
+
+bool StrategyStats::matches() {
+  std::string mMapHash = Broodwar->mapHash();
+  std::string mOwnRace = Broodwar->self()->getRace().getName();
+  if (mMapHash == mapHash && mOwnRace == ownRace) {
+    Race oRace = Broodwar->enemy()->getRace();
+    if (oRace.getID() != Races::Unknown.getID()) {
+      //Opponent race is known. Match race as well.
+      if (oRace.getName() == opponentRace) {
+        return true;
+      }
+      else {
+        return false;
+      }
+    }
+    return true;
+  }
+  return false;
+}
+
 
 StrategySelector::StrategySelector() {
   active = true;
@@ -83,7 +105,7 @@ void StrategySelector::selectStrategy() {
   }
 }
 
-Commander* StrategySelector::getStrategy() {
+Commander::Ptr StrategySelector::getStrategy() {
   int tot = 0;
   for (int i = 0; i < (int)stats.size(); i++) {
     if (stats.at(i).matches()) tot++;
@@ -97,17 +119,20 @@ Commander* StrategySelector::getStrategy() {
   else {
     //No strategy has been tested for this combo.
     //Return one of the available strategies.
-    if (Broodwar->self()->getRace().getID() == Races::Terran.getID()) currentStrategyId = "TerranMain";
-    if (Broodwar->self()->getRace().getID() == Races::Protoss.getID()) currentStrategyId = "ProtossMain";
-    if (Broodwar->self()->getRace().getID() == Races::Zerg.getID()) currentStrategyId = "LurkerRush";
+    auto self_race = Broodwar->self()->getRace().getID();
+    if (self_race == Races::Terran.getID()) currentStrategyId = "TerranMain";
+    else if (self_race == Races::Protoss.getID()) currentStrategyId = "ProtossMain";
+    else if (self_race == Races::Zerg.getID()) currentStrategyId = "LurkerRush";
   }
+  Broodwar << "Strategy: " << currentStrategyId << std::endl;
 
   //Get Commander for strategy
-  if (currentStrategyId == "ProtossMain") return new ProtossMain();
-  if (currentStrategyId == "TerranMain") return new TerranMain();
-  if (currentStrategyId == "LurkerRush") return new LurkerRush();
-  if (currentStrategyId == "ZergMain") return new ZergMain();
+  if (currentStrategyId == "ProtossMain") return std::make_shared<ProtossMain>();
+  if (currentStrategyId == "TerranMain") return std::make_shared<TerranMain>();
+  if (currentStrategyId == "LurkerRush") return std::make_shared<LurkerRush>();
+  if (currentStrategyId == "ZergMain") return std::make_shared<ZergMain>();
 
+  bwem_assert(false);
   return nullptr;
 }
 
@@ -120,7 +145,7 @@ void StrategySelector::loadStats() {
 
   std::ifstream inFile;
   inFile.open(filename.c_str());
-  if (!inFile) {
+  if (not inFile) {
     //No file found.
     return;
   }
@@ -221,7 +246,7 @@ std::string StrategySelector::getWriteFilename() {
 }
 
 void StrategySelector::addResult(int win) {
-  if (!active) return;
+  if (not active) return;
 
   std::string opponentRace = Broodwar->enemy()->getRace().getName();
   std::string mapHash = Broodwar->mapHash();
@@ -251,7 +276,7 @@ void StrategySelector::addResult(int win) {
 }
 
 void StrategySelector::saveStats() {
-  if (!active) return;
+  if (not active) return;
 
   //Fill entries in stats file for combinations that have
   //not yet been played.
@@ -269,7 +294,7 @@ void StrategySelector::saveStats() {
       }
     }
 
-    if (!found) {
+    if (not found) {
       //Only fill in the strategies for
       //the same race
       if (ownRace == strategies.at(i).race.getName()) {
@@ -291,7 +316,7 @@ void StrategySelector::saveStats() {
 
   std::ofstream outFile;
   outFile.open(filename.c_str());
-  if (!outFile) {
+  if (not outFile) {
     Broodwar << "Error writing to stats file!" << std::endl;
   }
   else {

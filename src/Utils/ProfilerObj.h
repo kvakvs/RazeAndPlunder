@@ -3,10 +3,6 @@
 #include "../MainAgents/BaseAgent.h"
 //#include <windows.h>
 
-using namespace BWAPI;
-
-
-
 /** Helper class for Profiler. This class represents a profiling of one specific
  * codeblock. Profiling can be done on any number of codeblocks.
  *
@@ -31,25 +27,25 @@ private:
   int timeouts_long;
 
 public:
-  /** Constructor */
+  // Constructor 
   ProfilerObj(std::string mId);
 
-  /** Destructor */
+  // Destructor 
   ~ProfilerObj();
 
-  /** Checks if this object matches the specified id string. */
+  // Checks if this object matches the specified id string. 
   bool matches(std::string mId);
 
-  /** Starts measuring a codeblock. */
+  // Starts measuring a codeblock. 
   void start();
 
-  /** Stops measuring a codeblock. */
+  // Stops measuring a codeblock. 
   void end();
 
-  /** Print data to the ingame chat window. */
+  // Print data to the ingame chat window. 
   void show();
 
-  /** Returns the html string for this profiling object. */
+  // Returns the html string for this profiling object. 
   std::string getDumpStr();
 };
 
