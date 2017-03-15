@@ -14,14 +14,22 @@ include_directories(
 
 add_definitions(
 	/MP /Oi /Zi
-	/MD /Gy
+	/Gy
 	/DNOMINMAX
+	)
+
+# Debug checks, MT Debug DLL, /GS security check
+add_definitions(
+	/RTC1
+	/MDd
+	/GS
+	/fp:fast
 	)
 
 set(SRC_SRC
         src/Glob.cpp src/Glob.h 
         src/BWEMUtil.cpp src/BWEMUtil.h
-        src/AIloop.cpp src/AIloop.h
+        src/BotAILoop.cpp src/BotAILoop.h
         src/Dll.cpp
         src/Influencemap/MapManager.cpp src/Influencemap/MapManager.h
         src/RnpBot.cpp src/RnpBot.h

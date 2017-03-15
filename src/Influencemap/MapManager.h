@@ -1,7 +1,7 @@
 #pragma once
 
 #include <BWAPI.h>
-#include "../Utils/Sets.h"
+#include "Utils/Sets.h"
 
 #include "bwem.h"
 
@@ -35,27 +35,21 @@ public:
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class MapManager {
-  MRegionSet map;
-  BaseLocationSet bases;
-  int lastCallFrame;
+  MRegionSet map_;
+  BaseLocationSet bases_;
+  int last_call_frame_ = 0;
   BWEM::Map& bwem_;
-  static MapManager* instance;
 
 private:
-  MapManager();
-
   MRegion* getMapFor(BWAPI::Position p);
 
   const MRegion* getMapRegion(const BWEM::Area* r);
   const BWEM::ChokePoint* findGuardChokepoint(const MRegion* mr);
-  bool isValidChokepoint(const BWEM::ChokePoint* cp);
+  static bool isValidChokepoint(const BWEM::ChokePoint* cp);
 
 public:
-  // Destructor 
+  MapManager();
   ~MapManager();
-
-  // Returns the instance of the class. 
-  static MapManager* getInstance();
 
   // Updates the influence map. 
   void update();

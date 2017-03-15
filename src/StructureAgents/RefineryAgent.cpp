@@ -1,7 +1,7 @@
 #include "RefineryAgent.h"
-#include "../MainAgents/WorkerAgent.h"
+#include "MainAgents/WorkerAgent.h"
 #include "../Managers/AgentManager.h"
-#include "../Commander/Commander.h"
+#include "Commander/Commander.h"
 #include "Glob.h"
 
 using namespace BWAPI;
@@ -23,7 +23,7 @@ void RefineryAgent::computeActions() {
 
   if ((int)assignedWorkers.size() < rnp::commander()->getWorkersPerRefinery()) {
     if (not unit->isBeingConstructed() && unit->getPlayer()->getID() == Broodwar->self()->getID()) {
-      WorkerAgent* worker = (WorkerAgent*)AgentManager::getInstance()->findClosestFreeWorker(unit->getTilePosition());
+      WorkerAgent* worker = (WorkerAgent*)rnp::agent_manager()->findClosestFreeWorker(unit->getTilePosition());
       if (worker != nullptr) {
         worker->getUnit()->rightClick(unit);
         worker->setState(WorkerAgent::GATHER_GAS);

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Commander/Commander.h"
+#include "Commander/Commander.h"
 #include <BWAPI.h>
 
 
@@ -11,19 +11,11 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class Statistics {
-
-private:
-  static Statistics* instance;
-  Statistics();
-
   std::string getFilename();
   bool active;
 
 public:
-  // Returns the instance of the class. 
-  static Statistics* getInstance();
-
-  // Destructor 
+  Statistics();
   ~Statistics();
 
   // Saves result from a game to file. 

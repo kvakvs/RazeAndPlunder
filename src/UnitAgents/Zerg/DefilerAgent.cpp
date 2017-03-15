@@ -1,12 +1,13 @@
 #include "DefilerAgent.h"
-#include "../../Managers/AgentManager.h"
+#include "Managers/AgentManager.h"
+#include "Glob.h"
 
 using namespace BWAPI;
 
 bool DefilerAgent::useAbilities() {
   //Consume
   if (unit->getEnergy() >= 125 && Broodwar->self()->hasResearched(TechTypes::Consume)) {
-    Agentset agents = AgentManager::getInstance()->getAgents();
+    auto& agents = rnp::agent_manager()->getAgents();
     for (auto& a : agents) {
       if (a->isAlive() && a->isOfType(UnitTypes::Zerg_Zergling)) {
         double dist = a->getUnit()->getTilePosition().getDistance(unit->getTilePosition());
@@ -22,7 +23,7 @@ bool DefilerAgent::useAbilities() {
 
   //Dark Swarm
   if (unit->getEnergy() >= 100 && Broodwar->getFrameCount() - darkSwarmFrame > 100) {
-    Agentset agents = AgentManager::getInstance()->getAgents();
+    auto& agents = rnp::agent_manager()->getAgents();
     for (auto& a : agents) {
       if (a->isOfType(UnitTypes::Zerg_Mutalisk) && a->isAlive()) {
         if (a->isUnderAttack()) {

@@ -10,9 +10,9 @@
 class ScienceVesselAgent : public UnitAgent {
 
 private:
-  BaseAgent* findImportantUnit();
-  bool isImportantUnit(BaseAgent* agent);
-  bool isEMPtarget(BWAPI::Unit e);
+  BaseAgent* findImportantUnit() const;
+  static bool isImportantUnit(BaseAgent* agent);
+  static bool isEMPtarget(BWAPI::Unit e);
   int lastIrradiateFrame;
   int lastShieldFrame;
 

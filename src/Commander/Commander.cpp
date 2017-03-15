@@ -1,5 +1,4 @@
-#include "Commander.h"
-#include "StrategySelector.h"
+#include "Commander/Commander.h"
 #include "Managers/AgentManager.h"
 #include "Managers/ExplorationManager.h"
 #include "Influencemap/MapManager.h"
@@ -11,6 +10,7 @@
 #include <iso646.h>
 
 #include "BWEMUtil.h"
+#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -23,30 +23,23 @@ Commander::Commander() {
 Commander::~Commander() {
 }
 
-//Commander* rnp::commander() {
-//  if (singleton_ == nullptr) {
-//    singleton_ = StrategySelector::getInstance()->getStrategy();
-//  }
-//  return singleton_;
-//}
-
 void Commander::checkBuildplan() {
   int cSupply = Broodwar->self()->supplyUsed() / 2;
 
   for (int i = 0; i < (int)buildplan_.size(); i++) {
-    if (cSupply >= buildplan_.at(i).supply && Constructor::getInstance()->buildPlanLength() == 0) {
+    if (cSupply >= buildplan_.at(i).supply && rnp::constructor()->buildPlanLength() == 0) {
       if (buildplan_.at(i).type == BuildplanEntry::BUILDING) {
-        Constructor::getInstance()->addBuilding(buildplan_.at(i).unittype);
+        rnp::constructor()->addBuilding(buildplan_.at(i).unittype);
         buildplan_.erase(buildplan_.begin() + i);
         i--;
       }
       else if (buildplan_.at(i).type == BuildplanEntry::UPGRADE) {
-        Upgrader::getInstance()->addUpgrade(buildplan_.at(i).upgradetype);
+        rnp::upgrader()->addUpgrade(buildplan_.at(i).upgradetype);
         buildplan_.erase(buildplan_.begin() + i);
         i--;
       }
       else if (buildplan_.at(i).type == BuildplanEntry::TECH) {
-        Upgrader::getInstance()->addTech(buildplan_.at(i).techtype);
+        rnp::upgrader()->addTech(buildplan_.at(i).techtype);
         buildplan_.erase(buildplan_.begin() + i);
         i--;
       }
@@ -55,15 +48,15 @@ void Commander::checkBuildplan() {
 }
 
 void Commander::cutWorkers() {
-  workers_num_ = AgentManager::getInstance()->getNoWorkers();
+  workers_num_ = rnp::agent_manager()->getNoWorkers();
   Broodwar << "Worker production halted" << std::endl;
 }
 
-int Commander::getNoWorkers() {
+int Commander::getNoWorkers() const {
   return workers_num_;
 }
 
-int Commander::getWorkersPerRefinery() {
+int Commander::getWorkersPerRefinery() const {
   return workers_per_refinery_;
 }
 
@@ -141,7 +134,7 @@ void Commander::computeActionsBase() {
 
   if (current_state_ == State::DEFEND) {
     //Check if we need to attack/kite enemy workers in the base
-    checkWorkersAttack(AgentManager::getInstance()->getClosestBase(Broodwar->self()->getStartLocation()));
+    checkWorkersAttack(rnp::agent_manager()->getClosestBase(Broodwar->self()->getStartLocation()));
 
     TilePosition defSpot = findChokePoint();
     for (auto& s : squads_) {
@@ -200,7 +193,7 @@ void Commander::computeActionsBase() {
 }
 
 void Commander::checkNoSquadUnits() {
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     bool notAssigned = true;
     if (not a->isAlive()) notAssigned = false;
@@ -228,9 +221,9 @@ void Commander::assignUnit(BaseAgent* agent) {
 }
 
 TilePosition Commander::findAttackPosition() const {
-  TilePosition regionPos = MapManager::getInstance()->findAttackPosition();
+  TilePosition regionPos = rnp::map_manager()->findAttackPosition();
   if (regionPos.x != -1) {
-    TilePosition toAttack = ExplorationManager::getInstance()->getClosestSpottedBuilding(regionPos);
+    TilePosition toAttack = rnp::exploration()->getClosestSpottedBuilding(regionPos);
     if (toAttack.x != -1) {
       return toAttack;
     }
@@ -299,7 +292,7 @@ bool Commander::checkWorkersAttack(BaseAgent* base) const {
       double dist = u->getTilePosition().getDistance(base->getUnit()->getTilePosition());
       if (dist <= 12) {
         //Enemy unit discovered. Attack with some workers.
-        Agentset agents = AgentManager::getInstance()->getAgents();
+        auto& agents = rnp::agent_manager()->getAgents();
         for (auto& a : agents) {
           if (a->isAlive() && a->isWorker() && noAttack < 1) {
             WorkerAgent* wAgent = static_cast<WorkerAgent*>(a);
@@ -341,8 +334,8 @@ void Commander::checkRemovableObstacles() {
       }
     }
     if (mineral != nullptr) {
-      if (not AgentManager::getInstance()->workerIsTargeting(mineral)) {
-        BaseAgent* worker = AgentManager::getInstance()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
+      if (not rnp::agent_manager()->workerIsTargeting(mineral)) {
+        BaseAgent* worker = rnp::agent_manager()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
         if (worker != nullptr) {
           worker->getUnit()->rightClick(mineral);
           removal_done_ = true;
@@ -354,7 +347,7 @@ void Commander::checkRemovableObstacles() {
 
 
 TilePosition Commander::findChokePoint() {
-  const BWEM::ChokePoint* bestChoke = MapManager::getInstance()->getDefenseLocation();
+  const BWEM::ChokePoint* bestChoke = rnp::map_manager()->getDefenseLocation();
 
   TilePosition guardPos = Broodwar->self()->getStartLocation();
   if (bestChoke != nullptr) {
@@ -403,7 +396,7 @@ TilePosition Commander::findDefensePos(const BWEM::ChokePoint* choke) const {
     if (Constructor::isProtoss()) defType = UnitTypes::Protoss_Photon_Cannon;
     if (Constructor::isTerran()) defType = UnitTypes::Terran_Bunker;
 
-    BaseAgent* turret = AgentManager::getInstance()->getClosestAgent(defPos, defType);
+    BaseAgent* turret = rnp::agent_manager()->getClosestAgent(defPos, defType);
     if (turret != nullptr) {
       TilePosition tPos = turret->getUnit()->getTilePosition();
       double dist = tPos.getDistance(defPos);
@@ -436,7 +429,8 @@ bool Commander::needUnit(UnitType type) {
 }
 
 bool Commander::assistBuilding() {
-  for (auto& a : AgentManager::getInstance()->getAgents()) {
+  auto& agents = rnp::agent_manager()->getAgents();
+  for (auto& a : agents) {
     if (a->isAlive() && a->isBuilding() && a->isUnderAttack()) {
       for (auto& s : squads_) {
         bool ok = true;
@@ -456,7 +450,7 @@ bool Commander::assistBuilding() {
 }
 
 bool Commander::assistWorker() {
-  for (auto& a : AgentManager::getInstance()->getAgents()) {
+  for (auto& a : rnp::agent_manager()->getAgents()) {
     if (a->isAlive() && a->isWorker() && a->isUnderAttack()) {
       for (auto& s : squads_) {
         bool ok = true;
@@ -496,9 +490,9 @@ void Commander::forceAttack() {
 
 void Commander::finishBuild(BaseAgent* baseAgent) {
   //First we must check if someone is repairing this building
-  if (AgentManager::getInstance()->isAnyAgentRepairingThisAgent(baseAgent)) return;
+  if (rnp::agent_manager()->isAnyAgentRepairingThisAgent(baseAgent)) return;
 
-  BaseAgent* repUnit = AgentManager::getInstance()->findClosestFreeWorker(baseAgent->getUnit()->getTilePosition());
+  BaseAgent* repUnit = rnp::agent_manager()->findClosestFreeWorker(baseAgent->getUnit()->getTilePosition());
   if (repUnit != nullptr) {
     WorkerAgent* w = (WorkerAgent*)repUnit;
     w->assignToRepair(baseAgent->getUnit());
@@ -506,7 +500,7 @@ void Commander::finishBuild(BaseAgent* baseAgent) {
 }
 
 bool Commander::checkDamagedBuildings() {
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive() && a->isBuilding() && a->isDamaged()) {
       Unit builder = a->getUnit()->getBuildUnit();
@@ -617,13 +611,13 @@ void Commander::printInfo() {
     }
     if (no == 0) no++;
     Broodwar->drawLineScreen(300, 40 + no * 16, 480, 40 + no * 16, Colors::Orange);
-    Constructor::getInstance()->printInfo();
+    rnp::constructor()->printInfo();
   }
 }
 
 int Commander::addBunkerSquad() {
   auto bSquad = std::make_shared<Squad>(
-    100 + AgentManager::getInstance()->countNoUnits(UnitTypes::Terran_Bunker), 
+    100 + rnp::agent_manager()->countNoUnits(UnitTypes::Terran_Bunker), 
     Squad::SquadType::BUNKER, 
     "BunkerSquad", 
     5);

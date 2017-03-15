@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 #include "bwem.h"
 
 struct Corners {
@@ -24,17 +24,30 @@ struct Corners {
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class BuildingPlacer {
-  static BuildingPlacer* instance;
-  int range;
-  int w;
-  int h;
-  int** cover_map;
+public:
+  enum class TileType {
+    // Tile is buildable. 
+    BUILDABLE = 1,
+    // Tile is blocked and cannot be built on. 
+    BLOCKED = 0,
+    // Tile is temporary blocked and cannot be built on. 
+    TEMPBLOCKED = 4,
+    // Tile contains a mineral vein. 
+    MINERAL = 2,
+    // Tile contains a gas vein. 
+    GAS = 3
+  }; 
+
+private:
+  int range_;
+  int w_;
+  int h_;
+  TileType** cover_map_;
   BWEM::Map& bwem_;
 
-  BuildingPlacer();
-
-  Corners getCorners(BWAPI::Unit unit);
-  Corners getCorners(BWAPI::UnitType type, BWAPI::TilePosition center);
+private:
+  Corners getCorners(BWAPI::Unit unit) const;
+  Corners getCorners(BWAPI::UnitType type, BWAPI::TilePosition center) const;
 
   BWAPI::TilePosition findSpotAtSide(BWAPI::UnitType toBuild, BWAPI::TilePosition start, BWAPI::TilePosition end);
   bool canBuildAt(BWAPI::UnitType toBuild, BWAPI::TilePosition pos);
@@ -44,20 +57,17 @@ class BuildingPlacer {
 
   BWAPI::Unit findWorker(BWAPI::TilePosition spot);
 
-  bool suitableForDetector(BWAPI::TilePosition pos);
+  static bool suitableForDetector(BWAPI::TilePosition pos);
 
-  bool baseUnderConstruction(BaseAgent* base);
-  bool isDefenseBuilding(BWAPI::UnitType toBuild);
+  static bool baseUnderConstruction(BaseAgent* base);
+  static bool isDefenseBuilding(BWAPI::UnitType toBuild);
   BWAPI::TilePosition findBuildSpot(BWAPI::UnitType toBuild, BWAPI::TilePosition start);
 
-  BWAPI::Unit hasMineralNear(BWAPI::TilePosition pos);
+  static BWAPI::Unit hasMineralNear(BWAPI::TilePosition pos);
 
 public:
-  // Destructor 
+  BuildingPlacer();
   ~BuildingPlacer();
-
-  // Returns the instance of the class. 
-  static BuildingPlacer* getInstance();
 
   // Adds a newly constructed building to the cover map. 
   void addConstructedBuilding(BWAPI::Unit unit);
@@ -95,26 +105,15 @@ public:
   BWAPI::TilePosition findClosestGasWithoutRefinery(BWAPI::UnitType toBuild, BWAPI::TilePosition start);
 
   // Searches for a spot to build a refinery at. Returns TilePosition(-1, -1) if no spot was found.
-  BWAPI::TilePosition searchRefinerySpot();
+  BWAPI::TilePosition searchRefinerySpot() const;
 
   // Returns a position of a suitable site for expansion, i.e. new bases. 
-  BWAPI::TilePosition findExpansionSite();
+  BWAPI::TilePosition findExpansionSite() const;
 
   // Finds a mineral to gather from. 
   BWAPI::Unit findClosestMineral(BWAPI::TilePosition workerPos);
 
   // Shows debug info on screen. 
-  void debug();
-
-  // Tile is buildable. 
-  static const int BUILDABLE = 1;
-  // Tile is blocked and cannot be built on. 
-  static const int BLOCKED = 0;
-  // Tile is temporary blocked and cannot be built on. 
-  static const int TEMPBLOCKED = 4;
-  // Tile contains a mineral vein. 
-  static const int MINERAL = 2;
-  // Tile contains a gas vein. 
-  static const int GAS = 3;
+  void debug() const;  
 };
 

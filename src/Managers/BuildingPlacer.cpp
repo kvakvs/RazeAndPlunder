@@ -4,39 +4,37 @@
 #include "../Pathfinding/Pathfinder.h"
 #include "Constructor.h"
 #include "../Influencemap/MapManager.h"
-#include "../Commander/Commander.h"
-#include "../Utils/Profiler.h"
+#include "Commander/Commander.h"
+#include "Utils/Profiler.h"
 #include "BWEMUtil.h"
 #include "Glob.h"
 
 using namespace BWAPI;
 
-BuildingPlacer* BuildingPlacer::instance = nullptr;
-
 BuildingPlacer::BuildingPlacer() : bwem_(BWEM::Map::Instance()) {
-  w = Broodwar->mapWidth();
-  h = Broodwar->mapHeight();
-  range = 40;
+  w_ = Broodwar->mapWidth();
+  h_ = Broodwar->mapHeight();
+  range_ = 40;
 
   Unit worker = findWorker(Broodwar->self()->getStartLocation());
 
-  cover_map = new int*[w];
-  for (int i = 0; i < w; i++) {
-    cover_map[i] = new int[h];
+  cover_map_ = new TileType*[w_];
+  for (int i = 0; i < w_; i++) {
+    cover_map_[i] = new TileType[h_];
 
     //Fill from static map and Region connectability
-    for (int j = 0; j < h; j++) {
-      int ok = BUILDABLE;
+    for (int j = 0; j < h_; j++) {
+      auto ok = TileType::BUILDABLE;
       if (not Broodwar->isBuildable(i, j)) {
-        ok = BLOCKED;
+        ok = TileType::BLOCKED;
       }
 
-      cover_map[i][j] = ok;
+      cover_map_[i][j] = ok;
     }
   }
 
   //Fill from current agents
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isBuilding()) {
       Corners c = getCorners(a->getUnit());
@@ -53,7 +51,7 @@ BuildingPlacer::BuildingPlacer() : bwem_(BWEM::Map::Instance()) {
     c.y2 = u->getTilePosition().y + 2;
     fill(c);
 
-    cover_map[c.x1 + 2][c.y1 + 2] = MINERAL;
+    cover_map_[c.x1 + 2][c.y1 + 2] = TileType::MINERAL;
   }
 
   //Fill from gas
@@ -65,7 +63,7 @@ BuildingPlacer::BuildingPlacer() : bwem_(BWEM::Map::Instance()) {
     c.y2 = u->getTilePosition().y + 3;
     fill(c);
 
-    cover_map[c.x1 + 2][c.y1 + 2] = GAS;
+    cover_map_[c.x1 + 2][c.y1 + 2] = TileType::GAS;
   }
 
   // Fill from narrow chokepoints
@@ -93,24 +91,14 @@ BuildingPlacer::BuildingPlacer() : bwem_(BWEM::Map::Instance()) {
 }
 
 BuildingPlacer::~BuildingPlacer() {
-  for (int i = 0; i < w; i++) {
-    delete[] cover_map[i];
+  for (int i = 0; i < w_; i++) {
+    delete[] cover_map_[i];
   }
-  delete[] cover_map;
-
-  instance = nullptr;
+  delete[] cover_map_;
 }
-
-BuildingPlacer* BuildingPlacer::getInstance() {
-  if (instance == nullptr) {
-    instance = new BuildingPlacer();
-  }
-  return instance;
-}
-
 
 Unit BuildingPlacer::findWorker(TilePosition spot) {
-  BaseAgent* worker = AgentManager::getInstance()->findClosestFreeWorker(spot);
+  BaseAgent* worker = rnp::agent_manager()->findClosestFreeWorker(spot);
   if (worker != nullptr) {
     return worker->getUnit();
   }
@@ -118,7 +106,7 @@ Unit BuildingPlacer::findWorker(TilePosition spot) {
 }
 
 bool BuildingPlacer::positionFree(TilePosition pos) {
-  if (cover_map[pos.x][pos.y] == BUILDABLE) {
+  if (cover_map_[pos.x][pos.y] == TileType::BUILDABLE) {
     return true;
   }
   return false;
@@ -129,7 +117,7 @@ void BuildingPlacer::blockPosition(TilePosition buildSpot) {
     //Error check
     return;
   }
-  cover_map[buildSpot.x][buildSpot.y] = BLOCKED;
+  cover_map_[buildSpot.x][buildSpot.y] = TileType::BLOCKED;
 }
 
 bool BuildingPlacer::canBuild(UnitType toBuild, TilePosition buildSpot) {
@@ -138,8 +126,8 @@ bool BuildingPlacer::canBuild(UnitType toBuild, TilePosition buildSpot) {
   //Step 1: Check BuildingPlacer.
   for (int x = c.x1; x <= c.x2; x++) {
     for (int y = c.y1; y <= c.y2; y++) {
-      if (x >= 0 && x < w && y >= 0 && y < h) {
-        if (cover_map[x][y] != BUILDABLE) {
+      if (x >= 0 && x < w_ && y >= 0 && y < h_) {
+        if (cover_map_[x][y] != TileType::BUILDABLE) {
           //Cant build here.
           return false;
         }
@@ -164,7 +152,7 @@ bool BuildingPlacer::canBuild(UnitType toBuild, TilePosition buildSpot) {
   }
 
   //Step 4: Check any units on tile
-  /*if (AgentManager::getInstance()->unitsInArea(buildSpot, toBuild.tileWidth(), toBuild.tileHeight(), worker->getID()))
+  /*if (rnp::agent_manager()->unitsInArea(buildSpot, toBuild.tileWidth(), toBuild.tileHeight(), worker->getID()))
   {
     return false;
   }*/
@@ -178,7 +166,7 @@ bool BuildingPlacer::canBuild(UnitType toBuild, TilePosition buildSpot) {
     }
 
     //Spread out Pylons
-    for (auto& a : AgentManager::getInstance()->getAgents()) {
+    for (auto& a : rnp::agent_manager()->getAgents()) {
       if (a->isAlive() && a->getUnitType().getID() == UnitTypes::Protoss_Pylon.getID()) {
         if (a->getUnit()->getTilePosition().getDistance(buildSpot) <= 3) {
           return false;
@@ -212,8 +200,8 @@ bool BuildingPlacer::canBuild(UnitType toBuild, TilePosition buildSpot) {
 }
 
 TilePosition BuildingPlacer::findBuildSpot(UnitType toBuild) {
-  range = 40;
-  if (toBuild.getID() == UnitTypes::Protoss_Pylon.getID()) range = 80;
+  range_ = 40;
+  if (toBuild.getID() == UnitTypes::Protoss_Pylon.getID()) range_ = 80;
 
   //Refinery
   if (toBuild.isRefinery()) {
@@ -223,7 +211,7 @@ TilePosition BuildingPlacer::findBuildSpot(UnitType toBuild) {
 
   //If we find unpowered buildings, build a Pylon there
   if (BaseAgent::isOfType(toBuild, UnitTypes::Protoss_Pylon)) {
-    Agentset agents = AgentManager::getInstance()->getAgents();
+    auto& agents = rnp::agent_manager()->getAgents();
     for (auto& a : agents) {
       if (a->isAlive()) {
         Unit cUnit = a->getUnit();
@@ -248,7 +236,7 @@ TilePosition BuildingPlacer::findBuildSpot(UnitType toBuild) {
 
   //Base buildings.
   if (toBuild.isResourceDepot()) {
-    TilePosition start = ExplorationManager::getInstance()->searchExpansionSite();
+    TilePosition start = rnp::exploration()->searchExpansionSite();
     if (start.x != -1) {
       //Expansion site found. Build close to it.
       TilePosition spot = findBuildSpot(toBuild, start);
@@ -257,7 +245,7 @@ TilePosition BuildingPlacer::findBuildSpot(UnitType toBuild) {
   }
 
   //General building. Search for spot around bases
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive() && a->getUnitType().isResourceDepot() && !baseUnderConstruction(a)) {
       TilePosition start = a->getUnit()->getTilePosition();
@@ -317,8 +305,8 @@ TilePosition BuildingPlacer::findSpotAtSide(UnitType toBuild, TilePosition start
 }
 
 bool BuildingPlacer::canBuildAt(UnitType toBuild, TilePosition pos) {
-  int maxW = w - toBuild.tileWidth() - 1;
-  int maxH = h - toBuild.tileHeight() - 1;
+  int maxW = w_ - toBuild.tileWidth() - 1;
+  int maxH = h_ - toBuild.tileHeight() - 1;
 
   //Out of bounds check
   if (pos.x >= 0 && pos.x < maxW && pos.y >= 0 && pos.y < maxH) {
@@ -375,7 +363,7 @@ TilePosition BuildingPlacer::findBuildSpot(UnitType toBuild, TilePosition start)
     }
 
     cDiff++;
-    if (cDiff > range) found = true;
+    if (cDiff > range_) found = true;
   }
 
   return spot;
@@ -404,12 +392,12 @@ void BuildingPlacer::buildingDestroyed(Unit unit) {
 void BuildingPlacer::fill(Corners c) {
   for (int x = c.x1; x <= c.x2; x++) {
     for (int y = c.y1; y <= c.y2; y++) {
-      if (x >= 0 && x < w && y >= 0 && y < h) {
-        if (cover_map[x][y] == BUILDABLE) {
-          cover_map[x][y] = BLOCKED;
+      if (x >= 0 && x < w_ && y >= 0 && y < h_) {
+        if (cover_map_[x][y] == TileType::BUILDABLE) {
+          cover_map_[x][y] = TileType::BLOCKED;
         }
-        if (cover_map[x][y] == TEMPBLOCKED) {
-          cover_map[x][y] = BLOCKED;
+        if (cover_map_[x][y] == TileType::TEMPBLOCKED) {
+          cover_map_[x][y] = TileType::BLOCKED;
         }
       }
     }
@@ -421,9 +409,9 @@ void BuildingPlacer::fillTemp(UnitType toBuild, TilePosition buildSpot) {
 
   for (int x = c.x1; x <= c.x2; x++) {
     for (int y = c.y1; y <= c.y2; y++) {
-      if (x >= 0 && x < w && y >= 0 && y < h) {
-        if (cover_map[x][y] == BUILDABLE) {
-          cover_map[x][y] = TEMPBLOCKED;
+      if (x >= 0 && x < w_ && y >= 0 && y < h_) {
+        if (cover_map_[x][y] == TileType::BUILDABLE) {
+          cover_map_[x][y] = TileType::TEMPBLOCKED;
         }
       }
     }
@@ -433,12 +421,12 @@ void BuildingPlacer::fillTemp(UnitType toBuild, TilePosition buildSpot) {
 void BuildingPlacer::clear(Corners c) {
   for (int x = c.x1; x <= c.x2; x++) {
     for (int y = c.y1; y <= c.y2; y++) {
-      if (x >= 0 && x < w && y >= 0 && y < h) {
-        if (cover_map[x][y] == BLOCKED) {
-          cover_map[x][y] = BUILDABLE;
+      if (x >= 0 && x < w_ && y >= 0 && y < h_) {
+        if (cover_map_[x][y] == TileType::BLOCKED) {
+          cover_map_[x][y] = TileType::BUILDABLE;
         }
-        if (cover_map[x][y] == TEMPBLOCKED) {
-          cover_map[x][y] = BUILDABLE;
+        if (cover_map_[x][y] == TileType::TEMPBLOCKED) {
+          cover_map_[x][y] = TileType::BUILDABLE;
         }
       }
     }
@@ -454,20 +442,20 @@ void BuildingPlacer::clearTemp(UnitType toBuild, TilePosition buildSpot) {
 
   for (int x = c.x1; x <= c.x2; x++) {
     for (int y = c.y1; y <= c.y2; y++) {
-      if (x >= 0 && x < w && y >= 0 && y < h) {
-        if (cover_map[x][y] == TEMPBLOCKED) {
-          cover_map[x][y] = BUILDABLE;
+      if (x >= 0 && x < w_ && y >= 0 && y < h_) {
+        if (cover_map_[x][y] == TileType::TEMPBLOCKED) {
+          cover_map_[x][y] = TileType::BUILDABLE;
         }
       }
     }
   }
 }
 
-Corners BuildingPlacer::getCorners(Unit unit) {
+Corners BuildingPlacer::getCorners(Unit unit) const {
   return getCorners(unit->getType(), unit->getTilePosition());
 }
 
-Corners BuildingPlacer::getCorners(UnitType type, TilePosition center) {
+Corners BuildingPlacer::getCorners(UnitType type, TilePosition center) const {
   int x1 = center.x;
   int y1 = center.y;
   int x2 = x1 + type.tileWidth() - 1;
@@ -500,7 +488,7 @@ Corners BuildingPlacer::getCorners(UnitType type, TilePosition center) {
 TilePosition BuildingPlacer::findRefineryBuildSpot(UnitType toBuild, TilePosition start) {
   TilePosition buildSpot = findClosestGasWithoutRefinery(toBuild, start);
   if (buildSpot.x >= 0) {
-    BaseAgent* base = AgentManager::getInstance()->getClosestBase(buildSpot);
+    BaseAgent* base = rnp::agent_manager()->getClosestBase(buildSpot);
     if (base == nullptr) {
       Broodwar << "No base found" << std::endl;
       return TilePosition(-1, -1);
@@ -522,13 +510,13 @@ TilePosition BuildingPlacer::findClosestGasWithoutRefinery(UnitType toBuild, Til
   TilePosition home = Broodwar->self()->getStartLocation();
   Unit worker = findWorker(start);
 
-  for (int i = 0; i < w; i++) {
-    for (int j = 0; j < h; j++) {
-      if (cover_map[i][j] == GAS) {
+  for (int i = 0; i < w_; i++) {
+    for (int j = 0; j < h_; j++) {
+      if (cover_map_[i][j] == TileType::GAS) {
         TilePosition cPos = TilePosition(i, j);
 
         bool ok = true;
-        Agentset agents = AgentManager::getInstance()->getAgents();
+        auto& agents = rnp::agent_manager()->getAgents();
         for (auto& a : agents) {
           Unit unit = a->getUnit();
           if (unit->getType().isRefinery()) {
@@ -540,7 +528,7 @@ TilePosition BuildingPlacer::findClosestGasWithoutRefinery(UnitType toBuild, Til
         }
         if (ok) {
           if (ExplorationManager::canReach(home, cPos)) {
-            BaseAgent* agent = AgentManager::getInstance()->getClosestBase(cPos);
+            BaseAgent* agent = rnp::agent_manager()->getClosestBase(cPos);
             double dist = agent->getUnit()->getTilePosition().getDistance(cPos);
             if (bestDist == -1 || dist < bestDist) {
               bestDist = dist;
@@ -555,14 +543,14 @@ TilePosition BuildingPlacer::findClosestGasWithoutRefinery(UnitType toBuild, Til
   return bestSpot;
 }
 
-TilePosition BuildingPlacer::searchRefinerySpot() {
-  for (int i = 0; i < w; i++) {
-    for (int j = 0; j < h; j++) {
-      if (cover_map[i][j] == GAS) {
+TilePosition BuildingPlacer::searchRefinerySpot() const {
+  for (int i = 0; i < w_; i++) {
+    for (int j = 0; j < h_; j++) {
+      if (cover_map_[i][j] == TileType::GAS) {
         TilePosition cPos = TilePosition(i, j);
 
         bool found = false;
-        Agentset agents = AgentManager::getInstance()->getAgents();
+        auto& agents = rnp::agent_manager()->getAgents();
         for (auto& a : agents) {
           if (a->getUnitType().isRefinery()) {
             double dist = a->getUnit()->getTilePosition().getDistance(cPos);
@@ -575,7 +563,7 @@ TilePosition BuildingPlacer::searchRefinerySpot() {
         }
 
         if (not found) {
-          BaseAgent* agent = AgentManager::getInstance()->getClosestBase(cPos);
+          BaseAgent* agent = rnp::agent_manager()->getClosestBase(cPos);
           if (agent != nullptr) {
             TilePosition bPos = agent->getUnit()->getTilePosition();
             double dist = bPos.getDistance(cPos);
@@ -594,7 +582,7 @@ TilePosition BuildingPlacer::searchRefinerySpot() {
   return TilePosition(-1, -1);
 }
 
-TilePosition BuildingPlacer::findExpansionSite() {
+TilePosition BuildingPlacer::findExpansionSite() const {
   UnitType baseType = Broodwar->self()->getRace().getCenter();
   double bestDist = 100000;
   TilePosition bestPos = TilePosition(-1, -1);
@@ -609,14 +597,14 @@ TilePosition BuildingPlacer::findExpansionSite() {
         bool taken = false;
 
         //Check if own buildings are close
-        if (MapManager::getInstance()->hasOwnInfluenceIn(pos)) taken = true;
+        if (rnp::map_manager()->hasOwnInfluenceIn(pos)) taken = true;
         //Check if enemy buildings are close
-        if (MapManager::getInstance()->hasEnemyInfluenceIn(pos)) taken = true;
+        if (rnp::map_manager()->hasEnemyInfluenceIn(pos)) taken = true;
 
         //Not taken, calculate ground distance
         if (not taken) {
           if (ExplorationManager::canReach(Broodwar->self()->getStartLocation(), pos)) {
-            double dist = Pathfinder::getInstance()->getDistance(Broodwar->self()->getStartLocation(), pos);
+            double dist = rnp::pathfinder()->getDistance(Broodwar->self()->getStartLocation(), pos);
             if (dist <= bestDist && dist > 0) {
               bestDist = dist;
               bestPos = pos;
@@ -628,7 +616,7 @@ TilePosition BuildingPlacer::findExpansionSite() {
   } // for areas
 
   //Don't build expansions too far away!
-  BaseAgent* base = AgentManager::getInstance()->getClosestBase(bestPos);
+  BaseAgent* base = rnp::agent_manager()->getClosestBase(bestPos);
   if (base != nullptr) {
     double d = base->getUnit()->getTilePosition().getDistance(bestPos);
     if (d >= 140) {
@@ -654,7 +642,7 @@ Unit BuildingPlacer::findClosestMineral(TilePosition workerPos) {
       
       if (cDist < bestDist) {
         //Find closest base
-        BaseAgent* base = AgentManager::getInstance()->getClosestBase(pos);
+        BaseAgent* base = rnp::agent_manager()->getClosestBase(pos);
         if (base != nullptr) {
           double dist = pos.getDistance(base->getUnit()->getTilePosition());
           if (dist <= 12) {
@@ -688,7 +676,7 @@ Unit BuildingPlacer::hasMineralNear(TilePosition pos) {
 }
 
 bool BuildingPlacer::suitableForDetector(TilePosition pos) {
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     UnitType type = a->getUnitType();
     if (a->isAlive() && type.isDetector() && type.isBuilding()) {
@@ -702,13 +690,13 @@ bool BuildingPlacer::suitableForDetector(TilePosition pos) {
   return true;
 }
 
-void BuildingPlacer::debug() {
-  for (int x = 0; x < w; x++) {
-    for (int y = 0; y < h; y++) {
-      if (cover_map[x][y] == TEMPBLOCKED) {
+void BuildingPlacer::debug() const {
+  for (int x = 0; x < w_; x++) {
+    for (int y = 0; y < h_; y++) {
+      if (cover_map_[x][y] == TileType::TEMPBLOCKED) {
         Broodwar->drawBoxMap(x * 32, y * 32, x * 32 + 31, y * 32 + 31, Colors::Green, false);
       }
-      if (cover_map[x][y] == BLOCKED) {
+      if (cover_map_[x][y] == TileType::BLOCKED) {
         Broodwar->drawBoxMap(x * 32, y * 32, x * 32 + 31, y * 32 + 31, Colors::Brown, false);
       }
     }

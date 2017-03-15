@@ -1,4 +1,4 @@
-#include "AIloop.h"
+#include "BotAILoop.h"
 #include "Managers/BuildingPlacer.h"
 #include "Utils/Profiler.h"
 #include "Managers/Upgrader.h"
@@ -12,75 +12,77 @@
 
 using namespace BWAPI;
 
-AIloop::AIloop(): bwem_(BWEM::Map::Instance()) {
-  debugUnit = false;
-  debugPF = false;
-  debugBP = false;
-  debugSQ = -1;
-  debug = true;
+BotAILoop::BotAILoop() : bwem_(BWEM::Map::Instance()) {
+  debug_unit_ = false;
+  debug_pf_ = false;
+  debug_bp_ = false;
+  debug_sq_ = -1;
+  debug_ = true;
+}
 
+void BotAILoop::register_initial_units() {
   for (auto& u : Broodwar->self()->getUnits()) {
-    AgentManager::getInstance()->addAgent(u);
+    rnp::agent_manager()->addAgent(u);
   }
 }
 
-AIloop::~AIloop() {
+BotAILoop::~BotAILoop() {
 
 }
 
-void AIloop::toggleDebug() {
-  debug = !debug;
+void BotAILoop::toggleDebug() {
+  debug_ = !debug_;
 }
 
-void AIloop::toggleUnitDebug() {
-  debugUnit = !debugUnit;
+void BotAILoop::toggleUnitDebug() {
+  debug_unit_ = !debug_unit_;
 }
 
-void AIloop::togglePFDebug() {
-  debugPF = !debugPF;
+void BotAILoop::togglePFDebug() {
+  debug_pf_ = !debug_pf_;
 }
 
-void AIloop::toggleBPDebug() {
-  debugBP = !debugBP;
+void BotAILoop::toggleBPDebug() {
+  debug_bp_ = !debug_bp_;
 }
 
-void AIloop::setDebugSQ(int squadID) {
-  debugSQ = squadID;
+void BotAILoop::setDebugSQ(int squadID) {
+  debug_sq_ = squadID;
 }
 
-void AIloop::computeActions() {
+void BotAILoop::computeActions() {
   rnp::profiler()->start("OnFrame_MapManager");
-  MapManager::getInstance()->update();
+  rnp::map_manager()->update();
   rnp::profiler()->end("OnFrame_MapManager");
   rnp::profiler()->start("OnFrame_Constructor");
-  Constructor::getInstance()->computeActions();
+  rnp::constructor()->computeActions();
   rnp::profiler()->end("OnFrame_Constructor");
   rnp::profiler()->start("OnFrame_Commander");
   rnp::commander()->computeActions();
   rnp::profiler()->end("OnFrame_Commander");
   rnp::profiler()->start("OnFrame_ExplorationManager");
-  ExplorationManager::getInstance()->computeActions();
+  rnp::exploration()->computeActions();
   rnp::profiler()->end("OnFrame_ExplorationManager");
   rnp::profiler()->start("OnFrame_AgentManager");
-  AgentManager::getInstance()->computeActions();
+  rnp::agent_manager()->computeActions();
   rnp::profiler()->end("OnFrame_AgentManager");
 }
 
-void AIloop::addUnit(Unit unit) {
-  AgentManager::getInstance()->addAgent(unit);
+void BotAILoop::addUnit(Unit unit) {
+  rnp::agent_manager()->addAgent(unit);
 
   //Remove from buildorder if this is a building
   if (unit->getType().isBuilding()) {
-    Constructor::getInstance()->unlock(unit->getType());
+    rnp::constructor()->unlock(unit->getType());
   }
 }
 
-void AIloop::morphUnit(Unit unit) {
-  AgentManager::getInstance()->morphDrone(unit);
-  Constructor::getInstance()->unlock(unit->getType());
+void BotAILoop::morphUnit(Unit unit) {
+  rnp::agent_manager()->morphDrone(unit);
+  rnp::constructor()->unlock(unit->getType());
 }
 
-void AIloop::unitDestroyed(Unit unit) {
+void BotAILoop::unitDestroyed(Unit unit) {
   if (unit->getPlayer()->getID() == Broodwar->self()->getID()) {
     //Remove bunker squads if the destroyed unit
     //is a bunker
@@ -88,21 +90,21 @@ void AIloop::unitDestroyed(Unit unit) {
       rnp::commander()->removeBunkerSquad(unit->getID());
     }
 
-    AgentManager::getInstance()->removeAgent(unit);
+    rnp::agent_manager()->removeAgent(unit);
     if (unit->getType().isBuilding()) {
-      Constructor::getInstance()->buildingDestroyed(unit);
+      rnp::constructor()->buildingDestroyed(unit);
     }
 
-    AgentManager::getInstance()->cleanup();
+    rnp::agent_manager()->cleanup();
   }
   if (unit->getPlayer()->getID() != Broodwar->self()->getID() && !unit->getPlayer()->isNeutral()) {
     //Update spotted buildings
-    ExplorationManager::getInstance()->unitDestroyed(unit);
+    rnp::exploration()->unitDestroyed(unit);
   }
 }
 
-void AIloop::show_debug() {
-  if (debug) {
+void BotAILoop::show_debug() {
+  if (debug_) {
     //Show timer
     std::stringstream ss;
     ss << "\x0FTime: ";
@@ -118,64 +120,65 @@ void AIloop::show_debug() {
     //Show pathfinder version
     std::stringstream st;
     st << "\x0FPathfinder: ";
-    if (NavigationAgent::pathfinding_version == 0) {
+    if (NavigationAgent::pathfinding_version_ == 0) {
       st << "Built-in";
     }
-    if (NavigationAgent::pathfinding_version == 1) {
+    if (NavigationAgent::pathfinding_version_ == 1) {
       st << "Hybrid Boids";
     }
-    if (NavigationAgent::pathfinding_version == 2) {
+    if (NavigationAgent::pathfinding_version_ == 2) {
       st << "Hybrid PF";
     }
 
     Broodwar->drawTextScreen(500, 310, st.str().c_str());
     //
 
-    StrategySelector::getInstance()->printInfo();
+    rnp::strategy_selector()->printInfo();
 
-    if (debugBP) {
-      BuildingPlacer::getInstance()->debug();
+    if (debug_bp_) {
+      rnp::building_placer()->debug();
     }
     drawTerrainData();
 
     rnp::commander()->debug_showGoal();
 
-    Agentset agents = AgentManager::getInstance()->getAgents();
+    auto& agents = rnp::agent_manager()->getAgents();
     for (auto& a : agents) {
       if (a->isBuilding()) a->debug_showGoal();
     }
 
     //Show goal info for selected units
-    if (Broodwar->getSelectedUnits().size() > 0) {
-      for (auto& u : Broodwar->getSelectedUnits()) {
+    auto& selected = Broodwar->getSelectedUnits();
+    if (not selected.empty()) {
+      for (auto& u : selected) {
         int unitID = (u)->getID();
-        BaseAgent* agent = AgentManager::getInstance()->getAgent(unitID);
+        BaseAgent* agent = rnp::agent_manager()->getAgent(unitID);
         if (agent != nullptr && agent->isAlive()) {
           agent->debug_showGoal();
         }
       }
     }
 
-    if (debugBP) {
+    if (debug_bp_) {
       //If we have any unit selected, use that to show PFs.
-      if (Broodwar->getSelectedUnits().size() > 0) {
-        for (auto& u : Broodwar->getSelectedUnits()) {
+      if (not selected.empty()) {
+        for (auto& u : selected) {
           int unitID = u->getID();
-          BaseAgent* agent = AgentManager::getInstance()->getAgent(unitID);
+          BaseAgent* agent = rnp::agent_manager()->getAgent(unitID);
           if (agent != nullptr) {
-            NavigationAgent::getInstance()->displayPF(agent);
+            rnp::navigation()->displayPF(agent);
           }
           break;
         }
       }
     }
 
-    if (debugUnit) {
+    if (debug_unit_) {
       //If we have any unit selected, show unit info.
-      if (Broodwar->getSelectedUnits().size() > 0) {
-        for (auto& u : Broodwar->getSelectedUnits()) {
+      if (not selected.empty()) {
+        for (auto& u : selected) {
           int unitID = u->getID();
-          BaseAgent* agent = AgentManager::getInstance()->getAgent(unitID);
+          BaseAgent* agent = rnp::agent_manager()->getAgent(unitID);
           if (agent != nullptr) {
             agent->printInfo();
             break;
@@ -184,19 +187,19 @@ void AIloop::show_debug() {
       }
     }
 
-    if (debugSQ >= 0) {
-      auto squad = rnp::commander()->getSquad(debugSQ);
+    if (debug_sq_ >= 0) {
+      auto squad = rnp::commander()->getSquad(debug_sq_);
       if (squad) {
         squad->printInfo();
       }
     }
 
-    Upgrader::getInstance()->printInfo();
+    rnp::upgrader()->printInfo();
     rnp::commander()->printInfo();
   }
 }
 
-void AIloop::drawTerrainData() {
+void BotAILoop::drawTerrainData() {
   // we will iterate through all the base locations, and draw their outlines.
   for (auto& area : bwem_.Areas()) {
     for (auto& base : area.Bases()) {
@@ -228,7 +231,7 @@ void AIloop::drawTerrainData() {
     } // for bases
   } // for areas
 
-  if (debugBP) {
+  if (debug_bp_) {
     //we will iterate through all the regions and draw the polygon outline of it in white.
 //    for (BWEM::Area* r : BWTA::getRegions()) {
 //      auto p = BWTA::PolygonImpl(r->getPolygon());

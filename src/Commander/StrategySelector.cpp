@@ -7,9 +7,7 @@
 
 using namespace BWAPI;
 
-StrategySelector* StrategySelector::instance = nullptr;
-
-bool StrategyStats::matches() {
+bool StrategyStats::matches() const {
   std::string mMapHash = Broodwar->mapHash();
   std::string mOwnRace = Broodwar->self()->getRace().getName();
   if (mMapHash == mapHash && mOwnRace == ownRace) {
@@ -28,46 +26,37 @@ bool StrategyStats::matches() {
   return false;
 }
 
-
 StrategySelector::StrategySelector() {
-  active = true;
+  active_ = true;
 
-  strategies.push_back(Strategy(Races::Protoss, ProtossMain::getStrategyId()));
-  strategies.push_back(Strategy(Races::Terran, TerranMain::getStrategyId()));
-  strategies.push_back(Strategy(Races::Zerg, LurkerRush::getStrategyId()));
-  strategies.push_back(Strategy(Races::Zerg, ZergMain::getStrategyId()));
+  strategies_.push_back(Strategy(Races::Protoss, ProtossMain::getStrategyId()));
+  strategies_.push_back(Strategy(Races::Terran, TerranMain::getStrategyId()));
+  strategies_.push_back(Strategy(Races::Zerg, LurkerRush::getStrategyId()));
+  strategies_.push_back(Strategy(Races::Zerg, ZergMain::getStrategyId()));
 
   loadStats();
 }
 
-StrategySelector* StrategySelector::getInstance() {
-  if (instance == nullptr) {
-    instance = new StrategySelector();
-  }
-  return instance;
-}
-
 StrategySelector::~StrategySelector() {
-  instance = nullptr;
 }
 
 void StrategySelector::enable() {
-  active = true;
+  active_ = true;
 }
 
 void StrategySelector::disable() {
-  active = false;
+  active_ = false;
 }
 
 void StrategySelector::selectStrategy() {
   int totWon = 0;
   int totPlay = 0;
-  for (int i = 0; i < (int)stats.size(); i++) {
+  for (int i = 0; i < (int)stats_.size(); i++) {
     std::string mOwnRace = Broodwar->self()->getRace().getName();
 
-    if (stats.at(i).matches()) {
-      totWon += stats.at(i).won;
-      totPlay += stats.at(i).total;
+    if (stats_.at(i).matches()) {
+      totWon += stats_.at(i).won;
+      totPlay += stats_.at(i).total;
     }
   }
   if (totPlay == 0) totPlay = 1; //To avoid division by zero
@@ -76,17 +65,17 @@ void StrategySelector::selectStrategy() {
   bool found = false;
   int i = 0;
   while (!found) {
-    i = rand() % (int)stats.size();
+    i = rand() % (int)stats_.size();
 
     //Entry matches
-    if (stats.at(i).matches()) {
+    if (stats_.at(i).matches()) {
       //Calculate probability for this entry.
-      int chance = stats.at(i).won * 100 / stats.at(i).getTotal();
+      int chance = stats_.at(i).won * 100 / stats_.at(i).getTotal();
       chance = chance * totWon / totPlay;
 
       //Have 75% chance to try a strategy that
       //hasn't been tested much yet.
-      if (stats.at(i).total <= 2) chance = 75;
+      if (stats_.at(i).total <= 2) chance = 75;
 
       //Set a max/min so all strategies have a chance
       //to be played.
@@ -96,8 +85,8 @@ void StrategySelector::selectStrategy() {
       //Make the roll!
       int roll = rand() % 100;
       if (roll <= chance) {
-        currentStrategyId = stats.at(i).strategyId;
-        Broodwar << "Strategy selected: " << currentStrategyId << " (Roll: " << roll << " Prob: " << chance << ")" << std::endl;
+        current_strategy_id_ = stats_.at(i).strategyId;
+        Broodwar << "Strategy selected: " << current_strategy_id_ << " (Roll: " << roll << " Prob: " << chance << ")" << std::endl;
         found = true;
         return;
       }
@@ -107,8 +96,8 @@ void StrategySelector::selectStrategy() {
 
 Commander::Ptr StrategySelector::getStrategy() {
   int tot = 0;
-  for (int i = 0; i < (int)stats.size(); i++) {
-    if (stats.at(i).matches()) tot++;
+  for (int i = 0; i < (int)stats_.size(); i++) {
+    if (stats_.at(i).matches()) tot++;
   }
 
   if (tot > 0) {
@@ -120,24 +109,24 @@ Commander::Ptr StrategySelector::getStrategy() {
     //No strategy has been tested for this combo.
     //Return one of the available strategies.
     auto self_race = Broodwar->self()->getRace().getID();
-    if (self_race == Races::Terran.getID()) currentStrategyId = "TerranMain";
-    else if (self_race == Races::Protoss.getID()) currentStrategyId = "ProtossMain";
-    else if (self_race == Races::Zerg.getID()) currentStrategyId = "LurkerRush";
+    if (self_race == Races::Terran.getID()) current_strategy_id_ = "TerranMain";
+    else if (self_race == Races::Protoss.getID()) current_strategy_id_ = "ProtossMain";
+    else if (self_race == Races::Zerg.getID()) current_strategy_id_ = "LurkerRush";
   }
-  Broodwar << "Strategy: " << currentStrategyId << std::endl;
+  Broodwar << "Strategy: " << current_strategy_id_ << std::endl;
 
   //Get Commander for strategy
-  if (currentStrategyId == "ProtossMain") return std::make_shared<ProtossMain>();
-  if (currentStrategyId == "TerranMain") return std::make_shared<TerranMain>();
-  if (currentStrategyId == "LurkerRush") return std::make_shared<LurkerRush>();
-  if (currentStrategyId == "ZergMain") return std::make_shared<ZergMain>();
+  if (current_strategy_id_ == "ProtossMain") return std::make_shared<ProtossMain>();
+  if (current_strategy_id_ == "TerranMain") return std::make_shared<TerranMain>();
+  if (current_strategy_id_ == "LurkerRush") return std::make_shared<LurkerRush>();
+  if (current_strategy_id_ == "ZergMain") return std::make_shared<ZergMain>();
 
   bwem_assert(false);
   return nullptr;
 }
 
 void StrategySelector::printInfo() {
-  Broodwar->drawTextScreen(180, 5, "\x0F%s", currentStrategyId.c_str());
+  Broodwar->drawTextScreen(180, 5, "\x0F%s", current_strategy_id_.c_str());
 }
 
 void StrategySelector::loadStats() {
@@ -217,7 +206,7 @@ void StrategySelector::addEntry(std::string line) {
   s.mapHash = t;
   line = line.substr(i + 1, line.length());
 
-  stats.push_back(s);
+  stats_.push_back(s);
 }
 
 int StrategySelector::toInt(std::string& str) {
@@ -246,18 +235,18 @@ std::string StrategySelector::getWriteFilename() {
 }
 
 void StrategySelector::addResult(int win) {
-  if (not active) return;
+  if (not active_) return;
 
   std::string opponentRace = Broodwar->enemy()->getRace().getName();
   std::string mapHash = Broodwar->mapHash();
 
   //Check if we have the entry already
-  for (int i = 0; i < (int)stats.size(); i++) {
-    if (mapHash == stats.at(i).mapHash && opponentRace == stats.at(i).opponentRace && currentStrategyId == stats.at(i).strategyId) {
-      stats.at(i).total++;
-      if (win == 0) stats.at(i).lost++;
-      if (win == 1) stats.at(i).won++;
-      if (win == 2) stats.at(i).draw++;
+  for (int i = 0; i < (int)stats_.size(); i++) {
+    if (mapHash == stats_.at(i).mapHash && opponentRace == stats_.at(i).opponentRace && current_strategy_id_ == stats_.at(i).strategyId) {
+      stats_.at(i).total++;
+      if (win == 0) stats_.at(i).lost++;
+      if (win == 1) stats_.at(i).won++;
+      if (win == 2) stats_.at(i).draw++;
       return;
     }
   }
@@ -267,16 +256,16 @@ void StrategySelector::addResult(int win) {
   if (win == 0) s.lost++;
   if (win == 1) s.won++;
   if (win == 2) s.draw++;
-  s.strategyId = currentStrategyId;
+  s.strategyId = current_strategy_id_;
   s.mapHash = mapHash;
   s.mapName = Broodwar->mapFileName();
   s.ownRace = Broodwar->self()->getRace().getName();
   s.opponentRace = opponentRace;
-  stats.push_back(s);
+  stats_.push_back(s);
 }
 
 void StrategySelector::saveStats() {
-  if (not active) return;
+  if (not active_) return;
 
   //Fill entries in stats file for combinations that have
   //not yet been played.
@@ -284,10 +273,10 @@ void StrategySelector::saveStats() {
   std::string opponentRace = Broodwar->enemy()->getRace().getName();
   std::string ownRace = Broodwar->self()->getRace().getName();
 
-  for (int i = 0; i < (int)strategies.size(); i++) {
+  for (int i = 0; i < (int)strategies_.size(); i++) {
     bool found = false;
-    for (int s = 0; s < (int)stats.size(); s++) {
-      if (strategies.at(i).strategyId == stats.at(s).strategyId && mapHash == stats.at(s).mapHash && opponentRace == stats.at(s).opponentRace) {
+    for (int s = 0; s < (int)stats_.size(); s++) {
+      if (strategies_.at(i).strategyId == stats_.at(s).strategyId && mapHash == stats_.at(s).mapHash && opponentRace == stats_.at(s).opponentRace) {
         //Matches
         found = true;
         break;
@@ -297,16 +286,16 @@ void StrategySelector::saveStats() {
     if (not found) {
       //Only fill in the strategies for
       //the same race
-      if (ownRace == strategies.at(i).race.getName()) {
+      if (ownRace == strategies_.at(i).race.getName()) {
         //Add entry
         StrategyStats s = StrategyStats();
         s.mapHash = mapHash;
         s.mapName = Broodwar->mapFileName();
         s.opponentRace = opponentRace;
-        s.ownRace = strategies.at(i).race.getName();
-        s.strategyId = strategies.at(i).strategyId;
+        s.ownRace = strategies_.at(i).race.getName();
+        s.strategyId = strategies_.at(i).strategyId;
 
-        stats.push_back(s);
+        stats_.push_back(s);
       }
     }
   }
@@ -320,25 +309,25 @@ void StrategySelector::saveStats() {
     Broodwar << "Error writing to stats file!" << std::endl;
   }
   else {
-    for (int i = 0; i < (int)stats.size(); i++) {
+    for (int i = 0; i < (int)stats_.size(); i++) {
       std::stringstream s2;
-      s2 << stats.at(i).strategyId;
+      s2 << stats_.at(i).strategyId;
       s2 << ";";
-      s2 << stats.at(i).ownRace;
+      s2 << stats_.at(i).ownRace;
       s2 << ";";
-      s2 << stats.at(i).opponentRace;
+      s2 << stats_.at(i).opponentRace;
       s2 << ";";
-      s2 << stats.at(i).won;
+      s2 << stats_.at(i).won;
       s2 << ";";
-      s2 << stats.at(i).lost;
+      s2 << stats_.at(i).lost;
       s2 << ";";
-      s2 << stats.at(i).draw;
+      s2 << stats_.at(i).draw;
       s2 << ";";
-      s2 << stats.at(i).total;
+      s2 << stats_.at(i).total;
       s2 << ";";
-      s2 << stats.at(i).mapName;
+      s2 << stats_.at(i).mapName;
       s2 << ";";
-      s2 << stats.at(i).mapHash;
+      s2 << stats_.at(i).mapHash;
       s2 << ";\n";
 
       outFile << s2.str();

@@ -23,23 +23,15 @@ struct ResourceLock {
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class ResourceManager {
-
+  std::vector<ResourceLock> locks_;
+  
 private:
-  static ResourceManager* instance;
-
-  ResourceManager();
-
-  std::vector<ResourceLock> locks;
-
   int calcLockedMinerals();
   int calcLockedGas();
 
 public:
-  // Destructor. 
+  ResourceManager();
   ~ResourceManager();
-
-  // Returns the instance to the Constructor that is currently used. 
-  static ResourceManager* getInstance();
 
   // Checks if we have enough resources free to build the specified unit. 
   bool hasResources(BWAPI::UnitType type);

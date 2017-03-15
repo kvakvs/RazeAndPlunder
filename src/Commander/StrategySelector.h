@@ -1,6 +1,6 @@
 #pragma once
 
-#include "Commander.h"
+#include "Commander/Commander.h"
 
 struct StrategyStats {
   std::string mapHash;
@@ -25,7 +25,7 @@ struct StrategyStats {
     return total;
   }
 
-  bool matches();
+  bool matches() const;
 };
 
 struct Strategy {
@@ -47,16 +47,13 @@ struct Strategy {
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class StrategySelector {
+  std::vector<Strategy> strategies_;
+  std::vector<StrategyStats> stats_;
+
+  std::string current_strategy_id_;
+  bool active_;
 
 private:
-  std::vector<Strategy> strategies;
-  std::vector<StrategyStats> stats;
-
-  static StrategySelector* instance;
-  StrategySelector();
-
-  std::string currentStrategyId;
-
   std::string getFilename();
   std::string getWriteFilename();
   void addEntry(std::string line);
@@ -64,13 +61,8 @@ private:
 
   void selectStrategy();
 
-  bool active;
-
 public:
-  // Returns the instance of the class. 
-  static StrategySelector* getInstance();
-
-  // Destructor 
+  StrategySelector();
   ~StrategySelector();
 
   // Returns the selected strategy for this game. 

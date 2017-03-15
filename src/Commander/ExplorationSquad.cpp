@@ -1,8 +1,9 @@
 #include "ExplorationSquad.h"
-#include "../UnitAgents/UnitAgent.h"
-#include "../Managers/AgentManager.h"
-#include "../Managers/ExplorationManager.h"
+#include "UnitAgents/UnitAgent.h"
+#include "Managers/AgentManager.h"
+#include "Managers/ExplorationManager.h"
 #include <iso646.h>
+#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -35,7 +36,7 @@ void ExplorationSquad::computeActions() {
       if (setup_.at(i).current < setup_.at(i).no && setup_.at(i).type.isWorker()) {
         int no = setup_.at(i).no - setup_.at(i).current;
         for (int j = 0; j < no; j++) {
-          BaseAgent* w = AgentManager::getInstance()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
+          BaseAgent* w = rnp::agent_manager()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
           if (w != nullptr) addMember(w);
         }
       }
@@ -65,7 +66,7 @@ void ExplorationSquad::computeActions() {
       priority_ = active_priority_;
     }
 
-    TilePosition nGoal = ExplorationManager::getInstance()->getNextToExplore(this);
+    TilePosition nGoal = rnp::exploration()->getNextToExplore(this);
     if (nGoal.x >= 0) {
       this->goal_ = nGoal;
       setMemberGoals(goal_);

@@ -1,5 +1,5 @@
 #include "MutaliskAgent.h"
-#include "../../Managers/AgentManager.h"
+#include "Managers/AgentManager.h"
 #include "../../Commander/Commander.h"
 #include "Glob.h"
 
@@ -7,7 +7,7 @@ using namespace BWAPI;
 
 bool MutaliskAgent::useAbilities() {
   //Check for morph
-  if (AgentManager::getInstance()->countNoUnits(UnitTypes::Zerg_Greater_Spire) > 0) {
+  if (rnp::agent_manager()->countNoUnits(UnitTypes::Zerg_Greater_Spire) > 0) {
     auto sq = rnp::commander()->getSquad(squadID);
     if (sq) {
       if (sq->morphsTo().getID() == UnitTypes::Zerg_Devourer.getID()) {

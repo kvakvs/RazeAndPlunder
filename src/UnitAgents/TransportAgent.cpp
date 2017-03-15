@@ -1,7 +1,7 @@
 #include "TransportAgent.h"
 #include "../Pathfinding/NavigationAgent.h"
-#include "../Commander/Commander.h"
-#include "../Commander/Squad.h"
+#include "Commander/Commander.h"
+#include "Commander/Squad.h"
 #include "Glob.h"
 
 using namespace BWAPI;
@@ -89,5 +89,5 @@ void TransportAgent::computeActions() {
     }
   }
 
-  NavigationAgent::getInstance()->computeMove(this, goal);
+  rnp::navigation()->computeMove(this, goal);
 }

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "Squad.h"
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 #include "../Managers/BuildplanEntry.h"
 
 #include "bwem.h"
@@ -90,10 +90,10 @@ public:
 
   // Returns the number of preferred workers, i.e. the
   // number of workers should be built. 
-  int getNoWorkers();
+  int getNoWorkers() const;
 
   // Returns the preferred number of workers for a refinery. 
-  int getWorkersPerRefinery();
+  int getWorkersPerRefinery() const;
 
   // Used in debug modes to show goal of squads. 
   virtual void debug_showGoal();

@@ -1,7 +1,7 @@
 #include "RushSquad.h"
 #include "../Managers/AgentManager.h"
 #include "../Managers/ExplorationManager.h"
-#include "Commander.h"
+#include "Commander/Commander.h"
 #include "Glob.h"
 
 using namespace BWAPI;
@@ -40,7 +40,7 @@ void RushSquad::computeActions() {
       if (setup_.at(i).current < setup_.at(i).no && setup_.at(i).type.isWorker()) {
         int no = setup_.at(i).no - setup_.at(i).current;
         for (int j = 0; j < no; j++) {
-          BaseAgent* w = AgentManager::getInstance()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
+          BaseAgent* w = rnp::agent_manager()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
           if (w != nullptr) addMember(w);
         }
       }
@@ -74,7 +74,7 @@ void RushSquad::computeActions() {
       }
     }
 
-    TilePosition ePos = ExplorationManager::getInstance()->getClosestSpottedBuilding(Broodwar->self()->getStartLocation());
+    TilePosition ePos = rnp::exploration()->getClosestSpottedBuilding(Broodwar->self()->getStartLocation());
     if (ePos.x != -1) {
       goal_ = ePos;
       setMemberGoals(goal_);

@@ -3,7 +3,7 @@
 #include "../Pathfinding/NavigationAgent.h"
 #include "../Managers/BuildingPlacer.h"
 #include "../Managers/Constructor.h"
-#include "../Commander/Commander.h"
+#include "Commander/Commander.h"
 #include "../Managers/ResourceManager.h"
 #include "Glob.h"
 
@@ -24,8 +24,8 @@ WorkerAgent::WorkerAgent(Unit mUnit) {
 void WorkerAgent::destroyed() {
   if (currentState == MOVE_TO_SPOT || currentState == CONSTRUCT || currentState == FIND_BUILDSPOT) {
     if (not Constructor::isZerg()) {
-      Constructor::getInstance()->handleWorkerDestroyed(toBuild, unitID);
-      BuildingPlacer::getInstance()->clearTemp(toBuild, buildSpot);
+      rnp::constructor()->handleWorkerDestroyed(toBuild, unitID);
+      rnp::building_placer()->clearTemp(toBuild, buildSpot);
       setState(GATHER_MINERALS);
     }
   }
@@ -109,7 +109,7 @@ bool WorkerAgent::checkRepair() {
   //Find closest unit that needs repairing
   BaseAgent* toRepair = nullptr;
   double bestDist = 10000;
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive() && a->isDamaged() && a->getUnitType().isMechanical() && a->getUnitID() != unitID) {
       double cDist = a->getUnit()->getPosition().getDistance(unit->getPosition());
@@ -140,7 +140,7 @@ void WorkerAgent::computeSquadWorkerActions() {
     //minerals while not doing any repairs
     if (not sq->isActive()) {
       if (unit->isIdle()) {
-        Unit mineral = BuildingPlacer::getInstance()->findClosestMineral(unit->getTilePosition());
+        Unit mineral = rnp::building_placer()->findClosestMineral(unit->getTilePosition());
         if (mineral != nullptr) {
           unit->rightClick(mineral);
           return;
@@ -148,7 +148,7 @@ void WorkerAgent::computeSquadWorkerActions() {
       }
     }
     else {
-      NavigationAgent::getInstance()->computeMove(this, goal);
+      rnp::navigation()->computeMove(this, goal);
       return;
     }
   }
@@ -178,7 +178,7 @@ void WorkerAgent::computeActions() {
   //Check if workers are too far away from a base when attacking
   if (currentState == ATTACKING) {
     if (unit->getTarget() != nullptr) {
-      BaseAgent* base = AgentManager::getInstance()->getClosestBase(unit->getTilePosition());
+      BaseAgent* base = rnp::agent_manager()->getClosestBase(unit->getTilePosition());
       if (base != nullptr) {
         double dist = base->getUnit()->getTilePosition().getDistance(unit->getTilePosition());
         if (dist > 25) {
@@ -218,7 +218,7 @@ void WorkerAgent::computeActions() {
 
   if (currentState == GATHER_MINERALS) {
     if (unit->isIdle()) {
-      Unit mineral = BuildingPlacer::getInstance()->findClosestMineral(unit->getTilePosition());
+      Unit mineral = rnp::building_placer()->findClosestMineral(unit->getTilePosition());
       if (mineral != nullptr) {
         unit->rightClick(mineral);
       }
@@ -227,7 +227,7 @@ void WorkerAgent::computeActions() {
 
   if (currentState == FIND_BUILDSPOT) {
     if (buildSpot.x == -1) {
-      buildSpot = BuildingPlacer::getInstance()->findBuildSpot(toBuild);
+      buildSpot = rnp::building_placer()->findBuildSpot(toBuild);
     }
     if (buildSpot.x >= 0) {
       setState(MOVE_TO_SPOT);
@@ -248,8 +248,8 @@ void WorkerAgent::computeActions() {
     if (buildSpotExplored() && !unit->isConstructing()) {
       bool ok = unit->build(toBuild, buildSpot);
       if (not ok) {
-        BuildingPlacer::getInstance()->blockPosition(buildSpot);
-        BuildingPlacer::getInstance()->clearTemp(toBuild, buildSpot);
+        rnp::building_placer()->blockPosition(buildSpot);
+        rnp::building_placer()->clearTemp(toBuild, buildSpot);
         //Cant build at selected spot, get a new one.
         setState(FIND_BUILDSPOT);
       }
@@ -264,7 +264,7 @@ void WorkerAgent::computeActions() {
   if (currentState == CONSTRUCT) {
     if (isBuilt()) {
       //Build finished.
-      BaseAgent* agent = AgentManager::getInstance()->getClosestBase(unit->getTilePosition());
+      BaseAgent* agent = rnp::agent_manager()->getClosestBase(unit->getTilePosition());
       if (agent != nullptr) {
         unit->rightClick(agent->getUnit()->getPosition());
       }
@@ -321,10 +321,10 @@ bool WorkerAgent::canBuild(UnitType type) {
 
 bool WorkerAgent::assignToBuild(UnitType type) {
   toBuild = type;
-  buildSpot = BuildingPlacer::getInstance()->findBuildSpot(toBuild);
+  buildSpot = rnp::building_placer()->findBuildSpot(toBuild);
   if (buildSpot.x >= 0) {
-    ResourceManager::getInstance()->lockResources(toBuild);
-    BuildingPlacer::getInstance()->fillTemp(toBuild, buildSpot);
+    rnp::resources()->lockResources(toBuild);
+    rnp::building_placer()->fillTemp(toBuild, buildSpot);
     setState(FIND_BUILDSPOT);
     return true;
   }
@@ -337,13 +337,13 @@ bool WorkerAgent::assignToBuild(UnitType type) {
 void WorkerAgent::reset() {
   if (currentState == MOVE_TO_SPOT) {
     //The buildSpot is probably not reachable. Block it.	
-    BuildingPlacer::getInstance()->blockPosition(buildSpot);
-    BuildingPlacer::getInstance()->clearTemp(toBuild, buildSpot);
+    rnp::building_placer()->blockPosition(buildSpot);
+    rnp::building_placer()->clearTemp(toBuild, buildSpot);
   }
 
   if (unit->isConstructing()) {
     unit->cancelConstruction();
-    BuildingPlacer::getInstance()->clearTemp(toBuild, buildSpot);
+    rnp::building_placer()->clearTemp(toBuild, buildSpot);
   }
 
   if (unit->isRepairing()) {
@@ -352,7 +352,7 @@ void WorkerAgent::reset() {
 
   setState(GATHER_MINERALS);
   unit->stop();
-  BaseAgent* base = AgentManager::getInstance()->getClosestBase(unit->getTilePosition());
+  BaseAgent* base = rnp::agent_manager()->getClosestBase(unit->getTilePosition());
   if (base != nullptr) {
     unit->rightClick(base->getUnit()->getPosition());
   }

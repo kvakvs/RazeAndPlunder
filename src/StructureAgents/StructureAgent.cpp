@@ -2,8 +2,8 @@
 #include "../Managers/AgentManager.h"
 #include "../Managers/Constructor.h"
 #include "../Managers/Upgrader.h"
-#include "../Commander/Commander.h"
-#include "../MainAgents/WorkerAgent.h"
+#include "Commander/Commander.h"
+#include "MainAgents/WorkerAgent.h"
 #include "../Managers/ResourceManager.h"
 #include <iso646.h>
 #include "Glob.h"
@@ -115,7 +115,7 @@ void StructureAgent::computeActions() {
   if (isAlive()) {
     if (not unit->isIdle()) return;
 
-    if (Upgrader::getInstance()->checkUpgrade(this)) return;
+    if (rnp::upgrader()->checkUpgrade(this)) return;
 
     if (Constructor::isTerran()) {
       //Check addons here
@@ -149,9 +149,9 @@ void StructureAgent::computeActions() {
 
     //Check for Spire upgrade
     if (isOfType(UnitTypes::Zerg_Spire)) {
-      if (Broodwar->canMake(UnitTypes::Zerg_Greater_Spire, unit) && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Zerg_Hive) > 0) {
-        if (ResourceManager::getInstance()->hasResources(UnitTypes::Zerg_Greater_Spire)) {
-          ResourceManager::getInstance()->lockResources(UnitTypes::Zerg_Greater_Spire);
+      if (Broodwar->canMake(UnitTypes::Zerg_Greater_Spire, unit) && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Hive) > 0) {
+        if (rnp::resources()->hasResources(UnitTypes::Zerg_Greater_Spire)) {
+          rnp::resources()->lockResources(UnitTypes::Zerg_Greater_Spire);
           unit->morph(UnitTypes::Zerg_Greater_Spire);
           return;
         }
@@ -160,8 +160,8 @@ void StructureAgent::computeActions() {
 
     //Check for Creep Colony upgrade
     if (isOfType(UnitTypes::Zerg_Creep_Colony)) {
-      if (ResourceManager::getInstance()->hasResources(UnitTypes::Zerg_Sunken_Colony)) {
-        ResourceManager::getInstance()->lockResources(UnitTypes::Zerg_Sunken_Colony);
+      if (rnp::resources()->hasResources(UnitTypes::Zerg_Sunken_Colony)) {
+        rnp::resources()->lockResources(UnitTypes::Zerg_Sunken_Colony);
         unit->morph(UnitTypes::Zerg_Sunken_Colony);
         return;
       }
@@ -182,7 +182,7 @@ bool StructureAgent::canBuild(UnitType type) {
   }
 
   //3. Check if we have enough resources
-  if (not ResourceManager::getInstance()->hasResources(type)) {
+  if (not rnp::resources()->hasResources(type)) {
     return false;
   }
 
@@ -213,7 +213,7 @@ bool StructureAgent::canBuildUnit(UnitType type) {
   }
 
   //5. Check if we have enough resources
-  if (not ResourceManager::getInstance()->hasResources(type)) {
+  if (not rnp::resources()->hasResources(type)) {
     return false;
   }
 
@@ -255,11 +255,11 @@ void StructureAgent::printInfo() {
 
 void StructureAgent::sendWorkers() {
   //We have constructed a new base. Make some workers move here.
-  int noWorkers = AgentManager::getInstance()->getNoWorkers();
-  int toSend = noWorkers / AgentManager::getInstance()->countNoBases();
+  int noWorkers = rnp::agent_manager()->getNoWorkers();
+  int toSend = noWorkers / rnp::agent_manager()->countNoBases();
   int hasSent = 0;
 
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive() && a->isFreeWorker()) {
       Unit worker = a->getUnit();
@@ -281,12 +281,12 @@ bool StructureAgent::canMorphInto(UnitType type) {
   }
 
   //Zerg morph units sometimes bugs in canMake, so we need to do an extra check
-  if (type.getID() == UnitTypes::Zerg_Defiler_Mound.getID() && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Zerg_Greater_Spire) == 0) {
+  if (type.getID() == UnitTypes::Zerg_Defiler_Mound.getID() && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Greater_Spire) == 0) {
     return false;
   }
 
   //2. Check if we have enough resources
-  if (not ResourceManager::getInstance()->hasResources(type)) {
+  if (not rnp::resources()->hasResources(type)) {
     return false;
   }
 
@@ -311,7 +311,7 @@ bool StructureAgent::canEvolveUnit(UnitType type) {
   }
 
   //3. Check if we have enough resources
-  if (not ResourceManager::getInstance()->hasResources(type)) {
+  if (not rnp::resources()->hasResources(type)) {
     return false;
   }
 

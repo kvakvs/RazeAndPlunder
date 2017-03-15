@@ -2,21 +2,11 @@
 
 using namespace BWAPI;
 
-ResourceManager* ResourceManager::instance = nullptr;
-
 ResourceManager::ResourceManager() {
-  locks.push_back(ResourceLock(Broodwar->self()->getRace().getCenter()));
+  locks_.push_back(ResourceLock(Broodwar->self()->getRace().getCenter()));
 }
 
 ResourceManager::~ResourceManager() {
-  instance = nullptr;
-}
-
-ResourceManager* ResourceManager::getInstance() {
-  if (instance == nullptr) {
-    instance = new ResourceManager();
-  }
-  return instance;
 }
 
 bool ResourceManager::hasResources(UnitType type) {
@@ -51,13 +41,13 @@ bool ResourceManager::hasResources(int neededMinerals, int neededGas) {
 }
 
 void ResourceManager::lockResources(UnitType type) {
-  locks.push_back(ResourceLock(type));
+  locks_.push_back(ResourceLock(type));
 }
 
 void ResourceManager::unlockResources(UnitType type) {
-  for (int i = 0; i < (int)locks.size(); i++) {
-    if (locks.at(i).unit.getID() == type.getID()) {
-      locks.erase(locks.begin() + i);
+  for (int i = 0; i < (int)locks_.size(); i++) {
+    if (locks_.at(i).unit.getID() == type.getID()) {
+      locks_.erase(locks_.begin() + i);
       return;
     }
   }
@@ -66,8 +56,8 @@ void ResourceManager::unlockResources(UnitType type) {
 int ResourceManager::calcLockedMinerals() {
   int nMinerals = 0;
 
-  for (int i = 0; i < (int)locks.size(); i++) {
-    nMinerals += locks.at(i).mineralCost;
+  for (int i = 0; i < (int)locks_.size(); i++) {
+    nMinerals += locks_.at(i).mineralCost;
   }
 
   return nMinerals;
@@ -76,8 +66,8 @@ int ResourceManager::calcLockedMinerals() {
 int ResourceManager::calcLockedGas() {
   int nGas = 0;
 
-  for (int i = 0; i < (int)locks.size(); i++) {
-    nGas += locks.at(i).gasCost;
+  for (int i = 0; i < (int)locks_.size(); i++) {
+    nGas += locks_.at(i).gasCost;
   }
 
   return nGas;

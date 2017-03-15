@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 #include "bwem.h"
 
 /** The bot uses two techniques for navigation: if no enemy units are close units navigate using the built in pathfinder in
@@ -14,16 +14,14 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class NavigationAgent {
-
-private:
-  static NavigationAgent* instance;
-  static bool instanceFlag;
   BWEM::Map& bwem_;
 
-  NavigationAgent();
+  int check_range_;
+  int map_w_;
+  int map_h_;
 
   // Moves a unit to the specified goal using the pathfinder, and stops at a distance where the
- // potential field navigation system should be used instead. 
+  // potential field navigation system should be used instead. 
   bool moveToGoal(BaseAgent* agent, BWAPI::TilePosition checkpoint, BWAPI::TilePosition goal);
 
   // Calculates the potential field values for an attacking unit. 
@@ -31,10 +29,6 @@ private:
   float getDefendingUnitP(BaseAgent* agent, BWAPI::WalkPosition wp);
 
   int getMaxUnitSize(BWAPI::UnitType type);
-
-  int checkRange;
-  int mapW;
-  int mapH;
 
   BWAPI::Color getColor(float p);
 
@@ -45,13 +39,10 @@ public:
    * - Hybrid pathfinding with boids
    * - Non-hybrid pathfinding
   */
-  static int pathfinding_version;
+  static int pathfinding_version_;
 
-  // Destructor 
+  NavigationAgent();
   ~NavigationAgent();
-
-  // Returns the instance to the class. 
-  static NavigationAgent* getInstance();
 
   // Is used to compute and execute movement commands for attacking units using the potential field
   // navigation system. 

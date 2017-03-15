@@ -1,9 +1,10 @@
 #include "ZergMain.h"
-#include "../../Managers/BuildplanEntry.h"
-#include "../../Managers/AgentManager.h"
-#include "../RushSquad.h"
-#include "../ExplorationSquad.h"
-#include "../../Managers/ExplorationManager.h"
+#include "Managers/BuildplanEntry.h"
+#include "Managers/AgentManager.h"
+#include "Managers/ExplorationManager.h"
+#include "Glob.h"
+#include "Commander/ExplorationSquad.h"
+#include "Commander/RushSquad.h"
 
 using namespace BWAPI;
 
@@ -43,20 +44,20 @@ ZergMain::~ZergMain() {
 void ZergMain::computeActions() {
   computeActionsBase();
 
-  workers_num_ = AgentManager::getInstance()->countNoBases() * 6 + AgentManager::getInstance()->countNoUnits(UnitTypes::Zerg_Extractor) * 3;
+  workers_num_ = rnp::agent_manager()->countNoBases() * 6 + rnp::agent_manager()->countNoUnits(UnitTypes::Zerg_Extractor) * 3;
 
   int cSupply = Broodwar->self()->supplyUsed() / 2;
   int min = Broodwar->self()->minerals();
   int gas = Broodwar->self()->gas();
 
-  if (stage_ == 0 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Zerg_Lair) > 0) {
+  if (stage_ == 0 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Lair) > 0) {
     buildplan_.push_back(BuildplanEntry(UnitTypes::Zerg_Spire, cSupply));
     buildplan_.push_back(BuildplanEntry(UnitTypes::Zerg_Creep_Colony, cSupply));
     buildplan_.push_back(BuildplanEntry(UnitTypes::Zerg_Creep_Colony, cSupply));
 
     stage_++;
   }
-  if (stage_ == 1 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Zerg_Spire) > 0) {
+  if (stage_ == 1 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Spire) > 0) {
     mainSquad->addSetup(UnitTypes::Zerg_Hydralisk, 14);
     mainSquad->addSetup(UnitTypes::Zerg_Mutalisk, 16);
     mainSquad->setBuildup(false);
@@ -70,12 +71,12 @@ void ZergMain::computeActions() {
 
     stage_++;
   }
-  if (stage_ == 3 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Zerg_Hive) > 0) {
+  if (stage_ == 3 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Hive) > 0) {
     buildplan_.push_back(BuildplanEntry(UnitTypes::Zerg_Defiler_Mound, cSupply));
 
     stage_++;
   }
-  if (stage_ == 4 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Zerg_Defiler_Mound) > 0) {
+  if (stage_ == 4 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Defiler_Mound) > 0) {
     mainSquad->addSetup(UnitTypes::Zerg_Defiler, 4);
 
     stage_++;

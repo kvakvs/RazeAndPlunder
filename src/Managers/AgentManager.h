@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 
-#include "../Utils/Sets.h"
+#include "Utils/Sets.h"
 
 /** The AgentManager class is a container that holds a list of all active agents in the game. Each unit, worker, building or
  * or addon is assigned to an agent. See the MainAgents, StructureAgents and UnitAgents folders for detailed information
@@ -15,20 +15,15 @@
  */
 
 class AgentManager {
-
 private:
-  Agentset agents;
-  AgentManager();
-  static AgentManager* instance;
-  int lastCallFrame;
+  Agentset agents_;
+  int last_call_frame_ = 0;
 
 public:
-  static int StartFrame;
+  static int start_frame_;
 
+  AgentManager();
   ~AgentManager();
-
-  // Returns the instance to the AgentManager. 
-  static AgentManager* getInstance();
 
   // Adds an agent to the container. Is called each time a new
   // unit is built. 

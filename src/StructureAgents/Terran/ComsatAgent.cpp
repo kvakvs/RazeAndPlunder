@@ -1,7 +1,7 @@
 #include "ComsatAgent.h"
-#include "../../Managers/AgentManager.h"
-#include "../../Influencemap/MapManager.h"
-//#include "../../Commander/Commander.h"
+#include "Managers/AgentManager.h"
+#include "Influencemap/MapManager.h"
+#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -41,7 +41,7 @@ void ComsatAgent::computeActions() {
     //Uncomment if you want the Comsat to scan for enemy location.
     /*if (rnp::commander()->isAttacking())
     {
-      TilePosition pos = MapManager::getInstance()->findAttackPosition();
+      TilePosition pos = rnp::map_manager()->findAttackPosition();
       if (pos.x == -1)
       {
         //No attack position found. Sweep a base area
@@ -67,7 +67,7 @@ void ComsatAgent::computeActions() {
 int ComsatAgent::friendlyUnitsWithinRange(Position pos) {
   int fCnt = 0;
   double maxRange = 384; //Range of sieged tanks
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isUnit() && a->isAlive() && a->getUnitType().canAttack()) {
       double dist = a->getUnit()->getPosition().getDistance(pos);
@@ -80,7 +80,7 @@ int ComsatAgent::friendlyUnitsWithinRange(Position pos) {
 }
 
 bool ComsatAgent::anyHasSweeped(TilePosition pos) {
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive() && a->getUnitType().getID() == UnitTypes::Terran_Comsat_Station.getID()) {
       ComsatAgent* ca = (ComsatAgent*)a;

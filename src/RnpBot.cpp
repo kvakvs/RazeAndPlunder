@@ -23,15 +23,38 @@ using namespace BWAPI;
 
 RnpBot* RnpBot::singleton_ = nullptr;
 
+RnpBot::RnpBot() : BWAPI::AIModule(), bwem_(BWEM::Map::Instance()) {
+  singleton_ = this;
+}
+
+void RnpBot::init_early_singletons() {
+  profiler_ = std::make_unique<Profiler>();
+  statistics_ = std::make_unique<Statistics>();
+  strategy_selector_ = std::make_unique<StrategySelector>();
+}
+
+void RnpBot::init_singletons() {
+  agent_manager_ = std::make_unique<AgentManager>();
+  commander_ = strategy_selector_->getStrategy();
+  building_placer_ = std::make_unique<BuildingPlacer>();
+  exploration_ = std::make_unique<ExplorationManager>();
+  constructor_ = std::make_unique<Constructor>();
+  upgrader_ = std::make_unique<Upgrader>();
+  resource_manager_ = std::make_unique<ResourceManager>();
+  pathfinder_ = std::make_unique<Pathfinder>();
+  navigation_ = std::make_unique<NavigationAgent>();
+
+  ai_loop_.register_initial_units();
+}
+
 void RnpBot::onStart() {
   try {
+    init_early_singletons();
+
     //Enable/disable file writing stuff 
-    profiler_ = std::make_unique<Profiler>();
     profiler_->disable();
-
-    Statistics::getInstance()->disable();
-
-    StrategySelector::getInstance()->disable();
+    statistics_->disable();
+    strategy_selector_->disable();
 
     profiler_->start("OnInit");
 
@@ -48,8 +71,8 @@ void RnpBot::onStart() {
 
     bwem_.Initialize();
     bwem_.EnableAutomaticPathAnalysis();
-    bool startingLocationsOK = bwem_.FindBasesForStartingLocations();
-    assert(startingLocationsOK);
+    bool starting_locations_ok = bwem_.FindBasesForStartingLocations();
+    assert(starting_locations_ok);
 
 //    BWEM::utils::MapPrinter::Initialize(&bwem_);
 //    BWEM::utils::printMap(theMap);      // will print the map into the file <StarCraftFolder>bwapi-data/map.bmp
@@ -59,32 +82,23 @@ void RnpBot::onStart() {
 
     profile_ = false;
 
-    //
-    // Init our singleton agents
-    //
-    AgentManager::getInstance();
-    BuildingPlacer::getInstance();
-    Constructor::getInstance();
-    Upgrader::getInstance();
-    ResourceManager::getInstance();
-    Pathfinder::getInstance();
-    commander_ = StrategySelector::getInstance()->getStrategy();
+    init_singletons();
 
     //Fill pathfinder
     for (auto& area : bwem_.Areas()) {
       for (auto& base : area.Bases()) {
         auto pos = base.Center();
-        Pathfinder::getInstance()->requestPath(
+        pathfinder_->requestPath(
           Broodwar->self()->getStartLocation(), 
           TilePosition(pos));
       }
     }
 
-    MapManager::getInstance();
+    map_manager_ = std::make_unique<MapManager>();
 
     //Add the units we have from start to agent manager
     for (auto& u : Broodwar->self()->getUnits()) {
-      AgentManager::getInstance()->addAgent(u);
+      rnp::agent_manager()->addAgent(u);
     }
 
     running_ = true;
@@ -94,7 +108,7 @@ void RnpBot::onStart() {
     //Debug mode. Active panels.
     commander_->toggleSquadsDebug();
     commander_->toggleBuildplanDebug();
-    Upgrader::getInstance()->toggleDebug();
+    upgrader_->toggleDebug();
     ai_loop_.toggleUnitDebug();
     //loop.toggleBPDebug();
     //End Debug mode
@@ -111,24 +125,9 @@ void RnpBot::onStart() {
 }
 
 void RnpBot::gameStopped() {
-  Pathfinder::getInstance()->stop();
+  pathfinder_->stop();
   profiler_->dumpToFile();
   running_ = false;
-
-  //Delete singletons
-  delete Pathfinder::getInstance();
-  delete AgentManager::getInstance();
-  delete BuildingPlacer::getInstance();
-  delete ResourceManager::getInstance();
-  delete Constructor::getInstance();
-  delete ExplorationManager::getInstance();
-  delete NavigationAgent::getInstance();
-  delete StrategySelector::getInstance();
-  delete MapManager::getInstance();
-}
-
-RnpBot::RnpBot(): BWAPI::AIModule(), bwem_(BWEM::Map::Instance()) {
-  singleton_ = this;
 }
 
 void RnpBot::onEnd(bool isWinner) {
@@ -138,9 +137,9 @@ void RnpBot::onEnd(bool isWinner) {
   if (isWinner) win = 1;
   if (Broodwar->elapsedTime() / 60 >= 80) win = 2;
 
-  StrategySelector::getInstance()->addResult(win);
-  StrategySelector::getInstance()->saveStats();
-  Statistics::getInstance()->saveResult(win);
+  strategy_selector_->addResult(win);
+  strategy_selector_->saveStats();
+  statistics_->saveResult(win);
 
   gameStopped();
 }
@@ -186,15 +185,15 @@ void RnpBot::onSendText(std::string text) {
   else if (text == "d") {
     ai_loop_.toggleDebug();
   }
-  else if (text == "pf" && NavigationAgent::pathfinding_version == 2) {
+  else if (text == "pf" && NavigationAgent::pathfinding_version_ == 2) {
     ai_loop_.togglePFDebug();
   }
   else if (text == "bp") {
     ai_loop_.toggleBPDebug();
   }
   else if (text == "spf") {
-    NavigationAgent::pathfinding_version++;
-    if (NavigationAgent::pathfinding_version > 2) NavigationAgent::pathfinding_version = 0;
+    NavigationAgent::pathfinding_version_++;
+    if (NavigationAgent::pathfinding_version_ > 2) NavigationAgent::pathfinding_version_ = 0;
   }
   else if (text.substr(0, 2) == "sq") {
     if (text == "sq") {
@@ -229,7 +228,7 @@ void RnpBot::onSendText(std::string text) {
     Broodwar->setLocalSpeed(speed_);
   }
   else if (text == "t") {
-    Upgrader::getInstance()->toggleDebug();
+    upgrader_->toggleDebug();
   }
   else if (text == "s") {
     rnp::commander()->toggleSquadsDebug();
@@ -268,7 +267,7 @@ void RnpBot::onUnitDiscover(BWAPI::Unit unit) {
 
   if (unit->getPlayer()->getID() != Broodwar->self()->getID()) {
     if (not unit->getPlayer()->isNeutral() && !unit->getPlayer()->isAlly(Broodwar->self())) {
-      ExplorationManager::getInstance()->addSpottedUnit(unit);
+      exploration_->addSpottedUnit(unit);
     }
   }
 }
@@ -282,7 +281,7 @@ void RnpBot::onUnitShow(BWAPI::Unit unit) {
 
   if (unit->getPlayer()->getID() != Broodwar->self()->getID()) {
     if (not unit->getPlayer()->isNeutral() && !unit->getPlayer()->isAlly(Broodwar->self())) {
-      ExplorationManager::getInstance()->addSpottedUnit(unit);
+      exploration_->addSpottedUnit(unit);
     }
   }
 }
@@ -346,14 +345,14 @@ bool BotTournamentModule::onAction(int actionType, void* parameter) {
   case Tournament::Printf:
     return true;
   case Tournament::EnableFlag:
-    switch (*(int*)parameter) {
+    switch (*static_cast<int*>(parameter)) {
     case Flag::CompleteMapInformation:
     case Flag::UserInput:
       // Disallow these two flags
       return false;
+    default: 
+      return true;
     }
-    // Allow other flags if we add more that don't affect gameplay specifically
-    return true;
   case Tournament::LeaveGame:
   case Tournament::PauseGame:
   case Tournament::ResumeGame:

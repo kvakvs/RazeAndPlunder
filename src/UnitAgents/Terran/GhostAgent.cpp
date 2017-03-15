@@ -1,6 +1,6 @@
 #include "GhostAgent.h"
-//#include "../../MainAgents/TargetingAgent.h"
-#include "../../Managers/AgentManager.h"
+#include "Managers/AgentManager.h"
+#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -36,7 +36,7 @@ bool GhostAgent::useAbilities() {
   return false;
 }
 
-Unit GhostAgent::findLockdownTarget() {
+Unit GhostAgent::findLockdownTarget() const {
   int fCnt = friendlyUnitsWithinRange(224);
   if (fCnt < 2) {
     //If we dont have any attacking units nearby,
@@ -44,7 +44,7 @@ Unit GhostAgent::findLockdownTarget() {
     return nullptr;
   }
 
-  int maxRange = TechTypes::Lockdown.getWeapon().maxRange();
+//  int maxRange = TechTypes::Lockdown.getWeapon().maxRange();
 
   Unit target = nullptr;
   int cTargetVal = 0;
@@ -62,9 +62,9 @@ Unit GhostAgent::findLockdownTarget() {
   return target;
 }
 
-int GhostAgent::friendlyUnitsWithinRange(int maxRange) {
+int GhostAgent::friendlyUnitsWithinRange(int maxRange) const {
   int fCnt = 0;
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isUnit() && !a->isOfType(UnitTypes::Terran_Medic)) {
       double dist = unit->getDistance(a->getUnit());

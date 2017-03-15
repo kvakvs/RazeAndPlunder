@@ -1,11 +1,8 @@
 #include "Pathfinder.h"
 #include "../Managers/ExplorationManager.h"
-#include "../Utils/Profiler.h"
-#include <fstream>
+#include "Utils/Profiler.h"
 
 using namespace BWAPI;
-
-Pathfinder* Pathfinder::instance = nullptr;
 
 Pathfinder::Pathfinder() {
   running = true;
@@ -18,14 +15,6 @@ Pathfinder::~Pathfinder() {
   for (auto& p : pathObj) {
     delete p;
   }
-  instance = nullptr;
-}
-
-Pathfinder* Pathfinder::getInstance() {
-  if (instance == nullptr) {
-    instance = new Pathfinder();
-  }
-  return instance;
 }
 
 PathObj* Pathfinder::getPathObj(TilePosition start, TilePosition end) {

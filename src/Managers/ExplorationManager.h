@@ -1,7 +1,7 @@
 #pragma once
 
 #include "SpottedObject.h"
-#include "../Commander/Squad.h"
+#include "Commander/Squad.h"
 
 #include "bwem.h"
 
@@ -33,25 +33,18 @@ class ExplorationManager {
 
 private:
   BWEM::Map& bwem_;
-  SpottedObjectSet enemy;
-  RegionSet explore;
-
-  static ExplorationManager* instance;
-  int lastCallFrame;
-
-  int siteSetFrame;
+  SpottedObjectSet enemy_;
+  RegionSet explore_;
+  int last_call_frame_ = 0;
+  int site_set_frame_ = 0;
   BWAPI::TilePosition expansionSite;
 
 private:
-  ExplorationManager();
   void cleanup();
 
 public:
-  // Destructor 
+  ExplorationManager();
   ~ExplorationManager();
-
-  // Returns the instance of the class. 
-  static ExplorationManager* getInstance();
 
   // Called each update to issue orders. 
   void computeActions();

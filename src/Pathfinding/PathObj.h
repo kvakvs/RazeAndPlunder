@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 #include "graph.h"
 
 /** Helper class for the threaded Pathfinder agent. Each PathObj contains the path between two

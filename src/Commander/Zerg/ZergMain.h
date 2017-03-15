@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../Commander.h"
+#include "Commander/Commander.h"
 #include "../Squad.h"
 
 /** This is the Commander class for a balanced Zerg tactic

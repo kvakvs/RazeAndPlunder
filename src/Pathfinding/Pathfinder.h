@@ -1,8 +1,8 @@
 #pragma once
 
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 #include "PathObj.h"
-#include "../Utils/cthread.h"
+#include "Utils/cthread.h"
 
 class PathObjSet : public BWAPI::SetContainer<PathObj*, std::hash<void*>> {
 public:
@@ -18,24 +18,16 @@ public:
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class Pathfinder : public CThread {
-
-private:
-  Pathfinder();
-  static Pathfinder* instance;
   bool running;
-
   PathObjSet pathObj;
-
-  PathObj* getPathObj(BWAPI::TilePosition start, BWAPI::TilePosition end);
-
   bool isRunning();
 
-public:
-  // Destructor 
-  ~Pathfinder();
+private:
+  PathObj* getPathObj(BWAPI::TilePosition start, BWAPI::TilePosition end);
 
-  // Returns the instance of the class. 
-  static Pathfinder* getInstance();
+public:
+  Pathfinder();
+  ~Pathfinder();
 
   // Returns the ground distance between two positions. 
   int getDistance(BWAPI::TilePosition start, BWAPI::TilePosition end);

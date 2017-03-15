@@ -3,21 +3,11 @@
 
 using namespace BWAPI;
 
-Statistics* Statistics::instance = nullptr;
-
 Statistics::Statistics() {
   active = true;
 }
 
-Statistics* Statistics::getInstance() {
-  if (instance == nullptr) {
-    instance = new Statistics();
-  }
-  return instance;
-}
-
 Statistics::~Statistics() {
-  instance = nullptr;
 }
 
 void Statistics::enable() {

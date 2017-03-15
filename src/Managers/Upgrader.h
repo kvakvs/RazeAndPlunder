@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 
 /** Upgrader handles upgrades and techs. Add the requested upgrade and/or tech
  * to the upgrader and the bot executes it when enough resources are available.
@@ -12,27 +12,18 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class Upgrader {
+  bool debug_;
+  std::vector<BWAPI::UpgradeType> upgrades_;
+  std::vector<BWAPI::TechType> techs_;
 
 private:
-  static Upgrader* instance;
-
-  Upgrader();
-
-  bool debug;
-
-  std::vector<BWAPI::UpgradeType> upgrades;
-  std::vector<BWAPI::TechType> techs;
-
   bool canUpgrade(BWAPI::UpgradeType type, BWAPI::Unit unit);
-  bool canResearch(BWAPI::TechType type, BWAPI::Unit unit);
-  std::string format(std::string str);
+  bool canResearch(BWAPI::TechType type, BWAPI::Unit unit) const;
+  std::string format(std::string str) const;
 
 public:
-  // Destructor. 
+  Upgrader();
   ~Upgrader();
-
-  // Returns the instance to the Upgrader that is currently used. 
-  static Upgrader* getInstance();
 
   // Checks if there is an upgrade the specified agent need to upgrade/research. 
   bool checkUpgrade(BaseAgent* agent);
@@ -41,7 +32,7 @@ public:
   void toggleDebug();
 
   // Prints debug info to screen. 
-  void printInfo();
+  void printInfo() const;
 
   // Adds an upgrade to the upgrade queue. 
   void addUpgrade(BWAPI::UpgradeType type);

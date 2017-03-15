@@ -2,35 +2,23 @@
 #include "PFFunctions.h"
 #include "../Managers/AgentManager.h"
 #include "../Influencemap/MapManager.h"
-#include "../Commander/Commander.h"
-#include "../Utils/Profiler.h"
+#include "Commander/Commander.h"
+#include "Utils/Profiler.h"
 #include <math.h>
 #include "BWEMUtil.h"
 #include "Glob.h"
 
 using namespace BWAPI;
 
-bool NavigationAgent::instanceFlag = false;
-int NavigationAgent::pathfinding_version = 1;
-NavigationAgent* NavigationAgent::instance = nullptr;
+int NavigationAgent::pathfinding_version_ = 1;
 
 NavigationAgent::NavigationAgent() : bwem_(BWEM::Map::Instance()) {
-  checkRange = 5;
-  mapW = Broodwar->mapWidth() * 4;
-  mapH = Broodwar->mapHeight() * 4;
+  check_range_ = 5;
+  map_w_ = Broodwar->mapWidth() * 4;
+  map_h_ = Broodwar->mapHeight() * 4;
 }
 
 NavigationAgent::~NavigationAgent() {
-  instanceFlag = false;
-  instance = nullptr;
-}
-
-NavigationAgent* NavigationAgent::getInstance() {
-  if (not instanceFlag) {
-    instance = new NavigationAgent();
-    instanceFlag = true;
-  }
-  return instance;
 }
 
 bool NavigationAgent::computeMove(BaseAgent* agent, TilePosition goal) {
@@ -52,8 +40,8 @@ bool NavigationAgent::computeMove(BaseAgent* agent, TilePosition goal) {
   //Retreat to center of the squad if the enemy
   //is overwhelming.
   if (agent->isUnderAttack() && (agent->getUnit()->isIdle() || agent->getUnit()->isInterruptible())) {
-    int ownI = MapManager::getInstance()->getOwnGroundInfluenceIn(agent->getUnit()->getTilePosition());
-    int enI = MapManager::getInstance()->getEnemyGroundInfluenceIn(agent->getUnit()->getTilePosition());
+    int ownI = rnp::map_manager()->getOwnGroundInfluenceIn(agent->getUnit()->getTilePosition());
+    int enI = rnp::map_manager()->getEnemyGroundInfluenceIn(agent->getUnit()->getTilePosition());
     if (enI > ownI) {
       //Broodwar << "Retreat from (" << agent->getUnit()->getTilePosition().x << "," << agent->getUnit()->getTilePosition().y << " " << ownI << "<" << enI << endl;
       auto sq = rnp::commander()->getSquad(agent->getSquadID());
@@ -76,19 +64,19 @@ bool NavigationAgent::computeMove(BaseAgent* agent, TilePosition goal) {
   }
 
   if (enemyInRange) {
-    if (pathfinding_version == 0) {
+    if (pathfinding_version_ == 0) {
       rnp::profiler()->start("NormMove");
       cmd = computePathfindingMove(agent, goal);
       rnp::profiler()->end("NormMove");
     }
 
-    if (pathfinding_version == 1) {
+    if (pathfinding_version_ == 1) {
       rnp::profiler()->start("BoidsMove");
       cmd = computeBoidsMove(agent);
       rnp::profiler()->end("BoidsMove");
     }
 
-    if (pathfinding_version == 2) {
+    if (pathfinding_version_ == 2) {
       rnp::profiler()->start("PFmove");
       computePotentialFieldMove(agent);
       rnp::profiler()->end("PFmove");
@@ -362,9 +350,9 @@ bool NavigationAgent::computePotentialFieldMove(BaseAgent* agent) {
   int bestX = wtX;
   int bestY = wtY;
 
-  for (int cX = wtX - checkRange; cX <= wtX + checkRange; cX++) {
-    for (int cY = wtY - checkRange; cY <= wtY + checkRange; cY++) {
-      if (cX >= 0 && cY >= 0 && cX <= mapW && cY <= mapH) {
+  for (int cX = wtX - check_range_; cX <= wtX + check_range_; cX++) {
+    for (int cY = wtY - check_range_; cY <= wtY + check_range_; cY++) {
+      if (cX >= 0 && cY >= 0 && cX <= map_w_ && cY <= map_h_) {
         WalkPosition wt = WalkPosition(cX, cY);
         cP = getAttackingUnitP(agent, wt);
         //cP += PFFunctions::getGoalP(Position(cX,cY), goal);
@@ -422,7 +410,7 @@ void NavigationAgent::displayPF(BaseAgent* agent) {
 
   for (int cTileX = tileX - range; cTileX < tileX + range; cTileX += 3) {
     for (int cTileY = tileY - range; cTileY < tileY + range; cTileY += 3) {
-      if (cTileX >= 0 && cTileY >= 0 && cTileX < mapW && cTileY < mapH) {
+      if (cTileX >= 0 && cTileY >= 0 && cTileX < map_w_ && cTileY < map_h_) {
         WalkPosition wt = WalkPosition(cTileX + 1, cTileY + 1);
         float p = getAttackingUnitP(agent, wt);
         //cP += PFFunctions::getGoalP(Position(cX,cY), goal);
@@ -538,7 +526,7 @@ float NavigationAgent::getAttackingUnitP(BaseAgent* agent, WalkPosition wp) {
   }
 
   //Own Units
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive()) {
       float dist = PFFunctions::getDistance(wp, a->getUnit());
@@ -567,7 +555,7 @@ float NavigationAgent::getDefendingUnitP(BaseAgent* agent, WalkPosition wp) {
   p += PFFunctions::getTerrainP(agent, wp);
 
   //Own Units
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive()) {
       float dist = PFFunctions::getDistance(wp, a->getUnit());

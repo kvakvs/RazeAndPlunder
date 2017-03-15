@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 //#include <windows.h>
 
 /** Helper class for Profiler. This class represents a profiling of one specific

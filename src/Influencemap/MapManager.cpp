@@ -1,14 +1,13 @@
 #include "MapManager.h"
-#include "../Managers/AgentManager.h"
-#include "../Managers/ExplorationManager.h"
-#include "../MainAgents/BaseAgent.h"
+#include "Managers/AgentManager.h"
+#include "Managers/ExplorationManager.h"
+#include "MainAgents/BaseAgent.h"
 
 #include "bwem.h"
 #include "BWEMUtil.h"
+#include "Glob.h"
 
 using namespace BWAPI;
-
-MapManager* MapManager::instance = nullptr;
 
 MapManager::MapManager() : bwem_(BWEM::Map::Instance()) {
   //Add the regions for this map
@@ -16,19 +15,19 @@ MapManager::MapManager() : bwem_(BWEM::Map::Instance()) {
     MRegion* mr = new MRegion();
     mr->region = &r;
     mr->resetInfluence();
-    map.insert(mr);
+    map_.insert(mr);
 
     //Add base locations for this map
     for (auto& base : r.Bases()) {
-      bases.insert(new BaseLocationItem(base.Location()));
+      bases_.insert(new BaseLocationItem(base.Location()));
     }
   }
-  lastCallFrame = 0;
+  last_call_frame_ = 0;
 }
 
 const MRegion* MapManager::getMapRegion(const BWEM::Area* area) {
   auto a_center = rnp::get_center(area);
-  for (MRegion* mr : map) {
+  for (MRegion* mr : map_) {
     auto center = rnp::get_center(mr->region);
     if (center.x == a_center.x && center.y == a_center.y) {
       return mr;
@@ -96,7 +95,7 @@ const BWEM::ChokePoint* MapManager::getDefenseLocation() {
   int bestInfluence = 0;
   const BWEM::ChokePoint* best = nullptr;
 
-  for (MRegion* base : map) {
+  for (MRegion* base : map_) {
     if (base->inf_own_buildings > bestInfluence) {
       const BWEM::ChokePoint* cp = findGuardChokepoint(base);
       if (cp != nullptr) {
@@ -112,7 +111,7 @@ const BWEM::ChokePoint* MapManager::getDefenseLocation() {
 }
 
 MRegion* MapManager::getMapFor(Position p) {
-  for (auto& mreg : map) {
+  for (auto& mreg : map_) {
     if (rnp::is_inside(*mreg->region, p)) {
       return mreg;
     }
@@ -121,7 +120,7 @@ MRegion* MapManager::getMapFor(Position p) {
 }
 
 bool MapManager::hasEnemyInfluence() {
-  for (auto& mr : map) {
+  for (auto& mr : map_) {
     if (mr->inf_en_buildings > 0) {
       return true;
     }
@@ -132,25 +131,25 @@ bool MapManager::hasEnemyInfluence() {
 void MapManager::update() {
   //Dont call too often
   int cFrame = Broodwar->getFrameCount();
-  if (cFrame - lastCallFrame < 10) {
+  if (cFrame - last_call_frame_ < 10) {
     return;
   }
-  lastCallFrame = cFrame;
+  last_call_frame_ = cFrame;
 
   //Reset previous influence scores
-  for (MRegion* mr : map) {
+  for (MRegion* mr : map_) {
     mr->resetInfluence();
   }
 
   //Update visited base locations
-  for (auto& a : bases) {
+  for (auto& a : bases_) {
     if (Broodwar->isVisible(a->baseLocation)) {
       a->frameVisited = Broodwar->getFrameCount();
     }
   }
 
   //Update own influence
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive()) {
       MRegion* mr = getMapFor(a->getUnit()->getPosition());
@@ -188,8 +187,8 @@ void MapManager::update() {
   }
 
   //Update enemy buildings influence
-  for (MRegion* mr : map) {
-    mr->inf_en_buildings = ExplorationManager::getInstance()->getSpottedInfluenceInRegion(mr->region);
+  for (MRegion* mr : map_) {
+    mr->inf_en_buildings = rnp::exploration()->getSpottedInfluenceInRegion(mr->region);
   }
 
   //Update enemy units influence
@@ -213,7 +212,7 @@ void MapManager::update() {
 }
 
 int MapManager::getOwnGroundInfluenceIn(TilePosition pos) {
-  for (MRegion* cm : map) {
+  for (MRegion* cm : map_) {
     if (rnp::is_inside(*cm->region, Position(pos))) {
       return cm->inf_own_ground;
     }
@@ -222,7 +221,7 @@ int MapManager::getOwnGroundInfluenceIn(TilePosition pos) {
 }
 
 int MapManager::getEnemyGroundInfluenceIn(TilePosition pos) {
-  for (MRegion* cm : map) {
+  for (MRegion* cm : map_) {
     if (rnp::is_inside(*cm->region, Position(pos))) {
       return cm->inf_en_ground;
     }
@@ -231,7 +230,7 @@ int MapManager::getEnemyGroundInfluenceIn(TilePosition pos) {
 }
 
 bool MapManager::hasOwnInfluenceIn(TilePosition pos) {
-  for (MRegion* cm : map) {
+  for (MRegion* cm : map_) {
     if (cm->inf_own_buildings > 0 
       && rnp::is_inside(*cm->region, Position(pos))) {
       return true;
@@ -241,7 +240,7 @@ bool MapManager::hasOwnInfluenceIn(TilePosition pos) {
 }
 
 bool MapManager::hasEnemyInfluenceIn(TilePosition pos) {
-  for (MRegion* cm : map) {
+  for (MRegion* cm : map_) {
     if (cm->inf_en_buildings > 0 
       && rnp::is_inside(*cm->region, Position(pos))) {
       return true;
@@ -252,7 +251,7 @@ bool MapManager::hasEnemyInfluenceIn(TilePosition pos) {
 
 TilePosition MapManager::findAttackPosition() {
   MRegion* best = nullptr;
-  for (MRegion* cm : map) {
+  for (MRegion* cm : map_) {
     if (cm->inf_en_buildings > 0) {
       if (best == nullptr) {
         best = cm;
@@ -274,7 +273,7 @@ TilePosition MapManager::findAttackPosition() {
     //No enemy building found. Move to starting positions.
     int longestVisitFrame = Broodwar->getFrameCount();
     TilePosition base = TilePosition(-1, -1);
-    for (auto& a : bases) {
+    for (auto& a : bases_) {
       if (a->frameVisited < longestVisitFrame) {
         longestVisitFrame = a->frameVisited;
         base = a->baseLocation;
@@ -286,26 +285,16 @@ TilePosition MapManager::findAttackPosition() {
 }
 
 MapManager::~MapManager() {
-  for (MRegion* mr : map) {
+  for (MRegion* mr : map_) {
     delete mr;
   }
-  for (auto& a : bases) {
+  for (auto& a : bases_) {
     delete a;
   }
-
-  instance = nullptr;
 }
-
-MapManager* MapManager::getInstance() {
-  if (instance == nullptr) {
-    instance = new MapManager();
-  }
-  return instance;
-}
-
 
 void MapManager::printInfo() {
-  for (MRegion* mr : map) {
+  for (MRegion* mr : map_) {
     auto mr_center = rnp::get_center(mr->region);
     int x1 = mr_center.x;
     int y1 = mr_center.y;

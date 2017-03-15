@@ -1,6 +1,7 @@
 #include "ScienceVesselAgent.h"
-#include "../../Managers/AgentManager.h"
+#include "Managers/AgentManager.h"
 #include "../../MainAgents/TargetingAgent.h"
+#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -73,8 +74,8 @@ bool ScienceVesselAgent::isEMPtarget(Unit e) {
   return false;
 }
 
-BaseAgent* ScienceVesselAgent::findImportantUnit() {
-  Agentset agents = AgentManager::getInstance()->getAgents();
+BaseAgent* ScienceVesselAgent::findImportantUnit() const {
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (isImportantUnit(a)) {
       double dist = unit->getDistance(a->getUnit());
@@ -87,7 +88,7 @@ BaseAgent* ScienceVesselAgent::findImportantUnit() {
 }
 
 bool ScienceVesselAgent::isImportantUnit(BaseAgent* agent) {
-  UnitType type = agent->getUnitType();
+//  UnitType type = agent->getUnitType();
 
   if (agent->isOfType(UnitTypes::Terran_Siege_Tank_Tank_Mode)) return true;
   if (agent->isOfType(UnitTypes::Terran_Siege_Tank_Siege_Mode)) return true;

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 
 /** The StructureAgent is the base agent class for all agents handling buildings. If a building is created and no
  * specific agent for that type is found, the building is assigned to a StructureAgent. StructureAgents are typically

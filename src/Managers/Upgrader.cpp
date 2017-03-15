@@ -1,33 +1,25 @@
 #include "Upgrader.h"
 #include "AgentManager.h"
 #include "ResourceManager.h"
+#include "Glob.h"
+
 #include <sstream>
 #include <iso646.h>
 
 using namespace BWAPI;
 
-Upgrader* Upgrader::instance = nullptr;
-
 Upgrader::Upgrader() {
-  debug = false;
+  debug_ = false;
 }
 
 Upgrader::~Upgrader() {
-  instance = nullptr;
-}
-
-Upgrader* Upgrader::getInstance() {
-  if (instance == nullptr) {
-    instance = new Upgrader();
-  }
-  return instance;
 }
 
 void Upgrader::toggleDebug() {
-  debug = !debug;
+  debug_ = !debug_;
 }
 
-std::string Upgrader::format(std::string str) {
+std::string Upgrader::format(std::string str) const {
   std::string res = str;
 
   std::string raceName = Broodwar->self()->getRace().getName();
@@ -39,8 +31,8 @@ std::string Upgrader::format(std::string str) {
   return res;
 }
 
-void Upgrader::printInfo() {
-  if (not debug) return;
+void Upgrader::printInfo() const {
+  if (not debug_) return;
 
   //Precalc total lines
   int totalLines = 1;
@@ -98,10 +90,10 @@ bool Upgrader::checkUpgrade(BaseAgent* agent) {
     Unit unit = agent->getUnit();
 
     //Check techs
-    for (int i = 0; i < (int)techs.size(); i++) {
-      TechType type = techs.at(i);
+    for (int i = 0; i < (int)techs_.size(); i++) {
+      TechType type = techs_.at(i);
       if (Broodwar->self()->hasResearched(type)) {
-        techs.erase(techs.begin() + i);
+        techs_.erase(techs_.begin() + i);
         return true;
       }
       if (canResearch(type, unit)) {
@@ -111,11 +103,11 @@ bool Upgrader::checkUpgrade(BaseAgent* agent) {
     }
 
     //Check upgrades
-    for (int i = 0; i < (int)upgrades.size(); i++) {
-      UpgradeType type = upgrades.at(i);
+    for (int i = 0; i < (int)upgrades_.size(); i++) {
+      UpgradeType type = upgrades_.at(i);
       if (canUpgrade(type, unit)) {
         if (unit->upgrade(type)) {
-          upgrades.erase(upgrades.begin() + i);
+          upgrades_.erase(upgrades_.begin() + i);
           return true;
         }
       }
@@ -137,7 +129,7 @@ bool Upgrader::canUpgrade(UpgradeType type, Unit unit) {
   }
 
   //3. Check if we have enough resources
-  if (not ResourceManager::getInstance()->hasResources(type)) {
+  if (not rnp::resources()->hasResources(type)) {
     return false;
   }
 
@@ -147,7 +139,7 @@ bool Upgrader::canUpgrade(UpgradeType type, Unit unit) {
   }
 
   //5. Check if some other building is already doing this upgrade
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->getUnit()->getUpgrade().getID() == type.getID()) {
       return false;
@@ -163,11 +155,11 @@ bool Upgrader::canUpgrade(UpgradeType type, Unit unit) {
   return true;
 }
 
-bool Upgrader::canResearch(TechType type, Unit unit) {
+bool Upgrader::canResearch(TechType type, Unit unit) const {
   //Seems Broodwar->canResearch bugs when Lurker Aspect is requested without
   //having an upgraded Lair.
   if (type.getID() == TechTypes::Lurker_Aspect.getID()) {
-    if (AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Zerg_Lair) == 0) return false;
+    if (rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Lair) == 0) return false;
   }
 
   //1. Check if unit can do this upgrade
@@ -176,7 +168,7 @@ bool Upgrader::canResearch(TechType type, Unit unit) {
   }
 
   //2. Check if we have enough resources
-  if (not ResourceManager::getInstance()->hasResources(type)) {
+  if (not rnp::resources()->hasResources(type)) {
     return false;
   }
 
@@ -191,7 +183,7 @@ bool Upgrader::canResearch(TechType type, Unit unit) {
   }
 
   //5. Check if some other building is already doing this upgrade
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->getUnit()->getTech().getID() == type.getID()) {
       return false;
@@ -208,9 +200,9 @@ bool Upgrader::canResearch(TechType type, Unit unit) {
 }
 
 void Upgrader::addUpgrade(UpgradeType type) {
-  upgrades.push_back(type);
+  upgrades_.push_back(type);
 }
 
 void Upgrader::addTech(TechType type) {
-  techs.push_back(type);
+  techs_.push_back(type);
 }

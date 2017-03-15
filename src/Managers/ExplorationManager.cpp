@@ -1,10 +1,9 @@
 #include "ExplorationManager.h"
 #include "BuildingPlacer.h"
 #include "BWEMUtil.h"
+#include "Glob.h"
 
 using namespace BWAPI;
-
-ExplorationManager* ExplorationManager::instance = nullptr;
 
 RegionItem::RegionItem(const BWEM::Area* region) {
   location = rnp::get_center(*region);
@@ -14,36 +13,28 @@ RegionItem::RegionItem(const BWEM::Area* region) {
 ExplorationManager::ExplorationManager(): bwem_(BWEM::Map::Instance()) {
   //Add the regions for this map
   for (auto& r : bwem_.Areas()) {
-    explore.insert(new RegionItem(&r));
+    explore_.insert(new RegionItem(&r));
   }
 
-  siteSetFrame = 0;
+  site_set_frame_ = 0;
 
-  lastCallFrame = Broodwar->getFrameCount();
+  last_call_frame_ = Broodwar->getFrameCount();
 
   expansionSite = TilePosition(-1, -1);
 }
 
 ExplorationManager::~ExplorationManager() {
-  instance = nullptr;
-}
-
-ExplorationManager* ExplorationManager::getInstance() {
-  if (instance == nullptr) {
-    instance = new ExplorationManager();
-  }
-  return instance;
 }
 
 void ExplorationManager::computeActions() {
   //Dont call too often
   int cFrame = Broodwar->getFrameCount();
-  if (cFrame - lastCallFrame < 9) {
+  if (cFrame - last_call_frame_ < 9) {
     return;
   }
-  lastCallFrame = cFrame;
+  last_call_frame_ = cFrame;
 
-  for (auto& a : explore) {
+  for (auto& a : explore_) {
     if (Broodwar->isVisible(a->location)) {
       a->frameVisited = Broodwar->getFrameCount();
     }
@@ -54,8 +45,8 @@ TilePosition ExplorationManager::searchExpansionSite() {
   getExpansionSite();
 
   if (expansionSite.x == -1) {
-    expansionSite = BuildingPlacer::getInstance()->findExpansionSite();
-    siteSetFrame = Broodwar->getFrameCount();
+    expansionSite = rnp::building_placer()->findExpansionSite();
+    site_set_frame_ = Broodwar->getFrameCount();
   }
 
   return expansionSite;
@@ -63,7 +54,7 @@ TilePosition ExplorationManager::searchExpansionSite() {
 
 TilePosition ExplorationManager::getExpansionSite() {
   if (expansionSite.x >= 0) {
-    if (Broodwar->getFrameCount() - siteSetFrame > 500) {
+    if (Broodwar->getFrameCount() - site_set_frame_ > 500) {
       expansionSite = TilePosition(-1, -1);
     }
   }
@@ -72,7 +63,7 @@ TilePosition ExplorationManager::getExpansionSite() {
 }
 
 void ExplorationManager::setExplored(TilePosition pos) {
-  for (auto& a : explore) {
+  for (auto& a : explore_) {
     if (a->location.x == pos.x && a->location.y == pos.y) {
       a->frameVisited = Broodwar->getFrameCount();
       return;
@@ -84,7 +75,7 @@ void ExplorationManager::setExplored(TilePosition pos) {
 
 void ExplorationManager::setExpansionSite(TilePosition pos) {
   if (pos.x >= 0) {
-    siteSetFrame = Broodwar->getFrameCount();
+    site_set_frame_ = Broodwar->getFrameCount();
     expansionSite = pos;
   }
 }
@@ -92,7 +83,7 @@ void ExplorationManager::setExpansionSite(TilePosition pos) {
 TilePosition ExplorationManager::getNextToExplore(Squad* squad) {
   int longestVisitFrame = Broodwar->getFrameCount();
   TilePosition nextPos = TilePosition(-1, -1);
-  for (auto& a : explore) {
+  for (auto& a : explore_) {
     if (a->frameVisited < longestVisitFrame) {
       longestVisitFrame = a->frameVisited;
       nextPos = a->location;
@@ -123,7 +114,7 @@ void ExplorationManager::addSpottedUnit(Unit unit) {
   if (unit->getType().isBuilding()) {
     //Check if we already have seen this building
     bool found = false;
-    for (auto& a : enemy) {
+    for (auto& a : enemy_) {
       if (a->getUnitID() == unit->getID()) {
         found = true;
         break;
@@ -131,7 +122,7 @@ void ExplorationManager::addSpottedUnit(Unit unit) {
     }
 
     if (not found) {
-      enemy.insert(new SpottedObject(unit));
+      enemy_.insert(new SpottedObject(unit));
     }
   }
 }
@@ -140,9 +131,9 @@ void ExplorationManager::unitDestroyed(Unit unit) {
   TilePosition uPos = unit->getTilePosition();
   if (unit->getType().isBuilding()) {
     bool removed = false;
-    for (auto& a : enemy) {
+    for (auto& a : enemy_) {
       if (a->isAt(unit->getTilePosition())) {
-        enemy.erase(a);
+        enemy_.erase(a);
         return;
       }
     }
@@ -154,7 +145,7 @@ void ExplorationManager::cleanup() {
 
   while (cont) {
     cont = false;
-    for (auto& a : enemy) {
+    for (auto& a : enemy_) {
       if (Broodwar->isVisible(a->getTilePosition())) {
         bool found = false;
         for (auto& u : Broodwar->enemy()->getUnits()) {
@@ -166,7 +157,7 @@ void ExplorationManager::cleanup() {
           }
         }
         if (not found) {
-          enemy.erase(a);
+          enemy_.erase(a);
           cont = true;
           break;
         }
@@ -177,7 +168,7 @@ void ExplorationManager::cleanup() {
 
 int ExplorationManager::getSpottedInfluenceInRegion(const BWEM::Area* area) {
   int im = 0;
-  for (auto& spotted_object : enemy) {
+  for (auto& spotted_object : enemy_) {
     if (rnp::is_inside(*area, spotted_object->getPosition())) {
       im += spotted_object->getType().buildScore();
     }
@@ -191,7 +182,7 @@ TilePosition ExplorationManager::getClosestSpottedBuilding(TilePosition start) {
   TilePosition pos = TilePosition(-1, -1);
   double bestDist = 100000;
 
-  for (auto& a : enemy) {
+  for (auto& a : enemy_) {
     double cDist = start.getDistance(a->getTilePosition());
     if (cDist < bestDist) {
       bestDist = cDist;

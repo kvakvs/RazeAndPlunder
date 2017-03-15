@@ -2,7 +2,7 @@
 
 #include <BWAPI.h>
 #include <BWAPI/SetContainer.h>
-#include "../MainAgents/BaseAgent.h"
+#include "MainAgents/BaseAgent.h"
 
 /** Author: Johan Hagelback (johan.hagelback@gmail.com)
  */

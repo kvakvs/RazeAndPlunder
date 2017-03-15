@@ -17,17 +17,16 @@ struct BuildQueueItem {
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class Constructor {
-
-private:
-  static Constructor* instance;
+protected:
+  std::vector<BWAPI::UnitType> build_plan_;
+  std::vector<BuildQueueItem> build_queue_;
+  int last_command_center_ = 0;
+  int last_call_frame_ = 0;
 
 protected:
-  Constructor();
-  std::vector<BWAPI::UnitType> buildPlan;
-  std::vector<BuildQueueItem> buildQueue;
   void lock(int buildOrderIndex, int unitId);
   bool executeOrder(BWAPI::UnitType type);
-  bool shallBuildSupplyDepot();
+  //bool shallBuildSupplyDepot();
   std::string format(BWAPI::UnitType type);
   // Checks if we currently is constructing a building 
   bool isBeingBuilt(BWAPI::UnitType type);
@@ -35,19 +34,12 @@ protected:
   bool hasResourcesLeft();
   int mineralsNearby(BWAPI::TilePosition center);
 
-  int lastCommandCenter;
-
-  int lastCallFrame;
-
 public:
-  // Destructor. 
+  Constructor();
   ~Constructor();
 
-  // Returns the instance to the Constructor that is currently used. 
-  static Constructor* getInstance();
-
   // Returns the number of entries in the build plan. 
-  int buildPlanLength();
+  int buildPlanLength() const;
 
   // Returns the number of units of the specified type currently being produced. 
   int noInProduction(BWAPI::UnitType type);

@@ -1,5 +1,5 @@
 #include "MarineAgent.h"
-#include "../../Managers/AgentManager.h"
+#include "Managers/AgentManager.h"
 #include "../../Commander/Commander.h"
 #include "Glob.h"
 
@@ -11,7 +11,7 @@ bool MarineAgent::useAbilities() {
     auto sq = rnp::commander()->getSquad(squadID);
     if (sq) {
       if (sq->isBunkerDefend()) {
-        Agentset agents = AgentManager::getInstance()->getAgents();
+        auto& agents = rnp::agent_manager()->getAgents();
         for (auto& a : agents) {
           if (a->isAlive() && a->isOfType(UnitTypes::Terran_Bunker) && a->getUnit()->exists()) {
             if (a->getUnit()->getLoadedUnits().size() < 4) {

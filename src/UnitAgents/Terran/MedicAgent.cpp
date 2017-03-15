@@ -1,6 +1,7 @@
 #include "MedicAgent.h"
-#include "../../Managers/AgentManager.h"
+#include "Managers/AgentManager.h"
 #include <iso646.h>
+#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -9,7 +10,7 @@ bool MedicAgent::useAbilities() {
   double bestDist = -1;
   Unit toHeal = nullptr;
 
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive() && a->isDamaged()) {
       if (isMedicTarget(a->getUnit()) && a->getUnitID() != unit->getID()) {

@@ -1,6 +1,6 @@
 #include "TerranMain.h"
-#include "../../Managers/BuildplanEntry.h"
-#include "../../Managers/AgentManager.h"
+#include "Managers/BuildplanEntry.h"
+#include "Managers/AgentManager.h"
 #include "../ExplorationSquad.h"
 #include "../RushSquad.h"
 #include "Glob.h"
@@ -61,7 +61,7 @@ TerranMain::~TerranMain() {
 void TerranMain::computeActions() {
   computeActionsBase();
 
-  workers_num_ = 12 * AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Command_Center) + 2 * AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Refinery);
+  workers_num_ = 12 * rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Terran_Command_Center) + 2 * rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Terran_Refinery);
   if (workers_num_ > 30) workers_num_ = 30;
 
   int cSupply = Broodwar->self()->supplyUsed() / 2;
@@ -111,7 +111,7 @@ void TerranMain::computeActions() {
     stage_++;
   }
 
-  if (stage_ == 4 && AgentManager::getInstance()->countNoUnits(UnitTypes::Terran_Command_Center) >= 2) {
+  if (stage_ == 4 && rnp::agent_manager()->countNoUnits(UnitTypes::Terran_Command_Center) >= 2) {
     buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Missile_Turret, cSupply));
     buildplan_.push_back(BuildplanEntry(UpgradeTypes::Terran_Vehicle_Weapons, cSupply));
     buildplan_.push_back(BuildplanEntry(UpgradeTypes::Terran_Infantry_Weapons, cSupply));
@@ -120,7 +120,7 @@ void TerranMain::computeActions() {
 
     stage_++;
   }
-  if (stage_ == 5 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Science_Facility) > 0) {
+  if (stage_ == 5 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Terran_Science_Facility) > 0) {
     buildplan_.push_back(BuildplanEntry(UnitTypes::Terran_Missile_Turret, cSupply));
 
     main_sq_->addSetup(UnitTypes::Terran_Science_Vessel, 1);
@@ -132,13 +132,13 @@ void TerranMain::computeActions() {
 
     stage_++;
   }
-  if (stage_ == 6 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Science_Vessel) > 0) {
+  if (stage_ == 6 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Terran_Science_Vessel) > 0) {
     buildplan_.push_back(BuildplanEntry(TechTypes::EMP_Shockwave, cSupply));
     buildplan_.push_back(BuildplanEntry(UpgradeTypes::Terran_Vehicle_Weapons, cSupply));
 
     stage_++;
   }
-  if (stage_ == 7 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Terran_Physics_Lab) > 0) {
+  if (stage_ == 7 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Terran_Physics_Lab) > 0) {
     backup2_sq_->addSetup(UnitTypes::Terran_Battlecruiser, 2);
     backup2_sq_->setBuildup(false);
     buildplan_.push_back(BuildplanEntry(TechTypes::Yamato_Gun, cSupply));

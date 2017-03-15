@@ -1,6 +1,6 @@
 #include "HighTemplarAgent.h"
 #include "../../Pathfinding/NavigationAgent.h"
-#include "../../Managers/AgentManager.h"
+#include "Managers/AgentManager.h"
 #include "../../Commander/Commander.h"
 #include "Glob.h"
 
@@ -73,7 +73,7 @@ bool HighTemplarAgent::useAbilities() {
 BaseAgent* HighTemplarAgent::findHallucinationTarget() {
   int maxRange = TechTypes::Hallucination.getWeapon().maxRange();
 
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     bool targetUnit = false;
     if (a->isOfType(UnitTypes::Protoss_Carrier)) targetUnit = true;
@@ -110,7 +110,7 @@ BaseAgent* HighTemplarAgent::findArchonTarget() {
 
 int HighTemplarAgent::friendlyUnitsWithinRange(TilePosition tilePos, int maxRange) {
   int fCnt = 0;
-  Agentset agents = AgentManager::getInstance()->getAgents();
+  auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isUnit() && !a->isOfType(UnitTypes::Terran_Medic)) {
       double dist = a->getUnit()->getDistance(Position(tilePos));

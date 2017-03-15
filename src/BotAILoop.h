@@ -8,24 +8,27 @@
  *
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
-class AIloop {
+class BotAILoop {
 
 private:
-  bool debug;
-  bool debugUnit;
-  bool debugPF;
-  bool debugBP;
-  int debugSQ;
+  bool debug_;
+  bool debug_unit_;
+  bool debug_pf_;
+  bool debug_bp_;
+  int debug_sq_;
   BWEM::Map& bwem_;
 
   void drawTerrainData();
 
 public:
   // Constructor 
-  AIloop();
+  BotAILoop();
 
   // Destructor 
-  ~AIloop();
+  ~BotAILoop();
+
+  // call this before game started but after commander and bot singleton have been created
+  void register_initial_units(); 
 
   // Call this each AI frame. 
   void computeActions();

@@ -1,7 +1,7 @@
 #include "CommandCenterAgent.h"
 #include "../../Commander/Commander.h"
-#include "../../Managers/AgentManager.h"
-#include "../../Managers/Constructor.h"
+#include "Managers/AgentManager.h"
+#include "Managers/Constructor.h"
 #include "Glob.h"
 
 using namespace BWAPI;
@@ -12,13 +12,13 @@ CommandCenterAgent::CommandCenterAgent(Unit mUnit) {
   unitID = unit->getID();
 
   hasSentWorkers = false;
-  if (AgentManager::getInstance()->countNoUnits(UnitTypes::Terran_Command_Center) == 0) {
+  if (rnp::agent_manager()->countNoUnits(UnitTypes::Terran_Command_Center) == 0) {
     //We dont do this for the first Command Center.
     hasSentWorkers = true;
   }
 
   agentType = "CommandCenterAgent";
-  Constructor::getInstance()->commandCenterBuilt();
+  rnp::constructor()->commandCenterBuilt();
 }
 
 void CommandCenterAgent::computeActions() {
@@ -27,7 +27,7 @@ void CommandCenterAgent::computeActions() {
       sendWorkers();
       hasSentWorkers = true;
 
-      Constructor::getInstance()->addRefinery();
+      rnp::constructor()->addRefinery();
     }
   }
 
@@ -41,7 +41,7 @@ void CommandCenterAgent::computeActions() {
     }
   }
 
-  if (AgentManager::getInstance()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
+  if (rnp::agent_manager()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
     if (canBuild(worker)) {
       unit->train(worker);

@@ -1,6 +1,6 @@
 #include "NexusAgent.h"
-#include "../../Managers/AgentManager.h"
-#include "../../Managers/Constructor.h"
+#include "Managers/AgentManager.h"
+#include "Managers/Constructor.h"
 #include "../../Commander/Commander.h"
 #include "Glob.h"
 
@@ -13,12 +13,12 @@ NexusAgent::NexusAgent(Unit mUnit) {
   agentType = "NexusAgent";
 
   hasSentWorkers = false;
-  if (AgentManager::getInstance()->countNoUnits(UnitTypes::Protoss_Nexus) == 0) {
+  if (rnp::agent_manager()->countNoUnits(UnitTypes::Protoss_Nexus) == 0) {
     //We dont do this for the first Nexus.
     hasSentWorkers = true;
   }
 
-  Constructor::getInstance()->commandCenterBuilt();
+  rnp::constructor()->commandCenterBuilt();
 }
 
 void NexusAgent::computeActions() {
@@ -27,13 +27,13 @@ void NexusAgent::computeActions() {
       sendWorkers();
       hasSentWorkers = true;
 
-      Constructor::getInstance()->addRefinery();
+      rnp::constructor()->addRefinery();
     }
   }
 
   if (not unit->isIdle()) return;
 
-  if (AgentManager::getInstance()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
+  if (rnp::agent_manager()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
     if (canBuild(worker)) {
       unit->train(worker);

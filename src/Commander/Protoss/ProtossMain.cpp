@@ -1,9 +1,8 @@
 #include "ProtossMain.h"
-#include "../../Managers/BuildplanEntry.h"
-#include "../ExplorationSquad.h"
-#include "../../Managers/ExplorationManager.h"
-#include "../RushSquad.h"
-#include "../../Managers/AgentManager.h"
+#include "Managers/BuildplanEntry.h"
+#include "Managers/ExplorationManager.h"
+#include "Managers/AgentManager.h"
+#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -54,7 +53,7 @@ void ProtossMain::computeActions() {
     buildplan_.push_back(BuildplanEntry(UpgradeTypes::Singularity_Charge, cSupply));
     stage_++;
   }
-  if (cSupply >= 30 && stage_ == 1 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Protoss_Templar_Archives) > 0) {
+  if (cSupply >= 30 && stage_ == 1 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Protoss_Templar_Archives) > 0) {
     mainSquad->addSetup(UnitTypes::Protoss_High_Templar, 4);
     mainSquad->setBuildup(false);
 
@@ -71,7 +70,7 @@ void ProtossMain::computeActions() {
     buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Stargate, cSupply));
     stage_++;
   }
-  if (stage_ == 4 && min > 400 && gas > 150 && AgentManager::getInstance()->countNoFinishedUnits(UnitTypes::Protoss_Gateway) >= 3) {
+  if (stage_ == 4 && min > 400 && gas > 150 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Protoss_Gateway) >= 3) {
     buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Robotics_Facility, cSupply));
     buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Observatory, cSupply));
 

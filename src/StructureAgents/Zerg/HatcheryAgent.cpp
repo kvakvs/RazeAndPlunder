@@ -1,9 +1,9 @@
 #include "HatcheryAgent.h"
-#include "../../Managers/AgentManager.h"
-#include "../../Managers/Constructor.h"
+#include "Managers/AgentManager.h"
+#include "Managers/Constructor.h"
 #include "../../Commander/Commander.h"
-#include "../../Managers/Upgrader.h"
-#include "../../Managers/ResourceManager.h"
+#include "Managers/Upgrader.h"
+#include "Managers/ResourceManager.h"
 #include "Glob.h"
 
 using namespace BWAPI;
@@ -14,7 +14,7 @@ HatcheryAgent::HatcheryAgent(Unit mUnit) {
   unitID = unit->getID();
 
   hasSentWorkers = false;
-  if (AgentManager::getInstance()->countNoBases() == 0) {
+  if (rnp::agent_manager()->countNoBases() == 0) {
     //We dont do this for the first base.
     hasSentWorkers = true;
   }
@@ -24,7 +24,7 @@ HatcheryAgent::HatcheryAgent(Unit mUnit) {
   }
 
   agentType = "HatcheryAgent";
-  Constructor::getInstance()->commandCenterBuilt();
+  rnp::constructor()->commandCenterBuilt();
 }
 
 void HatcheryAgent::computeActions() {
@@ -32,26 +32,26 @@ void HatcheryAgent::computeActions() {
     if (not unit->isBeingConstructed()) {
       sendWorkers();
       hasSentWorkers = true;
-      Constructor::getInstance()->addRefinery();
+      rnp::constructor()->addRefinery();
     }
   }
 
   if (not unit->isIdle()) return;
 
   //Check for base upgrades
-  if (isOfType(UnitTypes::Zerg_Hatchery) && AgentManager::getInstance()->countNoUnits(UnitTypes::Zerg_Lair) == 0) {
+  if (isOfType(UnitTypes::Zerg_Hatchery) && rnp::agent_manager()->countNoUnits(UnitTypes::Zerg_Lair) == 0) {
     if (Broodwar->canMake(UnitTypes::Zerg_Lair, unit)) {
-      if (ResourceManager::getInstance()->hasResources(UnitTypes::Zerg_Lair)) {
-        ResourceManager::getInstance()->lockResources(UnitTypes::Zerg_Lair);
+      if (rnp::resources()->hasResources(UnitTypes::Zerg_Lair)) {
+        rnp::resources()->lockResources(UnitTypes::Zerg_Lair);
         unit->morph(UnitTypes::Zerg_Lair);
         return;
       }
     }
   }
-  if (isOfType(UnitTypes::Zerg_Lair) && AgentManager::getInstance()->countNoUnits(UnitTypes::Zerg_Hive) == 0) {
+  if (isOfType(UnitTypes::Zerg_Lair) && rnp::agent_manager()->countNoUnits(UnitTypes::Zerg_Hive) == 0) {
     if (Broodwar->canMake(UnitTypes::Zerg_Hive, unit)) {
-      if (ResourceManager::getInstance()->hasResources(UnitTypes::Zerg_Hive)) {
-        ResourceManager::getInstance()->lockResources(UnitTypes::Zerg_Hive);
+      if (rnp::resources()->hasResources(UnitTypes::Zerg_Hive)) {
+        rnp::resources()->lockResources(UnitTypes::Zerg_Hive);
         unit->morph(UnitTypes::Zerg_Hive);
         return;
       }
@@ -63,7 +63,7 @@ void HatcheryAgent::computeActions() {
   int totSupply = Broodwar->self()->supplyTotal() / 2;
   int cSupply = Broodwar->self()->supplyUsed() / 2;
   if (cSupply >= totSupply - 2) {
-    if (Constructor::getInstance()->noInProduction(UnitTypes::Zerg_Overlord) == 0) buildOL = true;
+    if (rnp::constructor()->noInProduction(UnitTypes::Zerg_Overlord) == 0) buildOL = true;
   }
   if (buildOL) {
     if (canBuild(UnitTypes::Zerg_Overlord)) {
@@ -82,7 +82,7 @@ void HatcheryAgent::computeActions() {
   if (checkBuildUnit(UnitTypes::Zerg_Scourge)) return;
 
   //Create workers
-  if (AgentManager::getInstance()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
+  if (rnp::agent_manager()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
     if (canBuild(worker)) {
       unit->train(worker);
@@ -90,7 +90,7 @@ void HatcheryAgent::computeActions() {
   }
 
   //Check for upgrades
-  Upgrader::getInstance()->checkUpgrade(this);
+  rnp::upgrader()->checkUpgrade(this);
 }
 
 bool HatcheryAgent::checkBuildUnit(UnitType type) {

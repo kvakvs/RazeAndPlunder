@@ -1,12 +1,13 @@
 #include "Squad.h"
-#include "../UnitAgents/UnitAgent.h"
-#include "../Managers/ExplorationManager.h"
-#include "../Influencemap/MapManager.h"
-#include "Commander.h"
-#include "../Managers/Constructor.h"
-#include "../Pathfinding/Pathfinder.h"
-#include "../Utils/Profiler.h"
-#include "../Managers/AgentManager.h"
+#include "UnitAgents/UnitAgent.h"
+#include "Managers/ExplorationManager.h"
+#include "Influencemap/MapManager.h"
+#include "Commander/Commander.h"
+#include "Managers/Constructor.h"
+#include "Pathfinding/Pathfinder.h"
+#include "Utils/Profiler.h"
+#include "Managers/AgentManager.h"
+#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -159,7 +160,7 @@ void Squad::computeActions() {
     if (setup_.at(i).current < setup_.at(i).no && setup_.at(i).type.isWorker()) {
       int no = setup_.at(i).no - setup_.at(i).current;
       for (int j = 0; j < no; j++) {
-        BaseAgent* w = AgentManager::getInstance()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
+        BaseAgent* w = rnp::agent_manager()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
         if (w != nullptr) addMember(w);
       }
     }
@@ -217,7 +218,7 @@ bool Squad::needUnit(UnitType type) {
   for (int i = 0; i < (int)setup_.size(); i++) {
     if (setup_.at(i).equals(type)) {
       //Found a matching setup, see if there is room
-      if (setup_.at(i).current + Constructor::getInstance()->noInProduction(type) + noCreated <= setup_.at(i).no) {
+      if (setup_.at(i).current + rnp::constructor()->noInProduction(type) + noCreated <= setup_.at(i).no) {
         return true;
       }
     }
@@ -388,7 +389,7 @@ void Squad::removeMember(BaseAgent* agent) {
   if (isExplorer()) {
     TilePosition goal = agent->getGoal();
     if (goal.x >= 0) {
-      ExplorationManager::getInstance()->setExplored(goal);
+      rnp::exploration()->setExplored(goal);
     }
   }
 
@@ -493,11 +494,11 @@ void Squad::setGoal(TilePosition mGoal) {
       int d = (int)goal_.getDistance(mGoal);
       if (d >= 10) {
         if ((int)agents_.size() > 0) {
-          Pathfinder::getInstance()->requestPath(getCenter(), mGoal);
-          if (not Pathfinder::getInstance()->isReady(getCenter(), mGoal)) {
+          rnp::pathfinder()->requestPath(getCenter(), mGoal);
+          if (not rnp::pathfinder()->isReady(getCenter(), mGoal)) {
             return;
           }
-          path_ = Pathfinder::getInstance()->getPath(getCenter(), mGoal);
+          path_ = rnp::pathfinder()->getPath(getCenter(), mGoal);
 
           arrived_frame_ = -1;
           path_index_ = 20;

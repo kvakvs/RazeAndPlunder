@@ -1,6 +1,7 @@
 #include "UnitAgent.h"
 #include "../Pathfinding/NavigationAgent.h"
-#include "../MainAgents/TargetingAgent.h"
+#include "MainAgents/TargetingAgent.h"
+#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -36,7 +37,7 @@ void UnitAgent::computeActions() {
 
   //Prio 3: Move
   if (not unit->isLoaded() && !unit->isSieged() && !unit->isBurrowed()) {
-    if (NavigationAgent::getInstance()->computeMove(this, goal)) {
+    if (rnp::navigation()->computeMove(this, goal)) {
       lastOrderFrame = Broodwar->getFrameCount();
       return;
     }
