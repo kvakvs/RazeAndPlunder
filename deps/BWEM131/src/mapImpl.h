@@ -11,13 +11,14 @@
 
 
 #include <BWAPI.h>
-#include "graph.h"
-#include "map.h"
-#include "tiles.h"
 #include <queue>
 #include <memory>
-#include "utils.h"
+
 #include "defs.h"
+//#include "graph.h"
+#include "map.h"
+#include "tiles.h"
+#include "utils.h"
 
 
 namespace BWEM {
@@ -77,13 +78,9 @@ namespace BWEM {
         return m_maxAltitude;
       }
 
-      int BaseCount() const override {
-        return GetGraph().BaseCount();
-      }
+      int BaseCount() const override;
 
-      int ChokePointCount() const override {
-        return GetGraph().ChokePoints().size();
-      }
+      int ChokePointCount() const override;
 
       const vector<BWAPI::TilePosition>& StartingLocations() const override {
         return m_StartingLocations;
@@ -107,63 +104,35 @@ namespace BWEM {
       void OnMineralDestroyed(BWAPI::Unit u) override;
       void OnStaticBuildingDestroyed(BWAPI::Unit u) override;
 
-      const vector<Area>& Areas() const override {
-        return GetGraph().Areas();
-      }
+      const vector<Area>& Areas() const override;
 
       // Returns an Area given its id. Range = 1..Size()
-      const Area* GetArea(Area::id id) const override {
-        return m_Graph.GetArea(id);
-      }
+      const Area* GetArea(Area::id id) const override;
 
-      Area* GetArea(Area::id id) {
-        return m_Graph.GetArea(id);
-      }
+      Area* GetArea(Area::id id);
 
-      const Area* GetArea(BWAPI::WalkPosition w) const override {
-        return m_Graph.GetArea(w);
-      }
+      const Area* GetArea(BWAPI::WalkPosition w) const override;
 
-      const Area* GetArea(BWAPI::TilePosition t) const override {
-        return m_Graph.GetArea(t);
-      }
+      const Area* GetArea(BWAPI::TilePosition t) const override;
 
-      Area* GetArea(BWAPI::WalkPosition w) {
-        return m_Graph.GetArea(w);
-      }
+      Area* GetArea(BWAPI::WalkPosition w);
 
-      Area* GetArea(BWAPI::TilePosition t) {
-        return m_Graph.GetArea(t);
-      }
+      Area* GetArea(BWAPI::TilePosition t);
 
-      const Area* GetNearestArea(BWAPI::WalkPosition w) const override {
-        return m_Graph.GetNearestArea(w);
-      }
+      const Area* GetNearestArea(BWAPI::WalkPosition w) const override;
 
-      const Area* GetNearestArea(BWAPI::TilePosition t) const override {
-        return m_Graph.GetNearestArea(t);
-      }
+      const Area* GetNearestArea(BWAPI::TilePosition t) const override;
 
-      Area* GetNearestArea(BWAPI::WalkPosition w) {
-        return m_Graph.GetNearestArea(w);
-      }
+      Area* GetNearestArea(BWAPI::WalkPosition w);
 
-      Area* GetNearestArea(BWAPI::TilePosition t) {
-        return m_Graph.GetNearestArea(t);
-      }
+      Area* GetNearestArea(BWAPI::TilePosition t);
 
 
-      const CPPath& GetPath(const BWAPI::Position& a, const BWAPI::Position& b, int* pLength = nullptr) const override {
-        return m_Graph.GetPath(a, b, pLength);
-      }
+      const CPPath& GetPath(const BWAPI::Position& a, const BWAPI::Position& b, int* pLength = nullptr) const override;
 
-      const class Graph& GetGraph() const {
-        return m_Graph;
-      }
+      const Graph& GetGraph() const;
 
-      class Graph& GetGraph() {
-        return m_Graph;
-      }
+      Graph& GetGraph();
 
 
       const vector<pair<pair<Area::id, Area::id>, BWAPI::WalkPosition>>& RawFrontier() const override {
@@ -196,7 +165,7 @@ namespace BWEM {
 
       mutable bool m_automaticPathUpdate = false;
 
-      class Graph m_Graph;
+      std::unique_ptr<Graph> m_Graph;
       vector<unique_ptr<Mineral>> m_Minerals;
       vector<unique_ptr<Geyser>> m_Geysers;
       vector<unique_ptr<StaticBuilding>> m_StaticBuildings;

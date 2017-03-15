@@ -16,6 +16,8 @@
 #include "bwapiExt.h"
 #include "utils.h"
 #include "defs.h"
+#include "tiles.h"
+#include "mapImpl.h"
 
 
 namespace BWEM {
@@ -181,16 +183,13 @@ namespace BWEM {
 
     template <class TPosition>
     const Area* Graph::GetNearestArea(TPosition p) const {
-      typedef typename TileOfPosition<TPosition>::type Tile_t;
+      typedef typename BWEM::utils::TileOfPosition<TPosition>::type Tile_t;
       if (const Area* area = GetArea(p)) return area;
 
-      p = GetMap()->BreadthFirstSearch(p,
-                                       [this](const Tile_t& t, TPosition) {
-                                         return t.AreaId() > 0;
-                                       }, // findCond
-                                       [](const Tile_t&, TPosition) {
-                                         return true;
-                                       }); // visitCond
+      p = GetMap()->BreadthFirstSearch(
+          p,
+          [this](const Tile_t& t, TPosition) { return t.AreaId() > 0; }, // findCond
+          [](const Tile_t&, TPosition) { return true; }); // visitCond
 
       return GetArea(p);
     }

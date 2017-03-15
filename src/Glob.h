@@ -1,35 +1,35 @@
 #pragma once
 #include <memory>
 
-class Pathfinder;
-class ResourceManager;
-class ExplorationManager;
-class Statistics;
-class Commander;
-class Profiler;
 class AgentManager;
-class StrategySelector;
 class BuildingPlacer;
+class Commander;
 class Constructor;
-class Upgrader;
-class NavigationAgent;
+class ExplorationManager;
 class MapManager;
+class NavigationAgent;
+class Pathfinder;
+class Profiler;
+class ResourceManager;
+class Statistics;
+class StrategySelector;
+class Upgrader;
 
 namespace rnp {
 
   // Globally visible functions which access main class singleton
-  std::shared_ptr<Commander> commander();
-  Profiler* profiler();
   AgentManager* agent_manager();
+  BuildingPlacer* building_placer();
+  std::shared_ptr<Commander> commander();
+  Constructor* constructor();
+  ExplorationManager* exploration();
+  MapManager* map_manager();
+  NavigationAgent* navigation();
+  Pathfinder* pathfinder();
+  Profiler* profiler();
+  ResourceManager* resources();
   Statistics* statistics();
   StrategySelector* strategy_selector();
-  BuildingPlacer* building_placer();
-  ExplorationManager* exploration();
-  Constructor* constructor();
   Upgrader* upgrader();
-  ResourceManager* resources();
-  Pathfinder* pathfinder();
-  NavigationAgent* navigation();
-  MapManager* map_manager();
 
 } // ns rnp

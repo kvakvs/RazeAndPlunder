@@ -15,6 +15,8 @@
 #include <cstdint>
 #include <limits>
 #include <fstream>
+#include <cmath>
+#include <sstream>
 #include "defs.h"
 
 
@@ -43,7 +45,7 @@ namespace BWEM {
 
 
     inline double norm(int dx, int dy) {
-      return sqrt(squaredNorm(dx, dy));
+      return std::sqrt(squaredNorm(dx, dy));
     }
 
 
@@ -101,11 +103,11 @@ namespace BWEM {
       const auto n = std::distance(begin, end);
       const auto divisor = (RAND_MAX + 1) / n;
 
-      std::remove_const<decltype(n)>::type k;
+      using noconst_t = typename std::remove_const<decltype(n)>::type;
+      noconst_t k;
       do {
         k = std::rand() / divisor;
-      }
-      while (k >= n);
+      } while (k >= n);
 
       std::advance(begin, k);
       return begin;
@@ -113,15 +115,15 @@ namespace BWEM {
 
 
     template <class T>
-    inline typename const T::value_type& random_element(const T& Container) {
+    const auto& random_element(const T& Container) {
       const auto n = Container.size();
       const auto divisor = (RAND_MAX + 1) / n;
 
-      std::remove_const<decltype(n)>::type k;
+      using noconst_t = typename std::remove_const<decltype(n)>::type;
+      noconst_t k;
       do {
         k = std::rand() / divisor;
-      }
-      while (k >= n);
+      } while (k >= n);
 
       return Container[k];
     }

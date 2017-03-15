@@ -15,7 +15,7 @@
 
 #include "Managers/AgentManager.h"
 
-#include <Shlwapi.h>
+#include <shlwapi.h>
 #include "mapPrinter.h"
 #include "Glob.h"
 
@@ -254,7 +254,7 @@ void RnpBot::onPlayerLeft(BWAPI::Player player) {
 
 void RnpBot::onNukeDetect(BWAPI::Position target) {
   if (target != Positions::Unknown) {
-    TilePosition t = TilePosition(target);
+    TilePosition t(target);
     Broodwar << "Nuclear Launch Detected at (" << t.x << "," << t.y << ")" << std::endl;
   }
   else {

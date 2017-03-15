@@ -1723,8 +1723,10 @@ ebmpBYTE BMP::FindClosestColor(RGBApixel& input) {
 
 
 bool EasyBMPcheckDataSize(void) {
+#ifdef _MSC_VER
   __pragma(warning(push))
   __pragma(warning(disable:4127))
+#endif
   using namespace std;
   bool ReturnValue = true;
   if (sizeof(ebmpBYTE) != 1) {
@@ -1752,7 +1754,9 @@ bool EasyBMPcheckDataSize(void) {
     ReturnValue = false;
   }
   return ReturnValue;
+#ifdef _MSC_VER
   __pragma(warning(pop))
+#endif
 }
 
 bool Rescale(BMP& InputImage, char mode, int NewDimension) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <BWAPI.h>
+#include <vector>
 
 struct BuildQueueItem {
   BWAPI::UnitType toBuild;

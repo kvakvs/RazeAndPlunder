@@ -12,6 +12,7 @@
 #include <assert.h>
 #include <cstdint>
 #include <string>
+#include <stdexcept>
 
 namespace BWEM {
 

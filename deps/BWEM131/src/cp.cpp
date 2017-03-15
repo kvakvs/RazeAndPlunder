@@ -11,6 +11,7 @@
 #include "cp.h"
 #include "mapImpl.h"
 #include "neutral.h"
+#include "graph.h"
 
 
 using namespace BWAPI;

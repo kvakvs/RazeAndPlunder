@@ -1,6 +1,7 @@
 #pragma once
 
 #include <BWAPI.h>
+#include <vector>
 
 /** The BaseAgent is the base agent class all agent classes directly or indirectly must extend. It contains some
  * common logic that is needed for several other agent implementations.

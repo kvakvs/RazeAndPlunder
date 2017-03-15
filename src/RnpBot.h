@@ -18,18 +18,18 @@ class BotTournamentModule : public BWAPI::TournamentModule {
 };
 
 // singletons forward def
-class Commander;
-class Profiler;
 class AgentManager;
-class StrategySelector;
 class BuildingPlacer;
-class ExplorationManager;
+class Commander;
 class Constructor;
-class Upgrader;
-class ResourceManager;
-class Pathfinder;
-class NavigationAgent;
+class ExplorationManager;
 class MapManager;
+class NavigationAgent;
+class Pathfinder;
+class Profiler;
+class ResourceManager;
+class StrategySelector;
+class Upgrader;
 
 /** This class contains the main game loop and all events that is broadcasted from the Starcraft engine
 * using BWAPI. See the BWAPI documentation for more info.
@@ -49,18 +49,18 @@ public:
   // Globally visible resources via the singleton
   BWEM::Map& bwem_;
   std::shared_ptr<Commander> commander_;
-  std::unique_ptr<Profiler> profiler_;
   std::unique_ptr<AgentManager> agent_manager_;
+  std::unique_ptr<BuildingPlacer> building_placer_;
+  std::unique_ptr<Constructor> constructor_;
+  std::unique_ptr<ExplorationManager> exploration_;
+  std::unique_ptr<MapManager> map_manager_;
+  std::unique_ptr<NavigationAgent> navigation_;
+  std::unique_ptr<Pathfinder> pathfinder_;
+  std::unique_ptr<Profiler> profiler_;
+  std::unique_ptr<ResourceManager> resource_manager_;
   std::unique_ptr<Statistics> statistics_;
   std::unique_ptr<StrategySelector> strategy_selector_;
-  std::unique_ptr<BuildingPlacer> building_placer_;
-  std::unique_ptr<ExplorationManager> exploration_;
-  std::unique_ptr<Constructor> constructor_;
   std::unique_ptr<Upgrader> upgrader_;
-  std::unique_ptr<ResourceManager> resource_manager_;
-  std::unique_ptr<Pathfinder> pathfinder_;
-  std::unique_ptr<NavigationAgent> navigation_;
-  std::unique_ptr<MapManager> map_manager_;
   
 public:
   RnpBot();
@@ -74,23 +74,23 @@ public:
   }
 
   // Virtual functions for callbacks, leave these as they are.
-  void onStart() override;
   void onEnd(bool isWinner) override;
   void onFrame() override;
-  void onSendText(std::string text) override;
-  void onReceiveText(BWAPI::Player player, std::string text) override;
-  void onPlayerLeft(BWAPI::Player player) override;
   void onNukeDetect(BWAPI::Position target) override;
-  void onUnitDiscover(BWAPI::Unit unit) override;
-  void onUnitEvade(BWAPI::Unit unit) override;
-  void onUnitShow(BWAPI::Unit unit) override;
-  void onUnitHide(BWAPI::Unit unit) override;
+  void onPlayerLeft(BWAPI::Player player) override;
+  void onReceiveText(BWAPI::Player player, std::string text) override;
+  void onSaveGame(std::string gameName) override;
+  void onSendText(std::string text) override;
+  void onStart() override;
+  void onUnitComplete(BWAPI::Unit unit) override;
   void onUnitCreate(BWAPI::Unit unit) override;
   void onUnitDestroy(BWAPI::Unit unit) override;
+  void onUnitDiscover(BWAPI::Unit unit) override;
+  void onUnitEvade(BWAPI::Unit unit) override;
+  void onUnitHide(BWAPI::Unit unit) override;
   void onUnitMorph(BWAPI::Unit unit) override;
   void onUnitRenegade(BWAPI::Unit unit) override;
-  void onSaveGame(std::string gameName) override;
-  void onUnitComplete(BWAPI::Unit unit) override;
+  void onUnitShow(BWAPI::Unit unit) override;
 
 private:
   void gameStopped();

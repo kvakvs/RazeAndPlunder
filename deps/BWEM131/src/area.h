@@ -10,6 +10,7 @@
 #pragma once
 
 #include <BWAPI.h>
+
 #include "bwapiExt.h"
 #include "utils.h"
 #include "defs.h"
@@ -75,7 +76,7 @@ namespace BWEM {
       return m_bottomRight;
     }
 
-    const BWAPI::TilePosition& BoundingBoxSize() const;
+    BWAPI::TilePosition BoundingBoxSize() const;
 
     // Position of the MiniTile with the highest Altitude() value.
     const BWAPI::WalkPosition& Top() const {

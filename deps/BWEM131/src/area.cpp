@@ -59,7 +59,7 @@ namespace BWEM {
   }
 
 
-  const TilePosition& Area::BoundingBoxSize() const {
+  TilePosition Area::BoundingBoxSize() const {
     return m_bottomRight + m_topLeft - 1;
   }
 

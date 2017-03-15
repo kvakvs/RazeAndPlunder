@@ -10,6 +10,7 @@
 
 #include "mapImpl.h"
 #include "neutral.h"
+#include "graph.h"
 #include "bwapiExt.h"
 #include "winutils.h"
 
@@ -48,7 +49,7 @@ namespace BWEM {
     //////////////////////////////////////////////////////////////////////////////////////////////
 
     MapImpl::MapImpl()
-      : m_Graph(this) {
+      : m_Graph(std::make_unique<Graph>(this)) {
 
     }
 
@@ -734,6 +735,72 @@ namespace BWEM {
 
       return !atLeastOneFailed;
     }
+
+  const Graph& MapImpl::GetGraph() const {
+    return *m_Graph;
+  }
+
+  Graph& MapImpl::GetGraph() {
+    return *m_Graph;
+  }
+
+  int MapImpl::BaseCount() const {
+    return GetGraph().BaseCount();
+  }
+
+  int MapImpl::ChokePointCount() const {
+    return GetGraph().ChokePoints().size();
+  }
+
+  const vector<Area>& MapImpl::Areas() const {
+    return GetGraph().Areas();
+  }
+
+  const Area* MapImpl::GetArea(Area::id id) const {
+    return m_Graph->GetArea(id);
+  }
+
+  Area* MapImpl::GetArea(Area::id id) {
+    return m_Graph->GetArea(id);
+  }
+
+  const Area* MapImpl::GetArea(BWAPI::TilePosition t) const {
+    return m_Graph->GetArea(t);
+  }
+
+  Area* MapImpl::GetArea(BWAPI::TilePosition t) {
+    return m_Graph->GetArea(t);
+  }
+
+  const Area* MapImpl::GetNearestArea(BWAPI::TilePosition t) const {
+    return m_Graph->GetNearestArea(t);
+  }
+
+  Area* MapImpl::GetNearestArea(BWAPI::TilePosition t) {
+    return m_Graph->GetNearestArea(t);
+  }
+
+  const CPPath&
+  MapImpl::GetPath(const BWAPI::Position& a, const BWAPI::Position& b,
+                   int* pLength) const {
+    return m_Graph->GetPath(a, b, pLength);
+  }
+
+  Area* MapImpl::GetNearestArea(BWAPI::WalkPosition w) {
+    return m_Graph->GetNearestArea(w);
+  }
+
+  const Area* MapImpl::GetNearestArea(BWAPI::WalkPosition w) const {
+    return m_Graph->GetNearestArea(w);
+  }
+
+  Area* MapImpl::GetArea(BWAPI::WalkPosition w) {
+    return m_Graph->GetArea(w);
+  }
+
+  const Area* MapImpl::GetArea(BWAPI::WalkPosition w) const {
+    return m_Graph->GetArea(w);
+  }
 
 
   }

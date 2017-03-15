@@ -23,16 +23,6 @@ namespace rnp {
     return result;
   }
 
-//  BaseVec get_bases(const BWEM::Map& bwem) {
-//    BaseVec result(16);
-//    for (auto& a : bwem.Areas()) {
-//      for (auto& b : a.Bases()) {
-//        result.push_back(&b);
-//      }
-//    }
-//    return result;
-//  }
-
   bool is_inside(const BWEM::Area& area, const BWAPI::Position& pos) {
     auto tl = area.TopLeft();
     auto br = area.BottomRight();

@@ -130,7 +130,9 @@ namespace BWEM {
     // Returns a Tile or a MiniTile, given its position.
     // Provided as a support of generic algorithms.
     template <class TPosition>
-    typename const utils::TileOfPosition<TPosition>::type& GetTTile(const TPosition& p, utils::check_t checkMode = utils::check_t::check) const;
+    const auto&
+    GetTTile(const TPosition& p,
+             utils::check_t checkMode = utils::check_t::check) const;
 
     // Provides access to the internal array of Tiles.
     const std::vector<Tile>& Tiles() const {
@@ -266,12 +268,12 @@ namespace BWEM {
 
 
   template <>
-  inline typename const Tile& Map::GetTTile<BWAPI::TilePosition>(const BWAPI::TilePosition& t, utils::check_t checkMode) const {
+  inline const auto& Map::GetTTile<BWAPI::TilePosition>(const BWAPI::TilePosition& t, utils::check_t checkMode) const {
     return GetTile(t, checkMode);
   }
 
   template <>
-  inline typename const MiniTile& Map::GetTTile<BWAPI::WalkPosition>(const BWAPI::WalkPosition& w, utils::check_t checkMode) const {
+  inline const auto& Map::GetTTile<BWAPI::WalkPosition>(const BWAPI::WalkPosition& w, utils::check_t checkMode) const {
     return GetMiniTile(w, checkMode);
   }
 
@@ -295,10 +297,10 @@ namespace BWEM {
              TPosition(-1, +1), TPosition(0, +1), TPosition(+1, +1)}) {
         TPosition next = current + delta;
         if (Valid(next)) {
-          const Tile_t& Next = GetTTile(next, check_t::no_check);
+          const Tile_t& Next = GetTTile(next, utils::check_t::no_check);
           if (findCond(Next, next)) return next;
 
-          if (visitCond(Next, next) && !contains(Visited, next)) {
+          if (visitCond(Next, next) && !BWEM::utils::contains(Visited, next)) {
             ToVisit.push(next);
             Visited.push_back(next);
           }

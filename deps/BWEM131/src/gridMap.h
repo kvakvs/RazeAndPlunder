@@ -95,7 +95,7 @@ namespace BWEM {
       std::pair<int, int> GetCellCoords(const BWAPI::TilePosition& t, check_t checkMode = check_t::check) const {
         bwem_assert((checkMode == check_t::no_check) || m_pMap->Valid(t));
         utils::unused(checkMode);
-        return make_pair(t.x / N, t.y / N);
+        return std::make_pair(t.x / N, t.y / N);
       }
 
       // Returns specific tiles of a Cell, given its coordinates.
@@ -108,13 +108,15 @@ namespace BWEM {
       BWAPI::TilePosition GetBottomRight(int i, int j, check_t checkMode = check_t::check) const {
         bwem_assert((checkMode == check_t::no_check) || ValidCoords(i, j));
         utils::unused(checkMode);
-        return BWAPI::TilePosition((i + 1) * N, (j + 1) * N) - 1;
+        BWAPI::TilePosition t((i + 1) * N, (j + 1) * N);
+        return t - BWAPI::TilePosition(1, 1);
       }
 
       BWAPI::TilePosition GetCenter(int i, int j, check_t checkMode = check_t::check) const {
         bwem_assert((checkMode == check_t::no_check) || ValidCoords(i, j));
         utils::unused(checkMode);
-        return BWAPI::TilePosition(i * N, j * N) + N / 2;
+        BWAPI::TilePosition t(i * N, j * N);
+        return t + BWAPI::TilePosition(N / 2, N / 2);
       }
 
       // Provides access to the internal array of Cells.
@@ -144,7 +146,7 @@ namespace BWEM {
         m_Cells(m_width * m_height) {
       static_assert(N > 0, "GridMap::cell_width_in_tiles must be > 0");
       bwem_assert_throw(pMap->Initialized());
-      bwem_assert_throw(N <= min(pMap->Size().x, pMap->Size().y));
+      bwem_assert_throw(N <= std::min(pMap->Size().x, pMap->Size().y));
       bwem_assert_throw(pMap->Size().x % N == 0);
       bwem_assert_throw(pMap->Size().y % N == 0);
 
