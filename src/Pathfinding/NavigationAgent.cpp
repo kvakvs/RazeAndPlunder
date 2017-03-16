@@ -1,16 +1,17 @@
 #include "NavigationAgent.h"
 #include "PFFunctions.h"
 #include "../Managers/AgentManager.h"
-#include "../Influencemap/MapManager.h"
+#include "Influencemap/MapManager.h"
 #include "Commander/Commander.h"
 #include "Utils/Profiler.h"
 #include <math.h>
-#include "BWEMUtil.h"
+#include "RnpUtil.h"
 #include "Glob.h"
 
 using namespace BWAPI;
 
-int NavigationAgent::pathfinding_version_ = 1;
+NavigationAgent::PFType NavigationAgent::pathfinding_version_
+    = NavigationAgent::PFType::HybridBoids;
 
 NavigationAgent::NavigationAgent() : bwem_(BWEM::Map::Instance()) {
   check_range_ = 5;
@@ -47,7 +48,7 @@ bool NavigationAgent::computeMove(BaseAgent* agent, TilePosition goal) {
       auto sq = rnp::commander()->getSquad(agent->getSquadID());
       if (sq && not sq->isExplorer()) {
         TilePosition center = sq->getCenter();
-        if (center.getDistance(agent->getUnit()->getTilePosition()) >= 4 && !agent->getUnit()->isCloaked()) {
+        if (center.getDistance(agent->getUnit()->getTilePosition()) >= 4 && not agent->getUnit()->isCloaked()) {
           if (agent->getUnit()->isSieged()) {
             agent->getUnit()->unsiege();
             return true;
@@ -64,22 +65,24 @@ bool NavigationAgent::computeMove(BaseAgent* agent, TilePosition goal) {
   }
 
   if (enemyInRange) {
-    if (pathfinding_version_ == 0) {
-      rnp::profiler()->start("NormMove");
-      cmd = computePathfindingMove(agent, goal);
-      rnp::profiler()->end("NormMove");
-    }
+    switch (pathfinding_version_) {
+      case PFType::Builtin :
+        rnp::profiler()->start("NormMove");
+        cmd = computePathfindingMove(agent, goal);
+        rnp::profiler()->end("NormMove");
+        break;
 
-    if (pathfinding_version_ == 1) {
-      rnp::profiler()->start("BoidsMove");
-      cmd = computeBoidsMove(agent);
-      rnp::profiler()->end("BoidsMove");
-    }
+      case PFType::HybridBoids :
+        rnp::profiler()->start("BoidsMove");
+        cmd = computeBoidsMove(agent);
+        rnp::profiler()->end("BoidsMove");
+        break;
 
-    if (pathfinding_version_ == 2) {
-      rnp::profiler()->start("PFmove");
-      computePotentialFieldMove(agent);
-      rnp::profiler()->end("PFmove");
+      case PFType::HybridPF :
+        rnp::profiler()->start("PFmove");
+        computePotentialFieldMove(agent);
+        rnp::profiler()->end("PFmove");
+        break;
     }
   }
   else {
@@ -99,8 +102,8 @@ int NavigationAgent::getMaxUnitSize(UnitType type) {
 }
 
 
-bool NavigationAgent::computeBoidsMove(BaseAgent* agent) {
-  if (not agent->getUnit()->isIdle() && !agent->getUnit()->isMoving()) return false;
+bool NavigationAgent::computeBoidsMove(BaseAgent* agent) const {
+  if (not agent->getUnit()->isIdle() && not agent->getUnit()->isMoving()) return false;
 
   Unit unit = agent->getUnit();
   if (unit->isSieged() || unit->isBurrowed() || unit->isLoaded()) {
@@ -113,7 +116,7 @@ bool NavigationAgent::computeBoidsMove(BaseAgent* agent) {
   double aDiffY = 0;
 
   //Apply goal
-  if (agent->getGoal().x != -1 && agent->getGoal().y != -1) {
+  if (rnp::is_valid_position(agent->getGoal())) {
     Position goal = Position(agent->getGoal());
     double addX = ((double)goal.x - (double)agent->getUnit()->getPosition().x) / 100.0;
     double addY = ((double)goal.y - (double)agent->getUnit()->getPosition().y) / 100.0;
@@ -176,7 +179,7 @@ bool NavigationAgent::computeBoidsMove(BaseAgent* agent) {
   totDY = 0;
   double detectionLimit = 10.0;
 
-  if (sq != nullptr && !agent->getUnitType().isFlyer()) {
+  if (sq != nullptr && not agent->getUnitType().isFlyer()) {
     Agentset agents = sq->getMembers();
     int cnt = 0;
     for (auto& a : agents) {
@@ -327,7 +330,7 @@ bool NavigationAgent::computeBoidsMove(BaseAgent* agent) {
 
 
 bool NavigationAgent::computePotentialFieldMove(BaseAgent* agent) {
-  if (not agent->getUnit()->isIdle() && !agent->getUnit()->isMoving()) return false;
+  if (not agent->getUnit()->isIdle() && not agent->getUnit()->isMoving()) return false;
 
   Unit unit = agent->getUnit();
 
@@ -391,14 +394,14 @@ bool NavigationAgent::computePathfindingMove(BaseAgent* agent, TilePosition goal
     }
   }
 
-  if (goal.x != -1) {
+  if (rnp::is_valid_position(goal)) {
     moveToGoal(agent, checkpoint, goal);
     return true;
   }
   return false;
 }
 
-void NavigationAgent::displayPF(BaseAgent* agent) {
+void NavigationAgent::displayPF(BaseAgent* agent) const {
   Unit unit = agent->getUnit();
   if (unit->isBeingConstructed()) return;
 
@@ -450,7 +453,11 @@ Color NavigationAgent::getColor(float p) {
 }
 
 bool NavigationAgent::moveToGoal(BaseAgent* agent, TilePosition checkpoint, TilePosition goal) {
-  if (checkpoint.x == -1 || goal.x == -1) return false;
+  if (not rnp::is_valid_position(checkpoint)
+    || not rnp::is_valid_position(goal)) 
+  {
+    return false;
+  }
   Unit unit = agent->getUnit();
 
   if (unit->isStartingAttack() || unit->isAttacking()) {
@@ -507,7 +514,7 @@ bool NavigationAgent::moveToGoal(BaseAgent* agent, TilePosition checkpoint, Tile
   else return true;
 }
 
-float NavigationAgent::getAttackingUnitP(BaseAgent* agent, WalkPosition wp) {
+float NavigationAgent::getAttackingUnitP(BaseAgent* agent, WalkPosition wp) const {
   float p = 0;
 
   //Enemy Units
@@ -517,7 +524,7 @@ float NavigationAgent::getAttackingUnitP(BaseAgent* agent, WalkPosition wp) {
     UnitType t = u->getType();
     bool retreat = false;
     if (not agent->getUnitType().canAttack() && agent->getUnitType().isFlyer()) retreat = true;
-    if (not agent->getUnitType().canAttack() && !agent->getUnitType().isFlyer()) retreat = true;
+    if (not agent->getUnitType().canAttack() && not agent->getUnitType().isFlyer()) retreat = true;
     if (agent->getUnit()->getGroundWeaponCooldown() >= 20 || agent->getUnit()->getAirWeaponCooldown() >= 20) retreat = true;
 
     float dist = PFFunctions::getDistance(wp, u);
@@ -548,7 +555,7 @@ float NavigationAgent::getAttackingUnitP(BaseAgent* agent, WalkPosition wp) {
   return p;
 }
 
-float NavigationAgent::getDefendingUnitP(BaseAgent* agent, WalkPosition wp) {
+float NavigationAgent::getDefendingUnitP(BaseAgent* agent, WalkPosition wp) const {
   float p = 0;
 
   p += PFFunctions::getGoalP(agent, wp);

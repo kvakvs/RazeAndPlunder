@@ -41,7 +41,7 @@ int TargetingAgent::getNoAttackers(BaseAgent* agent) {
 }
 
 bool TargetingAgent::checkTarget(BaseAgent* agent) {
-  if (not agent->getUnit()->isIdle() && !agent->getUnit()->isMoving()) return false;
+  if (not agent->getUnit()->isIdle() && not agent->getUnit()->isMoving()) return false;
 
   Unit pTarget = findTarget(agent);
   if (pTarget != nullptr && pTarget->getPlayer()->isEnemy(Broodwar->self())) {
@@ -79,8 +79,8 @@ Unit TargetingAgent::findHighprioTarget(BaseAgent* agent, int maxDist, bool targ
     if (u->exists()) {
       UnitType t = u->getType();
       bool targets = isHighprioTarget(t);
-      if (t.isFlyer() && !targetsAir) targets = false;
-      if (not t.isFlyer() && !targetsGround) targets = false;
+      if (t.isFlyer() && not targetsAir) targets = false;
+      if (not t.isFlyer() && not targetsGround) targets = false;
 
       if (targets) {
         double dist = cPos.getDistance(u->getPosition());
@@ -116,11 +116,11 @@ Unit TargetingAgent::findTarget(BaseAgent* agent) {
     bool canAttack = false;
     if (not t.isFlyer() && targetsGround) canAttack = true;
     if ((t.isFlyer() || u->isLifted()) && targetsAir) canAttack = true;
-    if (u->isCloaked() && !u->isDetected()) {
+    if (u->isCloaked() && not u->isDetected()) {
       canAttack = false;
       handleCloakedUnit(u);
     }
-    if (u->isBurrowed() && !u->isDetected()) {
+    if (u->isBurrowed() && not u->isDetected()) {
       canAttack = false;
       handleCloakedUnit(u);
     }
@@ -148,7 +148,7 @@ Unit TargetingAgent::findTarget(BaseAgent* agent) {
 
 double TargetingAgent::getTargetModifier(UnitType attacker, UnitType target) {
   //Non-attacking buildings
-  if (target.isBuilding() && !target.canAttack() && !target.getID() == UnitTypes::Terran_Bunker.getID()) {
+  if (target.isBuilding() && not target.canAttack() && not target.getID() == UnitTypes::Terran_Bunker.getID()) {
     return 0.05;
   }
 
@@ -173,12 +173,12 @@ double TargetingAgent::getTargetModifier(UnitType attacker, UnitType target) {
     return 2;
   }
 
-  if (attacker.isFlyer() && !target.airWeapon().targetsAir()) {
+  if (attacker.isFlyer() && not target.airWeapon().targetsAir()) {
     //Target cannot attack back. Set to low prio
     return 0.1;
   }
 
-  if (not attacker.isFlyer() && !target.groundWeapon().targetsGround()) {
+  if (not attacker.isFlyer() && not target.groundWeapon().targetsGround()) {
     //Target cannot attack back. Set to low prio
     return 0.1;
   }

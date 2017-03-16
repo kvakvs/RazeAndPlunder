@@ -14,7 +14,7 @@
 class CommandCenterAgent : public StructureAgent {
 
 private:
-  bool hasSentWorkers;
+  bool has_sent_workers_ = false;
 
 public:
   explicit CommandCenterAgent(BWAPI::Unit mUnit);

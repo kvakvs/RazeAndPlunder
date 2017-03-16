@@ -6,7 +6,9 @@
 
 using namespace BWAPI;
 
-ProtossMain::ProtossMain() {
+ProtossMain::ProtossMain()
+    : main_sq_(), stealth_sq_(), detector_sq_()
+{
   buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Pylon, 8));
   buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Forge, 9));
   buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Gateway, 9));
@@ -20,16 +22,16 @@ ProtossMain::ProtossMain() {
   buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Pylon, 22));
   buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Templar_Archives, 24));
 
-  mainSquad = std::make_shared<Squad>(1, Squad::SquadType::OFFENSIVE, "MainSquad", 10);
-  mainSquad->addSetup(UnitTypes::Protoss_Dragoon, 10);
-  mainSquad->setBuildup(true);
-  mainSquad->setRequired(true);
-  squads_.push_back(mainSquad);
+  main_sq_ = std::make_shared<Squad>(1, Squad::SquadType::OFFENSIVE, "MainSquad", 10);
+  main_sq_->addSetup(UnitTypes::Protoss_Dragoon, 10);
+  main_sq_->setBuildup(true);
+  main_sq_->setRequired(true);
+  squads_.push_back(main_sq_);
 
-  stealthSquad = std::make_shared<Squad>(2, Squad::SquadType::OFFENSIVE, "StealthSquad", 11);
-  stealthSquad->setRequired(false);
-  stealthSquad->setBuildup(true);
-  squads_.push_back(stealthSquad);
+  stealth_sq_ = std::make_shared<Squad>(2, Squad::SquadType::OFFENSIVE, "StealthSquad", 11);
+  stealth_sq_->setRequired(false);
+  stealth_sq_->setBuildup(true);
+  squads_.push_back(stealth_sq_);
 
   workers_num_ = 16;
   workers_per_refinery_ = 3;
@@ -38,8 +40,8 @@ ProtossMain::ProtossMain() {
 ProtossMain::~ProtossMain() {
 }
 
-void ProtossMain::computeActions() {
-  computeActionsBase();
+void ProtossMain::on_frame() {
+  on_frame_base();
 
   int cSupply = Broodwar->self()->supplyUsed() / 2;
   int min = Broodwar->self()->minerals();
@@ -48,17 +50,17 @@ void ProtossMain::computeActions() {
   if (cSupply >= 17 && stage_ == 0) {
     buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Photon_Cannon, cSupply));
 
-    mainSquad->addSetup(UnitTypes::Protoss_Dragoon, 8);
-    mainSquad->addSetup(UnitTypes::Protoss_Scout, 5);
+    main_sq_->addSetup(UnitTypes::Protoss_Dragoon, 8);
+    main_sq_->addSetup(UnitTypes::Protoss_Scout, 5);
     buildplan_.push_back(BuildplanEntry(UpgradeTypes::Singularity_Charge, cSupply));
     stage_++;
   }
   if (cSupply >= 30 && stage_ == 1 && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Protoss_Templar_Archives) > 0) {
-    mainSquad->addSetup(UnitTypes::Protoss_High_Templar, 4);
-    mainSquad->setBuildup(false);
+    main_sq_->addSetup(UnitTypes::Protoss_High_Templar, 4);
+    main_sq_->setBuildup(false);
 
-    stealthSquad->addSetup(UnitTypes::Protoss_Dark_Templar, 6);
-    stealthSquad->setBuildup(false);
+    stealth_sq_->addSetup(UnitTypes::Protoss_Dark_Templar, 6);
+    stealth_sq_->setBuildup(false);
 
     buildplan_.push_back(BuildplanEntry(TechTypes::Psionic_Storm, cSupply));
 
@@ -74,7 +76,7 @@ void ProtossMain::computeActions() {
     buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Robotics_Facility, cSupply));
     buildplan_.push_back(BuildplanEntry(UnitTypes::Protoss_Observatory, cSupply));
 
-    mainSquad->addSetup(UnitTypes::Protoss_Observer, 1);
+    main_sq_->addSetup(UnitTypes::Protoss_Observer, 1);
 
     buildplan_.push_back(BuildplanEntry(UpgradeTypes::Protoss_Ground_Weapons, cSupply));
     buildplan_.push_back(BuildplanEntry(UpgradeTypes::Protoss_Plasma_Shields, cSupply));

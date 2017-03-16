@@ -144,7 +144,7 @@ void Squad::debug_showGoal() {
 
 void Squad::computeActions() {
   if (not active_) {
-    if (isFull() && !buildup_) {
+    if (isFull() && not buildup_) {
       active_ = true;
     }
   }
@@ -389,7 +389,7 @@ void Squad::removeMember(BaseAgent* agent) {
   if (isExplorer()) {
     TilePosition goal = agent->getGoal();
     if (goal.x >= 0) {
-      rnp::exploration()->setExplored(goal);
+      rnp::exploration()->set_explored(goal);
     }
   }
 
@@ -443,10 +443,10 @@ BaseAgent* Squad::removeMember(UnitType type) {
 }
 
 void Squad::defend(TilePosition mGoal) {
-  if (mGoal.x == -1 || mGoal.y == -1) return;
+  if (not rnp::is_valid_position(mGoal)) return;
 
   if (current_state_ != State::DEFEND) {
-    if (current_state_ == State::ASSIST && !isUnderAttack()) {
+    if (current_state_ == State::ASSIST && not isUnderAttack()) {
       current_state_ = State::DEFEND;
     }
   }
@@ -454,7 +454,7 @@ void Squad::defend(TilePosition mGoal) {
 }
 
 void Squad::attack(TilePosition mGoal) {
-  if (mGoal.x == -1 || mGoal.y == -1) return;
+  if (not rnp::is_valid_position(mGoal)) return;
 
   if (current_state_ != State::ATTACK) {
     if (not isUnderAttack()) {
@@ -470,7 +470,7 @@ void Squad::attack(TilePosition mGoal) {
 }
 
 void Squad::assist(TilePosition mGoal) {
-  if (mGoal.x == -1) return;
+  if (not rnp::is_valid_position(mGoal)) return;
 
   if (current_state_ != State::ASSIST) {
     if (not isUnderAttack()) {
@@ -546,7 +546,7 @@ TilePosition Squad::nextMovePosition() {
       //Check if we have arrived at a checkpoint. For mixed squads,
       //air units does not count as having arrived.
       bool check = false;
-      if (isGround() && !a->getUnitType().isFlyer()) check = true;
+      if (isGround() && not a->getUnitType().isFlyer()) check = true;
       if (isAir()) check = true;
 
       if (check) {
@@ -647,7 +647,7 @@ TilePosition Squad::getCenter() {
   double bestDist = 10000;
   for (auto& a : agents_) {
     if (a->isAlive()) {
-      if ((isAir() && a->getUnitType().isFlyer()) || (isGround() && !a->getUnitType().isFlyer())) {
+      if ((isAir() && a->getUnitType().isFlyer()) || (isGround() && not a->getUnitType().isFlyer())) {
         double dist = a->getUnit()->getTilePosition().getDistance(c);
         if (dist < bestDist) {
           bestDist = dist;
@@ -663,7 +663,7 @@ TilePosition Squad::getCenter() {
 int Squad::getSize() {
   int no = 0;
   for (auto& a : agents_) {
-    if (a->isAlive() && !a->getUnit()->isBeingConstructed()) {
+    if (a->isAlive() && not a->getUnit()->isBeingConstructed()) {
       no++;
     }
   }

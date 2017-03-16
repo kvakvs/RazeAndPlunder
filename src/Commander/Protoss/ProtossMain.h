@@ -11,9 +11,9 @@
 class ProtossMain : public Commander {
 
 private:
-  Squad::Ptr mainSquad;
-  Squad::Ptr stealthSquad;
-  Squad::Ptr detectorSquad;
+  Squad::Ptr main_sq_;
+  Squad::Ptr stealth_sq_;
+  Squad::Ptr detector_sq_;
 
 public:
   ProtossMain();
@@ -22,7 +22,7 @@ public:
   ~ProtossMain();
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void on_frame() override;
 
   // Returns the unique id for this strategy. 
   static std::string getStrategyId() {

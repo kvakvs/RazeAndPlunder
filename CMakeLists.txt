@@ -3,44 +3,39 @@ cmake_minimum_required(VERSION 3.5.2)
 project(RnP_bot)
 set(CMAKE_CXX_STANDARD 14)
 
-# Set to 1 when building on Windows MSVC2013
-set(RNP_MSVC 0)
-
-set(BOOST_VER 1_63)
 if(RNP_MSVC)
-    set(BOOST_DIR f:/boost_1_63_0)
 else()
-    set(BOOST_DIR ~/.wine/drive_c/boost_1_63_0)
-
-    set(CMAKE_CXX_COMPILER i686-w64-mingw32-g++-win32)
-    set(CMAKE_C_COMPILER i686-w64-mingw32-gcc-win32)
-    set(CMAKE_C_LINK_EXECUTABLE x86_64-w64-mingw32-ld)
-    set(CMAKE_CXX_LINK_EXECUTABLE x86_64-w64-mingw32-ld)
+    include(toolchain-mingw32.cmake)
 endif()
+
+set(RNP_VERSION 0.1)
 
 include_directories(
     ${CMAKE_SOURCE_DIR}/include
     ${CMAKE_SOURCE_DIR}/src
-    ${BOOST_DIR}/
     )
 
 if (RNP_MSVC)
+    add_definitions( /DRNP_VERSION="${RNP_VERSION}" )
+
     # Parallel build /MP, opt inline /Oi, debug info /Zi
     add_definitions(/MP /Oi /Zi /Gy /DNOMINMAX)
 
     # Debug checks, MT Debug DLL, /GS security check
     add_definitions(/RTC1 /MDd /GS /fp:fast)
 else()
+    add_definitions(-DRNP_VERSION="${RNP_VERSION}" )
     add_definitions(-DNOMINMAX -std=c++14
         -g -ggdb -O0
+        -Weffc++
         )
 endif()
 
 set(SRC_SRC
     src/Glob.cpp src/Glob.h
-    src/BWEMUtil.cpp src/BWEMUtil.h
+    src/RnpUtil.cpp src/RnpUtil.h
     src/BotAILoop.cpp src/BotAILoop.h
-    src/Dll.cpp
+    src/Dll.cpp src/ClientMain.cpp
     src/Influencemap/MapManager.cpp src/Influencemap/MapManager.h
     src/RnpBot.cpp src/RnpBot.h
     )
@@ -173,9 +168,9 @@ set(BWAPI_FILES
 source_group("BWAPI" FILES ${BWAPI_FILES})
 
 set(BWEM_ROOT deps/BWEM131)
-set(BWEM_DIR ${BWEM_ROOT}/src)
+set(BWEM_DIR ${BWEM_ROOT}/BWEM)
 set(BWEM_EASYBMP ${BWEM_ROOT}/easybmp106)
-include_directories(${BWEM_ROOT}/src ${BWEM_ROOT})
+include_directories(${BWEM_ROOT})
 set(BWEM_FILES
     ${BWEM_EASYBMP}/EasyBMP.cpp ${BWEM_EASYBMP}/EasyBMP.h
     ${BWEM_EASYBMP}/EasyBMP_BMP.h
@@ -202,34 +197,42 @@ set(BWEM_FILES
 source_group("BWEM" FILES ${BWEM_FILES})
 
 link_directories(
-    ${BOOST_DIR}/lib32-msvc-12.0
-    lib
+    ${CMAKE_SOURCE_DIR}/lib
     )
 
 set(DEBUG_D_SUFFIX d)
-set(BOT_TARGET_NAME rnpbot${DEBUG_D_SUFFIX})
+set(RNP_DLL_NAME rnpbot${DEBUG_D_SUFFIX})
+set(RNP_CLIENT_NAME rnpbot-client)
 
-add_library(${BOT_TARGET_NAME} SHARED
-    ${SOURCE_FILES}
-    ${BWAPI_FILES}
+if(RNP_MSVC)
+    set(RNP_TARGET_TYPE SHARED)
+else()
+    # Temporary hack to skip linking on GCC-MinGW, defunct but allows compiling
+    set(RNP_TARGET_TYPE STATIC)
+endif()
+
+add_library(bwem131 STATIC
     ${BWEM_FILES}
     )
 
-target_link_libraries(${BOT_TARGET_NAME}
-    debug BWAPId
-    debug BWAPIClientd
-    debug libboost_filesystem-vc120-mt-gd-${BOOST_VER}
-    debug libboost_system-vc120-mt-gd-${BOOST_VER}
-    debug libboost_thread-vc120-mt-gd-${BOOST_VER}
+add_library(${RNP_DLL_NAME} ${RNP_TARGET_TYPE}
+    ${SOURCE_FILES}
+    ${BWAPI_FILES}
     )
-#target_link_libraries(${BOT_TARGET_NAME}
-#    optimized BWAPI
-#    release BWAPIClient
-#    optimized libboost_system-vc120-mt-${BOOST_VER}
-#    optimized libboost_filesystem-vc120-mt-${BOOST_VER}
-#    optimized libboost_thread-vc120-mt-${BOOST_VER}
-#    )
+add_executable(${RNP_CLIENT_NAME}
+    ${SOURCE_FILES}
+    ${BWAPI_FILES}
+    )
+add_dependencies(${RNP_DLL_NAME} bwem131)
 
-#install(TARGETS ${BOT_TARGET_NAME}
+target_link_libraries(${RNP_DLL_NAME} bwem131)
+target_link_libraries(${RNP_CLIENT_NAME} bwem131)
+
+if(RNP_MSVC)
+    target_link_libraries(${RNP_DLL_NAME} BWAPId BWAPIClientd)
+    target_link_libraries(${RNP_CLIENT_NAME} BWAPId BWAPIClientd)
+endif()
+
+#install(TARGETS ${RNP_DLL_NAME}
 #        RUNTIME DESTINATION f:/Games/Starcraft/bwapi-data/
 #        )

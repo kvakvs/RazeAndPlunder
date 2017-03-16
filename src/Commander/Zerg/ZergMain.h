@@ -23,7 +23,7 @@ public:
   ~ZergMain();
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void on_frame() override;
 
   // Returns the unique id for this strategy. 
   static std::string getStrategyId() {

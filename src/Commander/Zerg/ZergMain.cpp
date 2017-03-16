@@ -41,8 +41,8 @@ ZergMain::ZergMain() {
 ZergMain::~ZergMain() {
 }
 
-void ZergMain::computeActions() {
-  computeActionsBase();
+void ZergMain::on_frame() {
+  on_frame_base();
 
   workers_num_ = rnp::agent_manager()->countNoBases() * 6 + rnp::agent_manager()->countNoUnits(UnitTypes::Zerg_Extractor) * 3;
 

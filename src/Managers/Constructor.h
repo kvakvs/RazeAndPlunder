@@ -3,10 +3,14 @@
 #include <BWAPI.h>
 #include <vector>
 
-struct BuildQueueItem {
-  BWAPI::UnitType toBuild;
-  int assignedFrame;
-  int assignedWorkerId;
+class BuildQueueItem {
+public:
+  BWAPI::UnitType to_build_;
+  int assigned_frame_ = 0;
+  int assigned_worker_id_ = 0;
+
+  BuildQueueItem(): to_build_() {
+  }
 };
 
 /** The Constructor class is resonsible for constructing the buildings added to the

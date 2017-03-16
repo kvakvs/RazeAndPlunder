@@ -9,7 +9,7 @@
 #include <algorithm>
 #include <iso646.h>
 
-#include "BWEMUtil.h"
+#include "RnpUtil.h"
 #include "Glob.h"
 
 using namespace BWAPI;
@@ -23,23 +23,23 @@ Commander::Commander() {
 Commander::~Commander() {
 }
 
-void Commander::checkBuildplan() {
+void Commander::check_buildplan() {
   int cSupply = Broodwar->self()->supplyUsed() / 2;
 
   for (int i = 0; i < (int)buildplan_.size(); i++) {
-    if (cSupply >= buildplan_.at(i).supply && rnp::constructor()->buildPlanLength() == 0) {
-      if (buildplan_.at(i).type == BuildplanEntry::BUILDING) {
-        rnp::constructor()->addBuilding(buildplan_.at(i).unittype);
+    if (cSupply >= buildplan_.at(i).supply_ && rnp::constructor()->buildPlanLength() == 0) {
+      if (buildplan_.at(i).type_ == BuildplanEntry::BUILDING) {
+        rnp::constructor()->addBuilding(buildplan_.at(i).unit_type_);
         buildplan_.erase(buildplan_.begin() + i);
         i--;
       }
-      else if (buildplan_.at(i).type == BuildplanEntry::UPGRADE) {
-        rnp::upgrader()->addUpgrade(buildplan_.at(i).upgradetype);
+      else if (buildplan_.at(i).type_ == BuildplanEntry::UPGRADE) {
+        rnp::upgrader()->addUpgrade(buildplan_.at(i).upgrade_type_);
         buildplan_.erase(buildplan_.begin() + i);
         i--;
       }
-      else if (buildplan_.at(i).type == BuildplanEntry::TECH) {
-        rnp::upgrader()->addTech(buildplan_.at(i).techtype);
+      else if (buildplan_.at(i).type_ == BuildplanEntry::TECH) {
+        rnp::upgrader()->addTech(buildplan_.at(i).tech_type_);
         buildplan_.erase(buildplan_.begin() + i);
         i--;
       }
@@ -47,52 +47,52 @@ void Commander::checkBuildplan() {
   }
 }
 
-void Commander::cutWorkers() {
+void Commander::cut_workers_production() {
   workers_num_ = rnp::agent_manager()->getNoWorkers();
   Broodwar << "Worker production halted" << std::endl;
 }
 
-int Commander::getNoWorkers() const {
+int Commander::get_preferred_workers_count() const {
   return workers_num_;
 }
 
-int Commander::getWorkersPerRefinery() const {
+int Commander::get_workers_per_refinery() const {
   return workers_per_refinery_;
 }
 
-bool Commander::shallEngage() {
-  TilePosition toAttack = findAttackPosition();
-  if (toAttack.x == -1) {
+bool Commander::is_time_to_engage() {
+  TilePosition toAttack = find_attack_position();
+  if (not rnp::is_valid_position(toAttack)) {
     //No enemy sighted. Dont launch attack.
     return false;
   }
 
   for (auto& s : squads_) {
-    if (s->isRequired() && !s->isActive()) {
+    if (s->isRequired() && not s->isActive()) {
       return false;
     }
   }
   return true;
 }
 
-void Commander::updateGoals() {
-  TilePosition defSpot = findChokePoint();
+void Commander::update_squad_goals() {
+  TilePosition defSpot = find_chokepoint();
 
-  if (defSpot.x != -1) {
+  if (not rnp::is_valid_position(defSpot)) {
     for (auto& s : squads_) {
       s->defend(defSpot);
     }
   }
 }
 
-void Commander::debug_showGoal() {
+void Commander::debug_show_goal() {
   for (auto& s : squads_) {
     s->debug_showGoal();
   }
 }
 
-void Commander::computeActionsBase() {
-  checkBuildplan();
+void Commander::on_frame_base() {
+  check_buildplan();
 
   //Dont call too often
   int cFrame = Broodwar->getFrameCount();
@@ -102,13 +102,13 @@ void Commander::computeActionsBase() {
   last_call_frame_ = cFrame;
 
   //See if we need to assist a base or worker that is under attack
-  if (assistBuilding()) return;
-  if (assistWorker()) return;
+  if (assist_building()) return;
+  if (assist_worker()) return;
 
   //Check if we shall launch an attack
   if (current_state_ == State::DEFEND) {
-    if (shallEngage()) {
-      forceAttack();
+    if (is_time_to_engage()) {
+      force_begin_attack();
     }
   }
 
@@ -125,7 +125,7 @@ void Commander::computeActionsBase() {
     //Go back to defend.
     if (not activeFound) {
       current_state_ = State::DEFEND;
-      TilePosition defSpot = findChokePoint();
+      TilePosition defSpot = find_chokepoint();
       for (auto& s : squads_) {
         s->setGoal(defSpot);
       }
@@ -134,12 +134,12 @@ void Commander::computeActionsBase() {
 
   if (current_state_ == State::DEFEND) {
     //Check if we need to attack/kite enemy workers in the base
-    checkWorkersAttack(rnp::agent_manager()->getClosestBase(Broodwar->self()->getStartLocation()));
+    check_workers_attack(rnp::agent_manager()->getClosestBase(Broodwar->self()->getStartLocation()));
 
-    TilePosition defSpot = findChokePoint();
+    TilePosition defSpot = find_chokepoint();
     for (auto& s : squads_) {
       if (not s->hasGoal()) {
-        if (defSpot.x != -1) {
+        if (rnp::is_valid_position(defSpot)) {
           s->defend(defSpot);
         }
       }
@@ -150,15 +150,15 @@ void Commander::computeActionsBase() {
     for (auto& s : squads_) {
       if (s->isOffensive()) {
         if (not s->hasGoal() && s->isActive()) {
-          TilePosition toAttack = findAttackPosition();
+          TilePosition toAttack = find_attack_position();
           if (toAttack.x >= 0) {
             s->attack(toAttack);
           }
         }
       }
       else {
-        TilePosition defSpot = findChokePoint();
-        if (defSpot.x != -1) {
+        TilePosition defSpot = find_chokepoint();
+        if (rnp::is_valid_position(defSpot)) {
           s->defend(defSpot);
         }
       }
@@ -174,25 +174,25 @@ void Commander::computeActionsBase() {
   if (current_state_ == State::DEFEND) {
     int supplyUsed = Broodwar->self()->supplyUsed() / 2;
     if (supplyUsed >= 198) {
-      forceAttack();
+      force_begin_attack();
     }
   }
 
   //Check if there are obstacles we can remove. Needed for some maps.
-  checkRemovableObstacles();
+  check_removable_obstacles();
 
   //Terran only: Check for repairs and finish unfinished buildings
   if (Constructor::isTerran()) {
     //Check if there are unfinished buildings we need
     //to complete.
-    checkDamagedBuildings();
+    check_damaged_buildings();
   }
 
   //Check for units not belonging to a squad
-  checkNoSquadUnits();
+  check_no_squad_units();
 }
 
-void Commander::checkNoSquadUnits() {
+void Commander::check_no_squad_units() {
   auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     bool notAssigned = true;
@@ -204,12 +204,12 @@ void Commander::checkNoSquadUnits() {
     if (a->getSquadID() != -1) notAssigned = false;
 
     if (notAssigned) {
-      assignUnit(a);
+      assign_unit(a);
     }
   }
 }
 
-void Commander::assignUnit(BaseAgent* agent) {
+void Commander::assign_unit(BaseAgent* agent) {
   //Broodwar << agent->getUnitID() << " (" << agent->getTypeName().c_str() << ") is not assigned to a squad" << endl;
   for (auto& s : squads_) {
     if (s->needUnit(agent->getUnitType())) {
@@ -220,22 +220,22 @@ void Commander::assignUnit(BaseAgent* agent) {
   }
 }
 
-TilePosition Commander::findAttackPosition() const {
+TilePosition Commander::find_attack_position() {
   TilePosition regionPos = rnp::map_manager()->findAttackPosition();
-  if (regionPos.x != -1) {
-    TilePosition toAttack = rnp::exploration()->getClosestSpottedBuilding(regionPos);
-    if (toAttack.x != -1) {
+
+  if (rnp::is_valid_position(regionPos)) {
+    TilePosition toAttack = rnp::exploration()->get_closest_spotted_building(regionPos);
+
+    if (rnp::is_valid_position(toAttack)) {
       return toAttack;
     }
-    else {
-      return regionPos;
-    }
+    return regionPos;
   }
 
   return TilePosition(-1, -1);
 }
 
-void Commander::removeSquad(int id) {
+void Commander::remove_squad(int id) {
   for (int i = 0; i < (int)squads_.size(); i++) {
     auto& sq = squads_.at(i);
     if (sq->getID() == id) {
@@ -255,11 +255,11 @@ Squad::Ptr Commander::getSquad(int id) {
   return nullptr;
 }
 
-void Commander::addSquad(Squad::Ptr sq) {
+void Commander::add_squad(Squad::Ptr sq) {
   squads_.push_back(sq);
 }
 
-void Commander::unitDestroyed(BaseAgent* agent) {
+void Commander::on_unit_destroyed(BaseAgent* agent) {
   int squadID = agent->getSquadID();
   if (squadID != -1) {
     auto squad = getSquad(squadID);
@@ -269,13 +269,13 @@ void Commander::unitDestroyed(BaseAgent* agent) {
   }
 }
 
-void Commander::sortSquadList() {
+void Commander::sort_squad_list() {
   sort(squads_.begin(), squads_.end(), SortSquadList());
 }
 
-void Commander::unitCreated(BaseAgent* agent) {
+void Commander::on_unit_created(BaseAgent* agent) {
   //Sort the squad list
-  sortSquadList();
+  sort_squad_list();
 
   for (auto& s : squads_) {
     if (s->addMember(agent)) {
@@ -284,7 +284,7 @@ void Commander::unitCreated(BaseAgent* agent) {
   }
 }
 
-bool Commander::checkWorkersAttack(BaseAgent* base) const {
+bool Commander::check_workers_attack(BaseAgent* base) const {
   int noAttack = 0;
 
   for (auto& u : Broodwar->enemy()->getUnits()) {
@@ -311,7 +311,7 @@ bool Commander::checkWorkersAttack(BaseAgent* base) const {
   return false;
 }
 
-void Commander::checkRemovableObstacles() {
+void Commander::check_removable_obstacles() {
   if (removal_done_) return;
 
   //This method is used to handle the removal of obstacles
@@ -346,18 +346,18 @@ void Commander::checkRemovableObstacles() {
 }
 
 
-TilePosition Commander::findChokePoint() {
+TilePosition Commander::find_chokepoint() {
   const BWEM::ChokePoint* bestChoke = rnp::map_manager()->getDefenseLocation();
 
   TilePosition guardPos = Broodwar->self()->getStartLocation();
   if (bestChoke != nullptr) {
-    guardPos = findDefensePos(bestChoke);
+    guardPos = find_defense_pos(bestChoke);
   }
 
   return guardPos;
 }
 
-TilePosition Commander::findDefensePos(const BWEM::ChokePoint* choke) const {
+TilePosition Commander::find_defense_pos(const BWEM::ChokePoint* choke) const {
   TilePosition defPos = TilePosition(choke->Center());
   TilePosition chokePos = defPos;
 
@@ -374,7 +374,7 @@ TilePosition Commander::findDefensePos(const BWEM::ChokePoint* choke) const {
     for (int cX = chokePos.x - maxD; cX <= chokePos.x + maxD; cX++) {
       for (int cY = chokePos.y - maxD; cY <= chokePos.y + maxD; cY++) {
         TilePosition cPos = TilePosition(cX, cY);
-        if (ExplorationManager::canReach(basePos, cPos)) {
+        if (rnp::exploration()->can_reach(basePos, cPos)) {
           double chokeDist = chokePos.getDistance(cPos);
           double baseDist = basePos.getDistance(cPos);
 
@@ -409,7 +409,7 @@ TilePosition Commander::findDefensePos(const BWEM::ChokePoint* choke) const {
   return defPos;
 }
 
-bool Commander::needUnit(UnitType type) {
+bool Commander::is_unit_needed(UnitType type) {
   int prevPrio = 1000;
 
   for (auto& s : squads_) {
@@ -428,7 +428,7 @@ bool Commander::needUnit(UnitType type) {
   return false;
 }
 
-bool Commander::assistBuilding() {
+bool Commander::assist_building() {
   auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive() && a->isBuilding() && a->isUnderAttack()) {
@@ -449,7 +449,7 @@ bool Commander::assistBuilding() {
   return false;
 }
 
-bool Commander::assistWorker() {
+bool Commander::assist_worker() {
   for (auto& a : rnp::agent_manager()->getAgents()) {
     if (a->isAlive() && a->isWorker() && a->isUnderAttack()) {
       for (auto& s : squads_) {
@@ -469,8 +469,8 @@ bool Commander::assistWorker() {
   return false;
 }
 
-void Commander::forceAttack() {
-  TilePosition cGoal = findAttackPosition();
+void Commander::force_begin_attack() {
+  TilePosition cGoal = find_attack_position();
   Broodwar << "Launch attack at (" << cGoal.x << "," << cGoal.y << ")" << std::endl;
   if (cGoal.x == -1) {
     return;
@@ -488,7 +488,7 @@ void Commander::forceAttack() {
   current_state_ = State::ATTACK;
 }
 
-void Commander::finishBuild(BaseAgent* baseAgent) {
+void Commander::assist_unfinished_construction(BaseAgent* baseAgent) {
   //First we must check if someone is repairing this building
   if (rnp::agent_manager()->isAnyAgentRepairingThisAgent(baseAgent)) return;
 
@@ -499,29 +499,29 @@ void Commander::finishBuild(BaseAgent* baseAgent) {
   }
 }
 
-bool Commander::checkDamagedBuildings() {
+bool Commander::check_damaged_buildings() {
   auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive() && a->isBuilding() && a->isDamaged()) {
       Unit builder = a->getUnit()->getBuildUnit();
       if (builder == nullptr || !builder->isConstructing()) {
-        finishBuild(a);
+        assist_unfinished_construction(a);
       }
     }
   }
   return false;
 }
 
-void Commander::toggleBuildplanDebug() {
+void Commander::toggle_buildplan_debug() {
   debug_bp_ = !debug_bp_;
 }
 
-void Commander::toggleSquadsDebug() {
+void Commander::toggle_squads_debug() {
   debug_sq_ = !debug_sq_;
 }
 
-std::string Commander::format(std::string str) {
-  std::string res = str;
+std::string Commander::format(const std::string& str) {
+  std::string res(str);
 
   std::string raceName = Broodwar->self()->getRace().getName();
   if (str.find(raceName) == 0) {
@@ -534,14 +534,14 @@ std::string Commander::format(std::string str) {
   return res;
 }
 
-void Commander::printInfo() {
+void Commander::print_info() {
   if (debug_sq_) {
     int totLines = 0;
     for (auto& s : squads_) {
       bool vis = true;
       if (s->getTotalUnits() == 0) vis = false;
       if (s->isBunkerDefend()) vis = false;
-      if (s->getPriority() == 1000 && !s->isActive()) vis = false;
+      if (s->getPriority() == 1000 && not s->isActive()) vis = false;
 
       if (vis) {
         totLines++;
@@ -558,7 +558,7 @@ void Commander::printInfo() {
       bool vis = true;
       if (s->getTotalUnits() == 0) vis = false;
       if (s->isBunkerDefend()) vis = false;
-      if (s->getPriority() == 1000 && !s->isActive()) vis = false;
+      if (s->getPriority() == 1000 && not s->isActive()) vis = false;
 
       if (vis) {
         int cSize = s->getSize();
@@ -595,15 +595,15 @@ void Commander::printInfo() {
 
     for (int i = 0; i < max; i++) {
       std::string name = "";
-      if (buildplan_.at(i).type == BuildplanEntry::BUILDING) name = buildplan_.at(i).unittype.getName();
-      if (buildplan_.at(i).type == BuildplanEntry::UPGRADE) name = buildplan_.at(i).upgradetype.getName();
-      if (buildplan_.at(i).type == BuildplanEntry::TECH) name = buildplan_.at(i).techtype.getName();
+      if (buildplan_.at(i).type_ == BuildplanEntry::BUILDING) name = buildplan_.at(i).unit_type_.getName();
+      if (buildplan_.at(i).type_ == BuildplanEntry::UPGRADE) name = buildplan_.at(i).upgrade_type_.getName();
+      if (buildplan_.at(i).type_ == BuildplanEntry::TECH) name = buildplan_.at(i).tech_type_.getName();
       name = format(name);
 
       std::stringstream ss;
       ss << name;
       ss << " \x0F(@";
-      ss << buildplan_.at(i).supply;
+      ss << buildplan_.at(i).supply_;
       ss << ")";
 
       Broodwar->drawTextScreen(300, 40 + no * 16, ss.str().c_str());
@@ -615,7 +615,7 @@ void Commander::printInfo() {
   }
 }
 
-int Commander::addBunkerSquad() {
+int Commander::add_bunker_squad() {
   auto bSquad = std::make_shared<Squad>(
     100 + rnp::agent_manager()->countNoUnits(UnitTypes::Terran_Bunker), 
     Squad::SquadType::BUNKER, 
@@ -646,12 +646,12 @@ int Commander::addBunkerSquad() {
   return bSquad->getID();
 }
 
-bool Commander::removeBunkerSquad(int unitID) {
+bool Commander::remove_bunker_squad(int unitID) {
   for (auto& s : squads_) {
     if (s->isBunkerDefend()) {
       if (s->getBunkerID() == unitID) {
         int sID = s->getID();
-        removeSquad(sID);
+        remove_squad(sID);
         return true;
       }
     }

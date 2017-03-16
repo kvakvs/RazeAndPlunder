@@ -11,7 +11,7 @@ class SiegeTankAgent : public UnitAgent {
 
 public:
   explicit SiegeTankAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "SiegeTankAgent";
+    agent_type_ = "SiegeTankAgent";
   }
 
   bool useAbilities() override;

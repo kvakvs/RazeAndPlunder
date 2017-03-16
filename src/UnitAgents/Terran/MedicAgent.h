@@ -17,7 +17,7 @@ private:
 
 public:
   explicit MedicAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "MedicAgent";
+    agent_type_ = "MedicAgent";
   }
 
   bool useAbilities() override;

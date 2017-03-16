@@ -1,22 +1,23 @@
 #include "WorkerAgent.h"
 #include "../Managers/AgentManager.h"
-#include "../Pathfinding/NavigationAgent.h"
+#include "Pathfinding/NavigationAgent.h"
 #include "../Managers/BuildingPlacer.h"
 #include "../Managers/Constructor.h"
 #include "Commander/Commander.h"
 #include "../Managers/ResourceManager.h"
 #include "Glob.h"
+#include "RnpUtil.h"
 
 using namespace BWAPI;
 
 WorkerAgent::WorkerAgent(Unit mUnit) {
-  unit = mUnit;
-  type = unit->getType();
-  unitID = unit->getID();
+  unit_ = mUnit;
+  type_ = unit_->getType();
+  unit_id_ = unit_->getID();
   setState(GATHER_MINERALS);
   startBuildFrame = 0;
   startSpot = TilePosition(-1, -1);
-  agentType = "WorkerAgent";
+  agent_type_ = "WorkerAgent";
 
   toBuild = UnitTypes::None;
 }
@@ -24,43 +25,43 @@ WorkerAgent::WorkerAgent(Unit mUnit) {
 void WorkerAgent::destroyed() {
   if (currentState == MOVE_TO_SPOT || currentState == CONSTRUCT || currentState == FIND_BUILDSPOT) {
     if (not Constructor::isZerg()) {
-      rnp::constructor()->handleWorkerDestroyed(toBuild, unitID);
-      rnp::building_placer()->clearTemp(toBuild, buildSpot);
+      rnp::constructor()->handleWorkerDestroyed(toBuild, unit_id_);
+      rnp::building_placer()->clear_temp(toBuild, buildSpot);
       setState(GATHER_MINERALS);
     }
   }
 }
 
 void WorkerAgent::printInfo() {
-  int e = Broodwar->getFrameCount() - infoUpdateFrame;
-  if (e >= infoUpdateTime || (sx == 0 && sy == 0)) {
-    infoUpdateFrame = Broodwar->getFrameCount();
-    sx = unit->getPosition().x;
-    sy = unit->getPosition().y;
+  int e = Broodwar->getFrameCount() - info_update_frame_;
+  if (e >= info_update_time_ || (sx_ == 0 && sy_ == 0)) {
+    info_update_frame_ = Broodwar->getFrameCount();
+    sx_ = unit_->getPosition().x;
+    sy_ = unit_->getPosition().y;
   }
 
-  Broodwar->drawBoxMap(sx - 2, sy, sx + 152, sy + 90, Colors::Black, true);
-  Broodwar->drawTextMap(sx + 4, sy, "\x03%s", unit->getType().getName().c_str());
-  Broodwar->drawLineMap(sx, sy + 14, sx + 150, sy + 14, Colors::Blue);
+  Broodwar->drawBoxMap(sx_ - 2, sy_, sx_ + 152, sy_ + 90, Colors::Black, true);
+  Broodwar->drawTextMap(sx_ + 4, sy_, "\x03%s", unit_->getType().getName().c_str());
+  Broodwar->drawLineMap(sx_, sy_ + 14, sx_ + 150, sy_ + 14, Colors::Blue);
 
-  Broodwar->drawTextMap(sx + 2, sy + 15, "Id: \x11%d", unitID);
-  Broodwar->drawTextMap(sx + 2, sy + 30, "Position: \x11(%d,%d)", unit->getTilePosition().x, unit->getTilePosition().y);
-  Broodwar->drawTextMap(sx + 2, sy + 45, "Goal: \x11(%d,%d)", goal.x, goal.y);
-  if (squadID == -1) Broodwar->drawTextMap(sx + 2, sy + 60, "Squad: \x15None");
-  else Broodwar->drawTextMap(sx + 2, sy + 60, "Squad: \x11%d", squadID);
-  Broodwar->drawTextMap(sx + 2, sy + 75, "State: \x11%s", getStateAsText().c_str());
+  Broodwar->drawTextMap(sx_ + 2, sy_ + 15, "Id: \x11%d", unit_id_);
+  Broodwar->drawTextMap(sx_ + 2, sy_ + 30, "Position: \x11(%d,%d)", unit_->getTilePosition().x, unit_->getTilePosition().y);
+  Broodwar->drawTextMap(sx_ + 2, sy_ + 45, "Goal: \x11(%d,%d)", goal_.x, goal_.y);
+  if (squad_id_ == -1) Broodwar->drawTextMap(sx_ + 2, sy_ + 60, "Squad: \x15None");
+  else Broodwar->drawTextMap(sx_ + 2, sy_ + 60, "Squad: \x11%d", squad_id_);
+  Broodwar->drawTextMap(sx_ + 2, sy_ + 75, "State: \x11%s", getStateAsText().c_str());
 
-  Broodwar->drawLineMap(sx, sy + 89, sx + 150, sy + 89, Colors::Blue);
+  Broodwar->drawLineMap(sx_, sy_ + 89, sx_ + 150, sy_ + 89, Colors::Blue);
 }
 
 void WorkerAgent::debug_showGoal() {
   if (not isAlive()) return;
-  if (not unit->isCompleted()) return;
+  if (not unit_->isCompleted()) return;
 
   if (currentState == GATHER_MINERALS || currentState == GATHER_GAS) {
-    Unit target = unit->getTarget();
+    Unit target = unit_->getTarget();
     if (target != nullptr) {
-      Position a = unit->getPosition();
+      Position a = unit_->getPosition();
       Position b = target->getPosition();
       Broodwar->drawLineMap(a.x, a.y, b.x, b.y, Colors::Teal);
     }
@@ -71,7 +72,7 @@ void WorkerAgent::debug_showGoal() {
       int w = toBuild.tileWidth() * 32;
       int h = toBuild.tileHeight() * 32;
 
-      Position a = unit->getPosition();
+      Position a = unit_->getPosition();
       Position b = Position(buildSpot.x * 32 + w / 2, buildSpot.y * 32 + h / 2);
       Broodwar->drawLineMap(a.x, a.y, b.x, b.y, Colors::Teal);
 
@@ -79,40 +80,40 @@ void WorkerAgent::debug_showGoal() {
     }
   }
 
-  if (unit->isRepairing()) {
-    Unit targ = unit->getOrderTarget();
+  if (unit_->isRepairing()) {
+    Unit targ = unit_->getOrderTarget();
     if (targ != nullptr) {
-      Position a = unit->getPosition();
+      Position a = unit_->getPosition();
       Position b = targ->getPosition();
       Broodwar->drawLineMap(a.x, a.y, b.x, b.y, Colors::Green);
 
-      Broodwar->drawTextMap(unit->getPosition().x, unit->getPosition().y, "Repairing %s", targ->getType().getName().c_str());
+      Broodwar->drawTextMap(unit_->getPosition().x, unit_->getPosition().y, "Repairing %s", targ->getType().getName().c_str());
     }
   }
 
-  if (unit->isConstructing()) {
-    Unit targ = unit->getOrderTarget();
+  if (unit_->isConstructing()) {
+    Unit targ = unit_->getOrderTarget();
     if (targ != nullptr) {
-      Position a = unit->getPosition();
+      Position a = unit_->getPosition();
       Position b = targ->getPosition();
       Broodwar->drawLineMap(a.x, a.y, b.x, b.y, Colors::Green);
 
-      Broodwar->drawTextMap(unit->getPosition().x, unit->getPosition().y, "Constructing %s", targ->getType().getName().c_str());
+      Broodwar->drawTextMap(unit_->getPosition().x, unit_->getPosition().y, "Constructing %s", targ->getType().getName().c_str());
     }
   }
 }
 
 bool WorkerAgent::checkRepair() {
-  if (unit->getType().getID() != UnitTypes::Terran_SCV.getID()) return false;
-  if (unit->isRepairing()) return true;
+  if (unit_->getType().getID() != UnitTypes::Terran_SCV.getID()) return false;
+  if (unit_->isRepairing()) return true;
 
   //Find closest unit that needs repairing
   BaseAgent* toRepair = nullptr;
   double bestDist = 10000;
   auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
-    if (a->isAlive() && a->isDamaged() && a->getUnitType().isMechanical() && a->getUnitID() != unitID) {
-      double cDist = a->getUnit()->getPosition().getDistance(unit->getPosition());
+    if (a->isAlive() && a->isDamaged() && a->getUnitType().isMechanical() && a->getUnitID() != unit_id_) {
+      double cDist = a->getUnit()->getPosition().getDistance(unit_->getPosition());
       if (cDist < bestDist) {
         bestDist = cDist;
         toRepair = a;
@@ -122,7 +123,7 @@ bool WorkerAgent::checkRepair() {
 
   //Repair it
   if (toRepair != nullptr) {
-    unit->repair(toRepair->getUnit());
+    unit_->repair(toRepair->getUnit());
     return true;
   }
 
@@ -134,21 +135,21 @@ void WorkerAgent::computeSquadWorkerActions() {
   if (checkRepair()) return;
 
   //No repairing. Gather minerals
-  auto sq = rnp::commander()->getSquad(squadID);
+  auto sq = rnp::commander()->getSquad(squad_id_);
   if (sq) {
     //If squad is not ative, let the worker gather
     //minerals while not doing any repairs
     if (not sq->isActive()) {
-      if (unit->isIdle()) {
-        Unit mineral = rnp::building_placer()->findClosestMineral(unit->getTilePosition());
+      if (unit_->isIdle()) {
+        Unit mineral = rnp::building_placer()->find_closest_mineral(unit_->getTilePosition());
         if (mineral != nullptr) {
-          unit->rightClick(mineral);
+          unit_->rightClick(mineral);
           return;
         }
       }
     }
     else {
-      rnp::navigation()->computeMove(this, goal);
+      rnp::navigation()->computeMove(this, goal_);
       return;
     }
   }
@@ -157,11 +158,11 @@ void WorkerAgent::computeSquadWorkerActions() {
 bool WorkerAgent::isFreeWorker() {
   if (currentState != GATHER_MINERALS) return false;
   if (toBuild.getID() != UnitTypes::None.getID()) return false;
-  if (unit->isConstructing()) return false;
-  Unit b = unit->getTarget();
+  if (unit_->isConstructing()) return false;
+  Unit b = unit_->getTarget();
   if (b != nullptr) if (b->isBeingConstructed()) return false;
-  if (unit->isRepairing()) return false;
-  if (squadID != -1) return false;
+  if (unit_->isRepairing()) return false;
+  if (squad_id_ != -1) return false;
 
   return true;
 }
@@ -169,22 +170,22 @@ bool WorkerAgent::isFreeWorker() {
 
 void WorkerAgent::computeActions() {
   //To prevent order spamming
-  lastOrderFrame = Broodwar->getFrameCount();
+  last_order_frame_ = Broodwar->getFrameCount();
 
-  if (squadID != -1) {
+  if (squad_id_ != -1) {
     computeSquadWorkerActions();
     return;
   }
   //Check if workers are too far away from a base when attacking
   if (currentState == ATTACKING) {
-    if (unit->getTarget() != nullptr) {
-      BaseAgent* base = rnp::agent_manager()->getClosestBase(unit->getTilePosition());
+    if (unit_->getTarget() != nullptr) {
+      BaseAgent* base = rnp::agent_manager()->getClosestBase(unit_->getTilePosition());
       if (base != nullptr) {
-        double dist = base->getUnit()->getTilePosition().getDistance(unit->getTilePosition());
+        double dist = base->getUnit()->getTilePosition().getDistance(unit_->getTilePosition());
         if (dist > 25) {
           //Stop attacking. Return home
-          unit->stop();
-          unit->rightClick(base->getUnit());
+          unit_->stop();
+          unit_->rightClick(base->getUnit());
           setState(GATHER_MINERALS);
           return;
         }
@@ -198,14 +199,14 @@ void WorkerAgent::computeActions() {
   }
 
   if (currentState == GATHER_GAS) {
-    if (unit->isIdle()) {
+    if (unit_->isIdle()) {
       //Not gathering gas. Reset.
       setState(GATHER_MINERALS);
     }
   }
 
   if (currentState == REPAIRING) {
-    Unit target = unit->getTarget();
+    Unit target = unit_->getTarget();
     bool cont = true;
     if (target == nullptr) cont = false;
     if (target != nullptr && target->getHitPoints() >= target->getInitialHitPoints()) cont = false;
@@ -217,23 +218,23 @@ void WorkerAgent::computeActions() {
   }
 
   if (currentState == GATHER_MINERALS) {
-    if (unit->isIdle()) {
-      Unit mineral = rnp::building_placer()->findClosestMineral(unit->getTilePosition());
+    if (unit_->isIdle()) {
+      Unit mineral = rnp::building_placer()->find_closest_mineral(unit_->getTilePosition());
       if (mineral != nullptr) {
-        unit->rightClick(mineral);
+        unit_->rightClick(mineral);
       }
     }
   }
 
   if (currentState == FIND_BUILDSPOT) {
-    if (buildSpot.x == -1) {
-      buildSpot = rnp::building_placer()->findBuildSpot(toBuild);
+    if (not rnp::is_valid_position(buildSpot)) {
+      buildSpot = rnp::building_placer()->find_build_spot(toBuild);
     }
     if (buildSpot.x >= 0) {
       setState(MOVE_TO_SPOT);
       startBuildFrame = Broodwar->getFrameCount();
       if (toBuild.isResourceDepot()) {
-        rnp::commander()->updateGoals();
+        rnp::commander()->update_squad_goals();
       }
     }
   }
@@ -242,20 +243,20 @@ void WorkerAgent::computeActions() {
     if (not buildSpotExplored()) {
       Position toMove = Position(buildSpot.x * 32 + 16, buildSpot.y * 32 + 16);
       if (toBuild.isRefinery()) toMove = Position(buildSpot);
-      unit->rightClick(toMove);
+      unit_->rightClick(toMove);
     }
 
-    if (buildSpotExplored() && !unit->isConstructing()) {
-      bool ok = unit->build(toBuild, buildSpot);
+    if (buildSpotExplored() && not unit_->isConstructing()) {
+      bool ok = unit_->build(toBuild, buildSpot);
       if (not ok) {
-        rnp::building_placer()->blockPosition(buildSpot);
-        rnp::building_placer()->clearTemp(toBuild, buildSpot);
+        rnp::building_placer()->mark_position_blocked(buildSpot);
+        rnp::building_placer()->clear_temp(toBuild, buildSpot);
         //Cant build at selected spot, get a new one.
         setState(FIND_BUILDSPOT);
       }
     }
 
-    if (unit->isConstructing()) {
+    if (unit_->isConstructing()) {
       setState(CONSTRUCT);
       startSpot = TilePosition(-1, -1);
     }
@@ -264,9 +265,9 @@ void WorkerAgent::computeActions() {
   if (currentState == CONSTRUCT) {
     if (isBuilt()) {
       //Build finished.
-      BaseAgent* agent = rnp::agent_manager()->getClosestBase(unit->getTilePosition());
+      BaseAgent* agent = rnp::agent_manager()->getClosestBase(unit_->getTilePosition());
       if (agent != nullptr) {
-        unit->rightClick(agent->getUnit()->getPosition());
+        unit_->rightClick(agent->getUnit()->getPosition());
       }
       setState(GATHER_MINERALS);
     }
@@ -274,9 +275,9 @@ void WorkerAgent::computeActions() {
 }
 
 bool WorkerAgent::isBuilt() {
-  if (unit->isConstructing()) return false;
+  if (unit_->isConstructing()) return false;
 
-  Unit b = unit->getTarget();
+  Unit b = unit_->getTarget();
   if (b != nullptr) if (b->isBeingConstructed()) return false;
 
   return true;
@@ -288,7 +289,7 @@ bool WorkerAgent::buildSpotExplored() {
     sightDist = 160; //5 tiles
   }
 
-  double dist = unit->getPosition().getDistance(Position(buildSpot));
+  double dist = unit_->getPosition().getDistance(Position(buildSpot));
   if (dist > sightDist) {
     return false;
   }
@@ -310,10 +311,10 @@ void WorkerAgent::setState(int state) {
 }
 
 bool WorkerAgent::canBuild(UnitType type) {
-  if (unit->isIdle()) {
+  if (unit_->isIdle()) {
     return true;
   }
-  if (unit->isGatheringMinerals()) {
+  if (unit_->isGatheringMinerals()) {
     return true;
   }
   return false;
@@ -321,10 +322,10 @@ bool WorkerAgent::canBuild(UnitType type) {
 
 bool WorkerAgent::assignToBuild(UnitType type) {
   toBuild = type;
-  buildSpot = rnp::building_placer()->findBuildSpot(toBuild);
+  buildSpot = rnp::building_placer()->find_build_spot(toBuild);
   if (buildSpot.x >= 0) {
     rnp::resources()->lockResources(toBuild);
-    rnp::building_placer()->fillTemp(toBuild, buildSpot);
+    rnp::building_placer()->fill_temp(toBuild, buildSpot);
     setState(FIND_BUILDSPOT);
     return true;
   }
@@ -337,24 +338,24 @@ bool WorkerAgent::assignToBuild(UnitType type) {
 void WorkerAgent::reset() {
   if (currentState == MOVE_TO_SPOT) {
     //The buildSpot is probably not reachable. Block it.	
-    rnp::building_placer()->blockPosition(buildSpot);
-    rnp::building_placer()->clearTemp(toBuild, buildSpot);
+    rnp::building_placer()->mark_position_blocked(buildSpot);
+    rnp::building_placer()->clear_temp(toBuild, buildSpot);
   }
 
-  if (unit->isConstructing()) {
-    unit->cancelConstruction();
-    rnp::building_placer()->clearTemp(toBuild, buildSpot);
+  if (unit_->isConstructing()) {
+    unit_->cancelConstruction();
+    rnp::building_placer()->clear_temp(toBuild, buildSpot);
   }
 
-  if (unit->isRepairing()) {
-    unit->cancelConstruction();
+  if (unit_->isRepairing()) {
+    unit_->cancelConstruction();
   }
 
   setState(GATHER_MINERALS);
-  unit->stop();
-  BaseAgent* base = rnp::agent_manager()->getClosestBase(unit->getTilePosition());
+  unit_->stop();
+  BaseAgent* base = rnp::agent_manager()->getClosestBase(unit_->getTilePosition());
   if (base != nullptr) {
-    unit->rightClick(base->getUnit()->getPosition());
+    unit_->rightClick(base->getUnit()->getPosition());
   }
 }
 
@@ -396,7 +397,7 @@ std::string WorkerAgent::getStateAsText() {
 bool WorkerAgent::assignToFinishBuild(Unit building) {
   if (isFreeWorker()) {
     setState(REPAIRING);
-    unit->rightClick(building);
+    unit_->rightClick(building);
     return true;
   }
   return false;
@@ -405,8 +406,8 @@ bool WorkerAgent::assignToFinishBuild(Unit building) {
 bool WorkerAgent::assignToRepair(Unit building) {
   if (isFreeWorker()) {
     setState(REPAIRING);
-    bool ok = unit->repair(building);
-    unit->rightClick(building);
+    bool ok = unit_->repair(building);
+    unit_->rightClick(building);
     return true;
   }
   return false;

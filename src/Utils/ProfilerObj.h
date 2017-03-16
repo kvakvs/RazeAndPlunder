@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MainAgents/BaseAgent.h"
-//#include <windows.h>
+#include <memory>
 
 /** Helper class for Profiler. This class represents a profiling of one specific
  * codeblock. Profiling can be done on any number of codeblocks.
@@ -9,32 +9,31 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class ProfilerObj {
+public:
+  using Ptr = std::unique_ptr<ProfilerObj>;
 
 private:
-  double PCFreq;
-  __int64 CounterStart;
-  __int64 CounterEnd;
+  double pc_freq_ = 0.0;
+  __int64 counter_start_ = 0;
+  __int64 counter_end_ = 0;
 
-  std::string id;
-  double maxTime;
-  double total;
-  int startCalls;
-  int endCalls;
-  int lastShowFrame;
+  std::string id_;
+  double max_time_ = 0.0;
+  double total_ = 0.0;
+  int start_calls_ = 0;
+  int end_calls_ = 0;
+  int last_show_frame_ = 0;
 
-  int timeouts_short;
-  int timeouts_medium;
-  int timeouts_long;
+  int timeouts_short_ = 0;
+  int timeouts_medium_ = 0;
+  int timeouts_long_ = 0;
 
 public:
-  // Constructor 
-  ProfilerObj(std::string mId);
-
-  // Destructor 
+  ProfilerObj(const std::string& mId);
   ~ProfilerObj();
 
   // Checks if this object matches the specified id string. 
-  bool matches(std::string mId);
+  bool matches(const std::string& mId);
 
   // Starts measuring a codeblock. 
   void start();
@@ -48,4 +47,3 @@ public:
   // Returns the html string for this profiling object. 
   std::string getDumpStr();
 };
-

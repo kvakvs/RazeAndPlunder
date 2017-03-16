@@ -9,13 +9,12 @@
 
 class BaseLocationItem {
 public:
-  explicit BaseLocationItem(BWAPI::TilePosition pos) {
-    baseLocation = pos;
+  explicit BaseLocationItem(BWAPI::TilePosition pos) : baseLocation(pos) {
     frameVisited = BWAPI::Broodwar->getFrameCount();
   };
 
   BWAPI::TilePosition baseLocation;
-  int frameVisited;
+  int frameVisited = 0;
 };
 
 class BaseLocationSet : public BWAPI::SetContainer<BaseLocationItem*, std::hash<void*>> {

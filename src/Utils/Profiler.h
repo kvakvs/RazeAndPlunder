@@ -1,10 +1,9 @@
 #pragma once
 
 #include <BWAPI.h>
-//#include "MainAgents/BaseAgent.h"
-#include "ProfilerObj.h"
 #include <memory>
 
+#include "ProfilerObj.h"
 
 /** This class is used to measure the time (in milliseconds) it takes to execute a codeblock.
  * It also counts timeouts according to the rules from the AIIDE 2011 bot competition. If one of
@@ -22,28 +21,32 @@
  */
 class Profiler {
 private:
-  std::vector<ProfilerObj*> obj;
-  ProfilerObj* getObj(std::string mId);
+  std::map<std::string, ProfilerObj::Ptr> profile_objects_;
+  bool active_ = true;
 
-  bool active;
+  ProfilerObj* getObj(const std::string& mId);
 
 public:
   Profiler();
   ~Profiler();
 
   // Starts measuring. Put at beginning of a codeblock.// Make sure the startiId is the same as the end id. 
-  void start(std::string mId);
+  void start(const std::string& mId);
 
   // Stops measuring. Put at the end of a codeblock.
   // Make sure the startiId is the same as the end id. 
-  void end(std::string mId);
+  void end(const std::string& mId);
 
   // Stores all profiling data to file. 
   void dumpToFile();
 
   // Enable profiling. 
-  void enable();
+  void enable() {
+    active_ = true;
+  }
 
   // Disable profiling. 
-  void disable();
+  void disable() {
+    active_ = false;
+  }
 };

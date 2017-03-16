@@ -6,10 +6,11 @@
 #include "BuildingPlacer.h"
 #include "ResourceManager.h"
 #include "Glob.h"
+#include "RnpUtil.h"
 
 using namespace BWAPI;
 
-Constructor::Constructor() {
+Constructor::Constructor(): build_plan_(), build_queue_() {
   last_call_frame_ = Broodwar->getFrameCount();
 }
 
@@ -69,15 +70,15 @@ void Constructor::computeActions() {
 
   //Check if we have possible "locked" items in the buildqueue
   for (int i = 0; i < (int)build_queue_.size(); i++) {
-    int elapsed = cFrame - build_queue_.at(i).assignedFrame;
+    int elapsed = cFrame - build_queue_.at(i).assigned_frame_;
     if (elapsed >= 2000) {
       //Reset the build request
-      WorkerAgent* worker = (WorkerAgent*)rnp::agent_manager()->getAgent(build_queue_.at(i).assignedWorkerId);
+      WorkerAgent* worker = (WorkerAgent*)rnp::agent_manager()->getAgent(build_queue_.at(i).assigned_worker_id_);
       if (worker != nullptr) {
         worker->reset();
       }
-      build_plan_.insert(build_plan_.begin(), build_queue_.at(i).toBuild);
-      rnp::resources()->unlockResources(build_queue_.at(i).toBuild);
+      build_plan_.insert(build_plan_.begin(), build_queue_.at(i).to_build_);
+      rnp::resources()->unlockResources(build_queue_.at(i).to_build_);
       build_queue_.erase(build_queue_.begin() + i);
       return;
     }
@@ -187,7 +188,7 @@ bool Constructor::supplyBeingBuilt() {
 
   //2. Check if we have a supply in build queue
   for (int i = 0; i < (int)build_queue_.size(); i++) {
-    if (build_queue_.at(i).toBuild.getID() == supply.getID()) {
+    if (build_queue_.at(i).to_build_.getID() == supply.getID()) {
       return true;
     }
   }
@@ -200,9 +201,9 @@ void Constructor::lock(int buildPlanIndex, int unitId) {
   build_plan_.erase(build_plan_.begin() + buildPlanIndex);
 
   BuildQueueItem item;
-  item.toBuild = type;
-  item.assignedWorkerId = unitId;
-  item.assignedFrame = Broodwar->getFrameCount();
+  item.to_build_ = type;
+  item.assigned_worker_id_ = unitId;
+  item.assigned_frame_ = Broodwar->getFrameCount();
 
   build_queue_.push_back(item);
 }
@@ -218,7 +219,7 @@ void Constructor::remove(UnitType type) {
 
 void Constructor::unlock(UnitType type) {
   for (int i = 0; i < (int)build_queue_.size(); i++) {
-    if (build_queue_.at(i).toBuild.getID() == type.getID()) {
+    if (build_queue_.at(i).to_build_.getID() == type.getID()) {
       build_queue_.erase(build_queue_.begin() + i);
       return;
     }
@@ -227,7 +228,7 @@ void Constructor::unlock(UnitType type) {
 
 void Constructor::handleWorkerDestroyed(UnitType type, int workerID) {
   for (int i = 0; i < (int)build_queue_.size(); i++) {
-    if (build_queue_.at(i).assignedWorkerId == workerID) {
+    if (build_queue_.at(i).assigned_worker_id_ == workerID) {
       build_queue_.erase(build_queue_.begin() + i);
       build_plan_.insert(build_plan_.begin(), type);
       rnp::resources()->unlockResources(type);
@@ -267,15 +268,15 @@ bool Constructor::executeOrder(UnitType type) {
   }
 
   if (type.isResourceDepot()) {
-    TilePosition pos = rnp::building_placer()->findExpansionSite();
-    if (pos.x == -1) {
+    TilePosition pos = rnp::building_placer()->find_expansion_site();
+    if (not rnp::is_valid_position(pos)) {
       //No expansion site found.
       if ((int)build_plan_.size() > 0) build_plan_.erase(build_plan_.begin());
       return true;
     }
   }
   if (type.isRefinery()) {
-    TilePosition rSpot = rnp::building_placer()->searchRefinerySpot();
+    TilePosition rSpot = rnp::building_placer()->search_refinery_spot();
     if (rSpot.x < 0) {
       //No buildspot found
       if ((int)build_plan_.size() > 0) build_plan_.erase(build_plan_.begin());
@@ -397,7 +398,7 @@ void Constructor::printInfo() {
 
     no = 0;
     for (int i = 0; i < (int)build_queue_.size(); i++) {
-      Broodwar->drawTextScreen(490, s + 20 + no * 16, format(build_queue_.at(i).toBuild).c_str());
+      Broodwar->drawTextScreen(490, s + 20 + no * 16, format(build_queue_.at(i).to_build_).c_str());
       no++;
     }
     if (no == 0) no++;
@@ -420,7 +421,7 @@ void Constructor::handleNoBuildspotFound(UnitType toBuild) {
   }
 
   if (not removeOrder) {
-    if (isProtoss() && !supplyBeingBuilt()) {
+    if (isProtoss() && not supplyBeingBuilt()) {
       //Insert a pylon to increase PSI coverage
       if (not nextIsOfType(UnitTypes::Protoss_Pylon)) {
         build_plan_.insert(build_plan_.begin(), UnitTypes::Protoss_Pylon);
@@ -448,7 +449,7 @@ bool Constructor::containsType(UnitType type) {
     }
   }
   for (int i = 0; i < (int)build_queue_.size(); i++) {
-    if (build_queue_.at(i).toBuild.getID() == type.getID()) {
+    if (build_queue_.at(i).to_build_.getID() == type.getID()) {
       return true;
     }
   }
@@ -489,8 +490,8 @@ void Constructor::expand(UnitType commandCenterUnit) {
     return;
   }
 
-  TilePosition pos = rnp::building_placer()->findExpansionSite();
-  if (pos.x == -1) {
+  TilePosition pos = rnp::building_placer()->find_expansion_site();
+  if (not rnp::is_valid_position(pos)) {
     //No expansion site found.
     return;
   }
@@ -522,7 +523,7 @@ int Constructor::noInProduction(UnitType type) {
   auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive()) {
-      if (a->getUnitType().canProduce() && !a->getUnit()->isBeingConstructed()) {
+      if (a->getUnitType().canProduce() && not a->getUnit()->isBeingConstructed()) {
         for (auto& u : a->getUnit()->getTrainingQueue()) {
           if (u.getID() == type.getID()) {
             no++;

@@ -8,8 +8,8 @@ bool ReaverAgent::useAbilities() {
     maxLoad = 10;
   }
 
-  if (unit->getScarabCount() < maxLoad) {
-    if (unit->train(UnitTypes::Protoss_Scarab)) {
+  if (unit_->getScarabCount() < maxLoad) {
+    if (unit_->train(UnitTypes::Protoss_Scarab)) {
       return true;
     }
   }

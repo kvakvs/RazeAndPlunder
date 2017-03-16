@@ -14,7 +14,7 @@ private:
 
 public:
   explicit BattlecruiserAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "BattlecruiserAgent";
+    agent_type_ = "BattlecruiserAgent";
   }
 
   bool useAbilities() override;

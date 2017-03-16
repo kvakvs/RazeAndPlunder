@@ -3,13 +3,15 @@
 #include "Managers/ExplorationManager.h"
 #include "MainAgents/BaseAgent.h"
 
-#include "bwem.h"
-#include "BWEMUtil.h"
+#include "BWEM/bwem.h"
+#include "RnpUtil.h"
 #include "Glob.h"
 
 using namespace BWAPI;
 
-MapManager::MapManager() : bwem_(BWEM::Map::Instance()) {
+MapManager::MapManager()
+    : bwem_(BWEM::Map::Instance()), map_(), bases_()
+{
   //Add the regions for this map
   for (auto& r : bwem_.Areas()) {
     MRegion* mr = new MRegion();
@@ -188,7 +190,7 @@ void MapManager::update() {
 
   //Update enemy buildings influence
   for (MRegion* mr : map_) {
-    mr->inf_en_buildings = rnp::exploration()->getSpottedInfluenceInRegion(mr->region);
+    mr->inf_en_buildings = rnp::exploration()->get_spotted_influence_in_region(mr->region);
   }
 
   //Update enemy units influence

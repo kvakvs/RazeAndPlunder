@@ -19,7 +19,7 @@ private:
 
 public:
   explicit HighTemplarAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "HighTemplarAgent";
+    agent_type_ = "HighTemplarAgent";
   }
 
   bool useAbilities() override;

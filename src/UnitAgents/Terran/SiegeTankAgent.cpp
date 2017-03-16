@@ -12,8 +12,8 @@ bool SiegeTankAgent::useAbilities() {
 
     //Check if enemy ground units are visible
     for (auto& u : Broodwar->enemy()->getUnits()) {
-      if (u->exists() && !u->getType().isFlyer()) {
-        if (unit->getDistance(u) <= range) {
+      if (u->exists() && not u->getType().isFlyer()) {
+        if (unit_->getDistance(u) <= range) {
           goSiege = true;
         }
       }
@@ -21,20 +21,20 @@ bool SiegeTankAgent::useAbilities() {
 
     //If we are defending and are at the defense position, go
     //in siege mode
-    auto sq = rnp::commander()->getSquad(squadID);
+    auto sq = rnp::commander()->getSquad(squad_id_);
     if (sq) {
       if (not sq->isActive()) {
-        double d = unit->getDistance(Position(goal));
+        double d = unit_->getDistance(Position(goal_));
         if (d <= range * 0.5) goSiege = true;
       }
     }
 
-    if (goSiege && !unit->isSieged()) {
-      unit->siege();
+    if (goSiege && not unit_->isSieged()) {
+      unit_->siege();
       return true;
     }
-    if (not goSiege && unit->isSieged()) {
-      unit->unsiege();
+    if (not goSiege && unit_->isSieged()) {
+      unit_->unsiege();
       return true;
     }
   }

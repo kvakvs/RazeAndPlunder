@@ -21,11 +21,11 @@ DESCRIPTION:
 class CThread {
 
 public:
-  //constructors
   CThread();
-
-  //destructor
   virtual ~CThread();
+
+  CThread(const CThread&) = delete;
+  CThread& operator=(const CThread&) = delete;
 
   bool CreateThread();
 

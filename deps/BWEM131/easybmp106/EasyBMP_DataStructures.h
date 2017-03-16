@@ -66,19 +66,19 @@ inline ebmpDWORD FlipDWORD(ebmpDWORD in) {
 // in memory
 
 typedef struct RGBApixel {
-  ebmpBYTE Blue;
-  ebmpBYTE Green;
-  ebmpBYTE Red;
-  ebmpBYTE Alpha;
+  ebmpBYTE Blue = 0;
+  ebmpBYTE Green = 0;
+  ebmpBYTE Red = 0;
+  ebmpBYTE Alpha = 0;
 } RGBApixel;
 
 class BMFH {
 public:
-  ebmpWORD bfType;
-  ebmpDWORD bfSize;
-  ebmpWORD bfReserved1;
-  ebmpWORD bfReserved2;
-  ebmpDWORD bfOffBits;
+  ebmpWORD bfType = 0;
+  ebmpDWORD bfSize = 0;
+  ebmpWORD bfReserved1 = 0;
+  ebmpWORD bfReserved2 = 0;
+  ebmpDWORD bfOffBits = 0;
 
   BMFH();
   void display(void);
@@ -87,17 +87,17 @@ public:
 
 class BMIH {
 public:
-  ebmpDWORD biSize;
-  ebmpDWORD biWidth;
-  ebmpDWORD biHeight;
-  ebmpWORD biPlanes;
-  ebmpWORD biBitCount;
-  ebmpDWORD biCompression;
-  ebmpDWORD biSizeImage;
-  ebmpDWORD biXPelsPerMeter;
-  ebmpDWORD biYPelsPerMeter;
-  ebmpDWORD biClrUsed;
-  ebmpDWORD biClrImportant;
+  ebmpDWORD biSize = 0;
+  ebmpDWORD biWidth = 0;
+  ebmpDWORD biHeight = 0;
+  ebmpWORD biPlanes = 0;
+  ebmpWORD biBitCount = 0;
+  ebmpDWORD biCompression = 0;
+  ebmpDWORD biSizeImage = 0;
+  ebmpDWORD biXPelsPerMeter = 0;
+  ebmpDWORD biYPelsPerMeter = 0;
+  ebmpDWORD biClrUsed = 0;
+  ebmpDWORD biClrImportant = 0;
 
   BMIH();
   void display(void);

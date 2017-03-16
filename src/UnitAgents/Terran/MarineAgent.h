@@ -13,7 +13,7 @@ private:
 
 public:
   explicit MarineAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "MarineAgent";
+    agent_type_ = "MarineAgent";
   }
 
   bool useAbilities() override;

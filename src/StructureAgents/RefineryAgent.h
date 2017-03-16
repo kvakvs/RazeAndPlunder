@@ -12,7 +12,7 @@
 class RefineryAgent : public StructureAgent {
 
 private:
-  std::vector<BaseAgent*> assignedWorkers;
+  std::vector<BaseAgent*> assigned_workers_;
 
 public:
   explicit RefineryAgent(BWAPI::Unit mUnit);

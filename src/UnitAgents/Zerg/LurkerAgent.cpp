@@ -9,20 +9,20 @@ bool LurkerAgent::useAbilities() {
   bool enemyVisible = false;
   for (auto& u : Broodwar->enemy()->getUnits()) {
     if (u->exists()) {
-      if (unit->getDistance(u) <= unit->getType().sightRange() && !u->getType().isFlyer()) {
+      if (unit_->getDistance(u) <= unit_->getType().sightRange() && not u->getType().isFlyer()) {
         enemyVisible = true;
         break;
       }
     }
   }
 
-  if (enemyVisible && !unit->isBurrowed()) {
-    if (unit->burrow()) {
+  if (enemyVisible && not unit_->isBurrowed()) {
+    if (unit_->burrow()) {
       return true;
     }
   }
-  if (not enemyVisible && unit->isBurrowed()) {
-    if (unit->unburrow()) {
+  if (not enemyVisible && unit_->isBurrowed()) {
+    if (unit_->unburrow()) {
       return true;
     }
   }

@@ -168,7 +168,7 @@ BaseAgent* AgentFactory::createTerranAgent(Unit unit) {
     else if (isOfType(unit, UnitTypes::Terran_Bunker)) {
       //Make sure we set the squad id to the bunker, so we
       //can remove the squad if the bunker is destroyed.
-      int squadID = rnp::commander()->addBunkerSquad();
+      int squadID = rnp::commander()->add_bunker_squad();
       BaseAgent* a = new StructureAgent(unit);
       a->setSquadID(squadID);
       return a;

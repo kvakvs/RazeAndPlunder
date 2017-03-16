@@ -10,7 +10,7 @@
 class WraithAgent : public UnitAgent {
 public:
   explicit WraithAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "WraithAgent";
+    agent_type_ = "WraithAgent";
   }
 
   bool useAbilities() override;

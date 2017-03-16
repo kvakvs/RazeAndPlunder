@@ -3,8 +3,11 @@
 #include <BWAPI.h>
 #include "BotAILoop.h"
 
-#include "bwem.h"
+#include "BWEM/bwem.h"
 #include "Utils/Statistics.h"
+
+// This is used as a prefix to console/broodwar outputs
+#define BOT_PREFIX "[Raze&Plunder] " 
 
 #define TOURNAMENT_NAME "SSCAIT 2017"
 #define SPONSORS "the Sponsors!"
@@ -64,6 +67,7 @@ public:
   
 public:
   RnpBot();
+  ~RnpBot();
 
   static RnpBot* singleton() {
     bwem_assert(singleton_);

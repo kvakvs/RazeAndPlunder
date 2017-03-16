@@ -1,7 +1,7 @@
 #pragma once
 
 //#include "MainAgents/BaseAgent.h"
-#include "bwem.h"
+#include "BWEM/bwem.h"
 
 /** This class handles the main AI loop that is executed each frame. It is 
  * separated from the RnpBot::onFrame().

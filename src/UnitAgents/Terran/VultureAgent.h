@@ -10,12 +10,11 @@
 class VultureAgent : public UnitAgent {
 
 private:
-  int mineDropFrame;
+  int mine_drop_frame_ = 0;
 
 public:
   explicit VultureAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "VultureAgent";
-    mineDropFrame = 0;
+    agent_type_ = "VultureAgent";
   }
 
   bool useAbilities() override;

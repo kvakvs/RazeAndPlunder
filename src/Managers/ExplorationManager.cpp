@@ -1,16 +1,18 @@
 #include "ExplorationManager.h"
 #include "BuildingPlacer.h"
-#include "BWEMUtil.h"
+#include "RnpUtil.h"
 #include "Glob.h"
 
 using namespace BWAPI;
 
-RegionItem::RegionItem(const BWEM::Area* region) {
-  location = rnp::get_center(*region);
-  frameVisited = Broodwar->getFrameCount();
+RegionItem::RegionItem(const BWEM::Area* region): location_() {
+  location_ = rnp::get_center(*region);
+  frame_visited_ = Broodwar->getFrameCount();
 }
 
-ExplorationManager::ExplorationManager(): bwem_(BWEM::Map::Instance()) {
+ExplorationManager::ExplorationManager()
+    : bwem_(BWEM::Map::Instance()), enemy_(), explore_(), expansion_site_()
+{
   //Add the regions for this map
   for (auto& r : bwem_.Areas()) {
     explore_.insert(new RegionItem(&r));
@@ -20,13 +22,13 @@ ExplorationManager::ExplorationManager(): bwem_(BWEM::Map::Instance()) {
 
   last_call_frame_ = Broodwar->getFrameCount();
 
-  expansionSite = TilePosition(-1, -1);
+  expansion_site_ = TilePosition(-1, -1);
 }
 
 ExplorationManager::~ExplorationManager() {
 }
 
-void ExplorationManager::computeActions() {
+void ExplorationManager::on_frame() {
   //Dont call too often
   int cFrame = Broodwar->getFrameCount();
   if (cFrame - last_call_frame_ < 9) {
@@ -35,37 +37,37 @@ void ExplorationManager::computeActions() {
   last_call_frame_ = cFrame;
 
   for (auto& a : explore_) {
-    if (Broodwar->isVisible(a->location)) {
-      a->frameVisited = Broodwar->getFrameCount();
+    if (Broodwar->isVisible(a->location_)) {
+      a->frame_visited_ = Broodwar->getFrameCount();
     }
   }
 }
 
-TilePosition ExplorationManager::searchExpansionSite() {
-  getExpansionSite();
+TilePosition ExplorationManager::search_expansion_site() {
+  get_expansion_site();
 
-  if (expansionSite.x == -1) {
-    expansionSite = rnp::building_placer()->findExpansionSite();
+  if (not rnp::is_valid_position(expansion_site_)) {
+    expansion_site_ = rnp::building_placer()->find_expansion_site();
     site_set_frame_ = Broodwar->getFrameCount();
   }
 
-  return expansionSite;
+  return expansion_site_;
 }
 
-TilePosition ExplorationManager::getExpansionSite() {
-  if (expansionSite.x >= 0) {
+TilePosition ExplorationManager::get_expansion_site() {
+  if (expansion_site_.x >= 0) {
     if (Broodwar->getFrameCount() - site_set_frame_ > 500) {
-      expansionSite = TilePosition(-1, -1);
+      expansion_site_ = TilePosition(-1, -1);
     }
   }
 
-  return expansionSite;
+  return expansion_site_;
 }
 
-void ExplorationManager::setExplored(TilePosition pos) {
+void ExplorationManager::set_explored(TilePosition pos) {
   for (auto& a : explore_) {
-    if (a->location.x == pos.x && a->location.y == pos.y) {
-      a->frameVisited = Broodwar->getFrameCount();
+    if (a->location_.x == pos.x && a->location_.y == pos.y) {
+      a->frame_visited_ = Broodwar->getFrameCount();
       return;
     }
   }
@@ -73,26 +75,26 @@ void ExplorationManager::setExplored(TilePosition pos) {
   Broodwar << "Cannot set to explored" << std::endl;
 }
 
-void ExplorationManager::setExpansionSite(TilePosition pos) {
+void ExplorationManager::set_expansion_site(TilePosition pos) {
   if (pos.x >= 0) {
     site_set_frame_ = Broodwar->getFrameCount();
-    expansionSite = pos;
+    expansion_site_ = pos;
   }
 }
 
-TilePosition ExplorationManager::getNextToExplore(Squad* squad) {
+TilePosition ExplorationManager::get_next_to_explore(Squad* squad) {
   int longestVisitFrame = Broodwar->getFrameCount();
   TilePosition nextPos = TilePosition(-1, -1);
   for (auto& a : explore_) {
-    if (a->frameVisited < longestVisitFrame) {
-      longestVisitFrame = a->frameVisited;
-      nextPos = a->location;
+    if (a->frame_visited_ < longestVisitFrame) {
+      longestVisitFrame = a->frame_visited_;
+      nextPos = a->location_;
     }
   }
   return nextPos;
 }
 
-void ExplorationManager::printInfo() {
+void ExplorationManager::debug_print() {
   //Uncomment this if you want to draw a mark at detected enemy buildings.
   /*for (int i = 0; i < (int)spottedBuildings.size(); i++)
   {
@@ -110,7 +112,7 @@ void ExplorationManager::printInfo() {
   //Draw a circle around detectors
 }
 
-void ExplorationManager::addSpottedUnit(Unit unit) {
+void ExplorationManager::on_unit_spotted(Unit unit) {
   if (unit->getType().isBuilding()) {
     //Check if we already have seen this building
     bool found = false;
@@ -127,7 +129,7 @@ void ExplorationManager::addSpottedUnit(Unit unit) {
   }
 }
 
-void ExplorationManager::unitDestroyed(Unit unit) {
+void ExplorationManager::on_unit_destroyed(Unit unit) {
   TilePosition uPos = unit->getTilePosition();
   if (unit->getType().isBuilding()) {
     bool removed = false;
@@ -166,7 +168,7 @@ void ExplorationManager::cleanup() {
   }
 }
 
-int ExplorationManager::getSpottedInfluenceInRegion(const BWEM::Area* area) {
+int ExplorationManager::get_spotted_influence_in_region(const BWEM::Area* area) {
   int im = 0;
   for (auto& spotted_object : enemy_) {
     if (rnp::is_inside(*area, spotted_object->getPosition())) {
@@ -176,7 +178,7 @@ int ExplorationManager::getSpottedInfluenceInRegion(const BWEM::Area* area) {
   return im;
 }
 
-TilePosition ExplorationManager::getClosestSpottedBuilding(TilePosition start) {
+TilePosition ExplorationManager::get_closest_spotted_building(TilePosition start) {
   cleanup();
 
   TilePosition pos = TilePosition(-1, -1);
@@ -193,19 +195,16 @@ TilePosition ExplorationManager::getClosestSpottedBuilding(TilePosition start) {
   return pos;
 }
 
-bool ExplorationManager::canReach(TilePosition a, TilePosition b) {
-//  auto ra = bwem_.GetNearestArea(a);
-//  auto rb = bwem_.GetNearestArea(b);
-  auto& bwem = BWEM::Map::Instance();
-  auto possible_path = bwem.GetPath(BWAPI::Position(a), BWAPI::Position(b));
+bool ExplorationManager::can_reach(TilePosition a, TilePosition b) const {
+  auto possible_path = bwem_.GetPath(BWAPI::Position(a), BWAPI::Position(b));
   return possible_path.empty() == false;
 }
 
-bool ExplorationManager::canReach(BaseAgent* agent, TilePosition b) {
+bool ExplorationManager::can_reach(BaseAgent* agent, TilePosition b) const {
   return agent->getUnit()->hasPath(Position(b));
 }
 
-bool ExplorationManager::enemyIsProtoss() {
+bool ExplorationManager::enemy_is_protoss() {
   for (auto& u : Broodwar->getPlayers()) {
     if (u->isEnemy(Broodwar->self())) {
       if (u->getRace().getID() == Races::Protoss.getID()) {
@@ -216,7 +215,7 @@ bool ExplorationManager::enemyIsProtoss() {
   return false;
 }
 
-bool ExplorationManager::enemyIsZerg() {
+bool ExplorationManager::enemy_is_zerg() {
   for (auto& u : Broodwar->getPlayers()) {
     if (u->isEnemy(Broodwar->self())) {
       if (u->getRace().getID() == Races::Zerg.getID()) {
@@ -227,7 +226,7 @@ bool ExplorationManager::enemyIsZerg() {
   return false;
 }
 
-bool ExplorationManager::enemyIsTerran() {
+bool ExplorationManager::enemy_is_terran() {
   for (auto& u : Broodwar->getPlayers()) {
     if (u->isEnemy(Broodwar->self())) {
       if (u->getRace().getID() == Races::Terran.getID()) {
@@ -238,8 +237,8 @@ bool ExplorationManager::enemyIsTerran() {
   return false;
 }
 
-bool ExplorationManager::enemyIsUnknown() {
-  if (not enemyIsTerran() && !enemyIsProtoss() && !enemyIsZerg()) {
+bool ExplorationManager::enemy_is_unknown() {
+  if (not enemy_is_terran() && not enemy_is_protoss() && not enemy_is_zerg()) {
     return true;
   }
   return false;

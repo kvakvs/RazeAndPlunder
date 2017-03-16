@@ -3,15 +3,17 @@
 #include <BWAPI.h>
 #include <vector>
 
-struct ResourceLock {
-  BWAPI::UnitType unit;
-  int mineralCost;
-  int gasCost;
+class ResourceLock {
+public:
+  BWAPI::UnitType unit_;
+  int mineral_cost_ = 0;
+  int gas_cost_ = 0;
 
-  explicit ResourceLock(BWAPI::UnitType mUnit) {
-    unit = mUnit;
-    mineralCost = mUnit.mineralPrice();
-    gasCost = mUnit.gasPrice();
+  explicit ResourceLock(BWAPI::UnitType mUnit)
+      : unit_(mUnit)
+      , mineral_cost_(mUnit.mineralPrice())
+      , gas_cost_(mUnit.gasPrice())
+  {
   }
 };
 

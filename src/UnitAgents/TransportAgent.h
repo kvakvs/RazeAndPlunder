@@ -10,8 +10,9 @@
 class TransportAgent : public UnitAgent {
 
 private:
-  int maxLoad;
-  int currentLoad;
+  int maxLoad = 0;
+  int currentLoad = 0;
+
   int getCurrentLoad();
   bool isValidLoadUnit(BaseAgent* a);
   BaseAgent* findUnitToLoad(int spaceLimit);

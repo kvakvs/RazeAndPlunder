@@ -10,7 +10,7 @@
 class HydraliskAgent : public UnitAgent {
 public:
   explicit HydraliskAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "HydraliskAgent";
+    agent_type_ = "HydraliskAgent";
   }
 
   bool useAbilities() override;

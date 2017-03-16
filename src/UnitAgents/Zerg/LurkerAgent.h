@@ -10,7 +10,7 @@
 class LurkerAgent : public UnitAgent {
 public:
   explicit LurkerAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "LurkerAgent";
+    agent_type_ = "LurkerAgent";
   }
 
   bool useAbilities() override;

@@ -9,9 +9,9 @@
 using namespace BWAPI;
 
 HatcheryAgent::HatcheryAgent(Unit mUnit) {
-  unit = mUnit;
-  type = unit->getType();
-  unitID = unit->getID();
+  unit_ = mUnit;
+  type_ = unit_->getType();
+  unit_id_ = unit_->getID();
 
   hasSentWorkers = false;
   if (rnp::agent_manager()->countNoBases() == 0) {
@@ -23,36 +23,36 @@ HatcheryAgent::HatcheryAgent(Unit mUnit) {
     hasSentWorkers = true;
   }
 
-  agentType = "HatcheryAgent";
+  agent_type_ = "HatcheryAgent";
   rnp::constructor()->commandCenterBuilt();
 }
 
 void HatcheryAgent::computeActions() {
   if (not hasSentWorkers) {
-    if (not unit->isBeingConstructed()) {
+    if (not unit_->isBeingConstructed()) {
       sendWorkers();
       hasSentWorkers = true;
       rnp::constructor()->addRefinery();
     }
   }
 
-  if (not unit->isIdle()) return;
+  if (not unit_->isIdle()) return;
 
   //Check for base upgrades
   if (isOfType(UnitTypes::Zerg_Hatchery) && rnp::agent_manager()->countNoUnits(UnitTypes::Zerg_Lair) == 0) {
-    if (Broodwar->canMake(UnitTypes::Zerg_Lair, unit)) {
+    if (Broodwar->canMake(UnitTypes::Zerg_Lair, unit_)) {
       if (rnp::resources()->hasResources(UnitTypes::Zerg_Lair)) {
         rnp::resources()->lockResources(UnitTypes::Zerg_Lair);
-        unit->morph(UnitTypes::Zerg_Lair);
+        unit_->morph(UnitTypes::Zerg_Lair);
         return;
       }
     }
   }
   if (isOfType(UnitTypes::Zerg_Lair) && rnp::agent_manager()->countNoUnits(UnitTypes::Zerg_Hive) == 0) {
-    if (Broodwar->canMake(UnitTypes::Zerg_Hive, unit)) {
+    if (Broodwar->canMake(UnitTypes::Zerg_Hive, unit_)) {
       if (rnp::resources()->hasResources(UnitTypes::Zerg_Hive)) {
         rnp::resources()->lockResources(UnitTypes::Zerg_Hive);
-        unit->morph(UnitTypes::Zerg_Hive);
+        unit_->morph(UnitTypes::Zerg_Hive);
         return;
       }
     }
@@ -67,7 +67,7 @@ void HatcheryAgent::computeActions() {
   }
   if (buildOL) {
     if (canBuild(UnitTypes::Zerg_Overlord)) {
-      unit->train(UnitTypes::Zerg_Overlord);
+      unit_->train(UnitTypes::Zerg_Overlord);
       return;
     }
   }
@@ -82,10 +82,10 @@ void HatcheryAgent::computeActions() {
   if (checkBuildUnit(UnitTypes::Zerg_Scourge)) return;
 
   //Create workers
-  if (rnp::agent_manager()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
+  if (rnp::agent_manager()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->get_preferred_workers_count()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
     if (canBuild(worker)) {
-      unit->train(worker);
+      unit_->train(worker);
     }
   }
 
@@ -95,7 +95,7 @@ void HatcheryAgent::computeActions() {
 
 bool HatcheryAgent::checkBuildUnit(UnitType type) {
   if (canEvolveUnit(type)) {
-    unit->train(type);
+    unit_->train(type);
     return true;
   }
   return false;

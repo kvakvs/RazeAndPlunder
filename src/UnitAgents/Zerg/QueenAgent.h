@@ -13,7 +13,7 @@ private:
 
 public:
   explicit QueenAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "QueenAgent";
+    agent_type_ = "QueenAgent";
   }
 
   bool useAbilities() override;

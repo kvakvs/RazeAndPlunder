@@ -6,12 +6,12 @@ using namespace BWAPI;
 
 bool HydraliskAgent::useAbilities() {
   if (Broodwar->self()->hasResearched(TechTypes::Lurker_Aspect)) {
-    auto sq = rnp::commander()->getSquad(squadID);
+    auto sq = rnp::commander()->getSquad(squad_id_);
     if (sq != nullptr
       && sq->morphsTo().getID() == UnitTypes::Zerg_Lurker.getID()
-      && !enemyUnitsVisible()
-      && Broodwar->canMake(UnitTypes::Zerg_Lurker, unit)
-      && unit->morph(UnitTypes::Zerg_Lurker)) {
+      && not enemyUnitsVisible()
+      && Broodwar->canMake(UnitTypes::Zerg_Lurker, unit_)
+      && unit_->morph(UnitTypes::Zerg_Lurker)) {
       return true;
     }
   }

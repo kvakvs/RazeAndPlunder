@@ -10,7 +10,7 @@
 class FirebatAgent : public UnitAgent {
 public:
   explicit FirebatAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "FirebatAgent";
+    agent_type_ = "FirebatAgent";
   }
 
   bool useAbilities() override;

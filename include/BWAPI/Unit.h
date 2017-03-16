@@ -767,7 +767,7 @@ namespace BWAPI
     ///       BWAPI::Unitset myWorkers = pMain->getUnitsInRadius(512, BWAPI::Filter::IsWorker && BWAPI::Filter::IsIdle && BWAPI::Filter::IsOwned );
     ///       while ( !myWorkers.empty() ) // make sure we command all nearby idle workers, if any
     ///       {
-    ///         for ( auto u = myResources.begin(); u != myResources.end() && !myWorkers.empty(); ++u )
+    ///         for ( auto u = myResources.begin(); u != myResources.end() && not myWorkers.empty(); ++u )
     ///         {
     ///           myWorkers.back()->gather(*u);
     ///           myWorkers.pop_back();

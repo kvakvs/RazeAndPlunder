@@ -58,8 +58,8 @@ TerranMain::TerranMain() {
 TerranMain::~TerranMain() {
 }
 
-void TerranMain::computeActions() {
-  computeActionsBase();
+void TerranMain::on_frame() {
+  on_frame_base();
 
   workers_num_ = 12 * rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Terran_Command_Center) + 2 * rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Terran_Refinery);
   if (workers_num_ > 30) workers_num_ = 30;

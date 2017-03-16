@@ -13,7 +13,7 @@ class CorsairAgent : public UnitAgent {
 
 public:
   explicit CorsairAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "CorsairAgent";
+    agent_type_ = "CorsairAgent";
   }
 
   bool useAbilities() override;

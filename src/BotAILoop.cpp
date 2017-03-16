@@ -54,15 +54,19 @@ void BotAILoop::computeActions() {
   rnp::profiler()->start("OnFrame_MapManager");
   rnp::map_manager()->update();
   rnp::profiler()->end("OnFrame_MapManager");
+
   rnp::profiler()->start("OnFrame_Constructor");
   rnp::constructor()->computeActions();
   rnp::profiler()->end("OnFrame_Constructor");
+
   rnp::profiler()->start("OnFrame_Commander");
-  rnp::commander()->computeActions();
+  rnp::commander()->on_frame();
   rnp::profiler()->end("OnFrame_Commander");
+
   rnp::profiler()->start("OnFrame_ExplorationManager");
-  rnp::exploration()->computeActions();
+  rnp::exploration()->on_frame();
   rnp::profiler()->end("OnFrame_ExplorationManager");
+
   rnp::profiler()->start("OnFrame_AgentManager");
   rnp::agent_manager()->computeActions();
   rnp::profiler()->end("OnFrame_AgentManager");
@@ -87,7 +91,7 @@ void BotAILoop::unitDestroyed(Unit unit) {
     //Remove bunker squads if the destroyed unit
     //is a bunker
     if (unit->getType().getID() == UnitTypes::Terran_Bunker.getID()) {
-      rnp::commander()->removeBunkerSquad(unit->getID());
+      rnp::commander()->remove_bunker_squad(unit->getID());
     }
 
     rnp::agent_manager()->removeAgent(unit);
@@ -97,9 +101,9 @@ void BotAILoop::unitDestroyed(Unit unit) {
 
     rnp::agent_manager()->cleanup();
   }
-  if (unit->getPlayer()->getID() != Broodwar->self()->getID() && !unit->getPlayer()->isNeutral()) {
+  if (unit->getPlayer()->getID() != Broodwar->self()->getID() && not unit->getPlayer()->isNeutral()) {
     //Update spotted buildings
-    rnp::exploration()->unitDestroyed(unit);
+    rnp::exploration()->on_unit_destroyed(unit);
   }
 }
 
@@ -120,18 +124,19 @@ void BotAILoop::show_debug() {
     //Show pathfinder version
     std::stringstream st;
     st << "\x0FPathfinder: ";
-    if (NavigationAgent::pathfinding_version_ == 0) {
-      st << "Built-in";
-    }
-    if (NavigationAgent::pathfinding_version_ == 1) {
-      st << "Hybrid Boids";
-    }
-    if (NavigationAgent::pathfinding_version_ == 2) {
-      st << "Hybrid PF";
+    switch (NavigationAgent::pathfinding_version_) {
+        case NavigationAgent::PFType::Builtin :
+          st << "Built-in";
+        break;
+        case NavigationAgent::PFType::HybridBoids :
+          st << "Hybrid Boids";
+        break;
+        case NavigationAgent::PFType::HybridPF :
+          st << "Hybrid PF";
+        break;
     }
 
     Broodwar->drawTextScreen(500, 310, st.str().c_str());
-    //
 
     rnp::strategy_selector()->printInfo();
 
@@ -140,7 +145,7 @@ void BotAILoop::show_debug() {
     }
     drawTerrainData();
 
-    rnp::commander()->debug_showGoal();
+    rnp::commander()->debug_show_goal();
 
     auto& agents = rnp::agent_manager()->getAgents();
     for (auto& a : agents) {
@@ -195,7 +200,7 @@ void BotAILoop::show_debug() {
     }
 
     rnp::upgrader()->printInfo();
-    rnp::commander()->printInfo();
+    rnp::commander()->print_info();
   }
 }
 
@@ -203,8 +208,8 @@ void BotAILoop::drawTerrainData() {
   // we will iterate through all the base locations, and draw their outlines.
   for (auto& area : bwem_.Areas()) {
     for (auto& base : area.Bases()) {
-      TilePosition p = base.Location();
-      Position c = base.Center();
+      TilePosition p(base.Location());
+      Position c(base.Center());
 
       //Draw a progress bar at each resource
       for (auto& u : Broodwar->getStaticMinerals()) {

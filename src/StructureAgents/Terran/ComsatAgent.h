@@ -7,9 +7,10 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class ComsatAgent : public StructureAgent {
+  int last_sweep_frame_ = 0;
+  BWAPI::TilePosition last_sweep_pos_;
+
   int friendlyUnitsWithinRange(BWAPI::Position pos);
-  int lastSweepFrame;
-  BWAPI::TilePosition lastSweepPos;
   bool anyHasSweeped(BWAPI::TilePosition pos);
 
 public:

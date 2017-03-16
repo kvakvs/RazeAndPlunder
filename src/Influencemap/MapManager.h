@@ -3,7 +3,7 @@
 #include <BWAPI.h>
 #include "Utils/Sets.h"
 
-#include "bwem.h"
+#include "BWEM/bwem.h"
 
 struct MRegion {
   const BWEM::Area* region;

@@ -10,11 +10,11 @@ using namespace BWAPI;
 bool StrategyStats::matches() const {
   std::string mMapHash = Broodwar->mapHash();
   std::string mOwnRace = Broodwar->self()->getRace().getName();
-  if (mMapHash == mapHash && mOwnRace == ownRace) {
+  if (mMapHash == map_hash_ && mOwnRace == my_race_) {
     Race oRace = Broodwar->enemy()->getRace();
     if (oRace.getID() != Races::Unknown.getID()) {
       //Opponent race is known. Match race as well.
-      if (oRace.getName() == opponentRace) {
+      if (oRace.getName() == opponent_race_) {
         return true;
       }
       else {
@@ -55,8 +55,8 @@ void StrategySelector::selectStrategy() {
     std::string mOwnRace = Broodwar->self()->getRace().getName();
 
     if (stats_.at(i).matches()) {
-      totWon += stats_.at(i).won;
-      totPlay += stats_.at(i).total;
+      totWon += stats_.at(i).won_;
+      totPlay += stats_.at(i).total_;
     }
   }
   if (totPlay == 0) totPlay = 1; //To avoid division by zero
@@ -64,18 +64,18 @@ void StrategySelector::selectStrategy() {
   //Random probability select one strategy
   bool found = false;
   int i = 0;
-  while (!found) {
+  while (not found) {
     i = rand() % (int)stats_.size();
 
     //Entry matches
     if (stats_.at(i).matches()) {
       //Calculate probability for this entry.
-      int chance = stats_.at(i).won * 100 / stats_.at(i).getTotal();
+      int chance = stats_.at(i).won_ * 100 / stats_.at(i).getTotal();
       chance = chance * totWon / totPlay;
 
       //Have 75% chance to try a strategy that
       //hasn't been tested much yet.
-      if (stats_.at(i).total <= 2) chance = 75;
+      if (stats_.at(i).total_ <= 2) chance = 75;
 
       //Set a max/min so all strategies have a chance
       //to be played.
@@ -85,7 +85,7 @@ void StrategySelector::selectStrategy() {
       //Make the roll!
       int roll = rand() % 100;
       if (roll <= chance) {
-        current_strategy_id_ = stats_.at(i).strategyId;
+        current_strategy_id_ = stats_.at(i).strat_id_;
         Broodwar << "Strategy selected: " << current_strategy_id_ << " (Roll: " << roll << " Prob: " << chance << ")" << std::endl;
         found = true;
         return;
@@ -141,7 +141,7 @@ void StrategySelector::loadStats() {
   else {
     std::string line;
     char buffer[256];
-    while (!inFile.eof()) {
+    while (not inFile.eof()) {
       inFile.getline(buffer, 256);
       if (buffer[0] != ';') {
         std::stringstream ss;
@@ -163,47 +163,47 @@ void StrategySelector::addEntry(std::string line) {
 
   i = line.find(";");
   t = line.substr(0, i);
-  s.strategyId = t;
+  s.strat_id_ = t;
   line = line.substr(i + 1, line.length());
 
   i = line.find(";");
   t = line.substr(0, i);
-  s.ownRace = t;
+  s.my_race_ = t;
   line = line.substr(i + 1, line.length());
 
   i = line.find(";");
   t = line.substr(0, i);
-  s.opponentRace = t;
+  s.opponent_race_ = t;
   line = line.substr(i + 1, line.length());
 
   i = line.find(";");
   t = line.substr(0, i);
-  s.won = toInt(t);
+  s.won_ = toInt(t);
   line = line.substr(i + 1, line.length());
 
   i = line.find(";");
   t = line.substr(0, i);
-  s.lost = toInt(t);
+  s.lost_ = toInt(t);
   line = line.substr(i + 1, line.length());
 
   i = line.find(";");
   t = line.substr(0, i);
-  s.draw = toInt(t);
+  s.draw_ = toInt(t);
   line = line.substr(i + 1, line.length());
 
   i = line.find(";");
   t = line.substr(0, i);
-  s.total = toInt(t);
+  s.total_ = toInt(t);
   line = line.substr(i + 1, line.length());
 
   i = line.find(";");
   t = line.substr(0, i);
-  s.mapName = t;
+  s.map_name_ = t;
   line = line.substr(i + 1, line.length());
 
   i = line.find(";");
   t = line.substr(0, i);
-  s.mapHash = t;
+  s.map_hash_ = t;
   line = line.substr(i + 1, line.length());
 
   stats_.push_back(s);
@@ -242,25 +242,25 @@ void StrategySelector::addResult(int win) {
 
   //Check if we have the entry already
   for (int i = 0; i < (int)stats_.size(); i++) {
-    if (mapHash == stats_.at(i).mapHash && opponentRace == stats_.at(i).opponentRace && current_strategy_id_ == stats_.at(i).strategyId) {
-      stats_.at(i).total++;
-      if (win == 0) stats_.at(i).lost++;
-      if (win == 1) stats_.at(i).won++;
-      if (win == 2) stats_.at(i).draw++;
+    if (mapHash == stats_.at(i).map_hash_ && opponentRace == stats_.at(i).opponent_race_ && current_strategy_id_ == stats_.at(i).strat_id_) {
+      stats_.at(i).total_++;
+      if (win == 0) stats_.at(i).lost_++;
+      if (win == 1) stats_.at(i).won_++;
+      if (win == 2) stats_.at(i).draw_++;
       return;
     }
   }
 
   StrategyStats s = StrategyStats();
-  s.total++;
-  if (win == 0) s.lost++;
-  if (win == 1) s.won++;
-  if (win == 2) s.draw++;
-  s.strategyId = current_strategy_id_;
-  s.mapHash = mapHash;
-  s.mapName = Broodwar->mapFileName();
-  s.ownRace = Broodwar->self()->getRace().getName();
-  s.opponentRace = opponentRace;
+  s.total_++;
+  if (win == 0) s.lost_++;
+  if (win == 1) s.won_++;
+  if (win == 2) s.draw_++;
+  s.strat_id_ = current_strategy_id_;
+  s.map_hash_ = mapHash;
+  s.map_name_ = Broodwar->mapFileName();
+  s.my_race_ = Broodwar->self()->getRace().getName();
+  s.opponent_race_ = opponentRace;
   stats_.push_back(s);
 }
 
@@ -276,7 +276,7 @@ void StrategySelector::saveStats() {
   for (int i = 0; i < (int)strategies_.size(); i++) {
     bool found = false;
     for (int s = 0; s < (int)stats_.size(); s++) {
-      if (strategies_.at(i).strategyId == stats_.at(s).strategyId && mapHash == stats_.at(s).mapHash && opponentRace == stats_.at(s).opponentRace) {
+      if (strategies_.at(i).strat_id_ == stats_.at(s).strat_id_ && mapHash == stats_.at(s).map_hash_ && opponentRace == stats_.at(s).opponent_race_) {
         //Matches
         found = true;
         break;
@@ -286,14 +286,14 @@ void StrategySelector::saveStats() {
     if (not found) {
       //Only fill in the strategies for
       //the same race
-      if (ownRace == strategies_.at(i).race.getName()) {
+      if (ownRace == strategies_.at(i).race_.getName()) {
         //Add entry
         StrategyStats s = StrategyStats();
-        s.mapHash = mapHash;
-        s.mapName = Broodwar->mapFileName();
-        s.opponentRace = opponentRace;
-        s.ownRace = strategies_.at(i).race.getName();
-        s.strategyId = strategies_.at(i).strategyId;
+        s.map_hash_ = mapHash;
+        s.map_name_ = Broodwar->mapFileName();
+        s.opponent_race_ = opponentRace;
+        s.my_race_ = strategies_.at(i).race_.getName();
+        s.strat_id_ = strategies_.at(i).strat_id_;
 
         stats_.push_back(s);
       }
@@ -311,23 +311,23 @@ void StrategySelector::saveStats() {
   else {
     for (int i = 0; i < (int)stats_.size(); i++) {
       std::stringstream s2;
-      s2 << stats_.at(i).strategyId;
+      s2 << stats_.at(i).strat_id_;
       s2 << ";";
-      s2 << stats_.at(i).ownRace;
+      s2 << stats_.at(i).my_race_;
       s2 << ";";
-      s2 << stats_.at(i).opponentRace;
+      s2 << stats_.at(i).opponent_race_;
       s2 << ";";
-      s2 << stats_.at(i).won;
+      s2 << stats_.at(i).won_;
       s2 << ";";
-      s2 << stats_.at(i).lost;
+      s2 << stats_.at(i).lost_;
       s2 << ";";
-      s2 << stats_.at(i).draw;
+      s2 << stats_.at(i).draw_;
       s2 << ";";
-      s2 << stats_.at(i).total;
+      s2 << stats_.at(i).total_;
       s2 << ";";
-      s2 << stats_.at(i).mapName;
+      s2 << stats_.at(i).map_name_;
       s2 << ";";
-      s2 << stats_.at(i).mapHash;
+      s2 << stats_.at(i).map_hash_;
       s2 << ";\n";
 
       outFile << s2.str();

@@ -3,56 +3,43 @@
 #include <iso646.h>
 
 Profiler::Profiler() {
-  active = true;
 }
 
 Profiler::~Profiler() {
-  for (ProfilerObj* o : obj) {
-    delete o;
+}
+
+ProfilerObj* Profiler::getObj(const std::string& mId) {
+  auto iter = profile_objects_.find(mId);
+  if (iter == profile_objects_.end()) {
+    return nullptr;
   }
-}
-
-void Profiler::enable() {
-  active = true;
-}
-
-void Profiler::disable() {
-  active = false;
-}
-
-ProfilerObj* Profiler::getObj(std::string mId) {
-  for (ProfilerObj* o : obj) {
-    if (o->matches(mId)) {
-      return o;
-    }
-  }
-  return nullptr;
+  return iter->second.get();
 }
 
 
-void Profiler::start(std::string mId) {
-  if (not active) return;
+void Profiler::start(const std::string& mId) {
+  if (not active_) return;
 
   ProfilerObj* cObj = getObj(mId);
   if (cObj != nullptr) {
     cObj->start();
   }
   else {
-    ProfilerObj* newObj = new ProfilerObj(mId);
+    auto newObj = std::make_unique<ProfilerObj>(mId);
     newObj->start();
-    obj.push_back(newObj);
+    profile_objects_[mId] = std::move(newObj);
   }
 }
 
-void Profiler::end(std::string mId) {
-  if (not active) return;
+void Profiler::end(const std::string& mId) {
+  if (not active_) return;
 
   ProfilerObj* cObj = getObj(mId);
   if (cObj != nullptr) cObj->end();
 }
 
 void Profiler::dumpToFile() {
-  if (not active) return;
+  if (not active_) return;
 
   std::ofstream ofile;
   ofile.open("bwapi-data\\AI\\Profiling_OpprimoBot.html");
@@ -87,8 +74,8 @@ void Profiler::dumpToFile() {
   ofile << "</td>";
   ofile << "</tr>\n";
 
-  for (ProfilerObj* o : obj) {
-    ofile << o->getDumpStr().c_str();
+  for (auto& o_pair : profile_objects_) {
+    ofile << o_pair.second->getDumpStr().c_str();
   }
 
   ofile << "</table>";

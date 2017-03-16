@@ -13,10 +13,10 @@ bool MedicAgent::useAbilities() {
   auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
     if (a->isAlive() && a->isDamaged()) {
-      if (isMedicTarget(a->getUnit()) && a->getUnitID() != unit->getID()) {
+      if (isMedicTarget(a->getUnit()) && a->getUnitID() != unit_->getID()) {
         Unit cUnit = a->getUnit();
         if (cUnit->exists() && cUnit->getHitPoints() > 0) {
-          double dist = unit->getDistance(cUnit);
+          double dist = unit_->getDistance(cUnit);
           if (bestDist < 0 || dist < bestDist) {
             bestDist = dist;
             toHeal = cUnit;
@@ -27,7 +27,7 @@ bool MedicAgent::useAbilities() {
   }
 
   if (bestDist >= 0 && toHeal != nullptr) {
-    unit->useTech(TechTypes::Healing, toHeal);
+    unit_->useTech(TechTypes::Healing, toHeal);
     return true;
   }
 

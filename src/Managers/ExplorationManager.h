@@ -3,7 +3,8 @@
 #include "SpottedObject.h"
 #include "Commander/Squad.h"
 
-#include "bwem.h"
+#include "BWEM/bwem.h"
+#include "RnpUtil.h"
 
 class SpottedObjectSet : public BWAPI::SetContainer<SpottedObject*, std::hash<void*>> {
 };
@@ -12,8 +13,8 @@ class RegionItem {
 public:
   explicit RegionItem(const BWEM::Area* region);
 
-  BWAPI::TilePosition location;
-  int frameVisited;
+  BWAPI::TilePosition location_;
+  int frame_visited_ = 0;
 };
 
 class RegionSet : public BWAPI::SetContainer<RegionItem*, std::hash<void*>> {
@@ -37,7 +38,7 @@ private:
   RegionSet explore_;
   int last_call_frame_ = 0;
   int site_set_frame_ = 0;
-  BWAPI::TilePosition expansionSite;
+  BWAPI::TilePosition expansion_site_;
 
 private:
   void cleanup();
@@ -47,56 +48,70 @@ public:
   ~ExplorationManager();
 
   // Called each update to issue orders. 
-  void computeActions();
+  void on_frame();
 
   // Returns the next position to explore for this squad. 
-  BWAPI::TilePosition getNextToExplore(Squad* squad);
+  BWAPI::TilePosition get_next_to_explore(Squad* squad);
 
   // Searches for the next position to expand the base to. 
-  BWAPI::TilePosition searchExpansionSite();
+  BWAPI::TilePosition search_expansion_site();
 
   // Returns the next position to expand the base to. 
-  BWAPI::TilePosition getExpansionSite();
+  BWAPI::TilePosition get_expansion_site();
 
   // Sets the next position to expand the base to. 
-  void setExpansionSite(BWAPI::TilePosition pos);
+  void set_expansion_site(BWAPI::TilePosition pos);
 
   // Shows all spotted objects as squares on the SC map. Use for debug purpose. 
-  void printInfo();
+  void debug_print();
 
   // Notifies about an enemy unit that has been spotted. 
-  void addSpottedUnit(BWAPI::Unit unit);
+  void on_unit_spotted(BWAPI::Unit unit);
 
   // Notifies that an enemy unit has been destroyed. If the destroyed unit was among
   // the spotted units, it is removed from the list. 
-  void unitDestroyed(BWAPI::Unit unit);
+  void on_unit_destroyed(BWAPI::Unit unit);
 
-  // Returns the closest enemy spotted building from a start position, or TilePosition(-1,-1) if// none was found. 
-  BWAPI::TilePosition getClosestSpottedBuilding(BWAPI::TilePosition start);
+  // Returns the closest enemy spotted building from a start position, 
+  // or TilePosition(-1,-1) if// none was found. 
+  BWAPI::TilePosition get_closest_spotted_building(BWAPI::TilePosition start);
 
   // Calculates the influence of spotted enemy buildings within a specified region. 
-  int getSpottedInfluenceInRegion(const BWEM::Area* region);
+  int get_spotted_influence_in_region(const BWEM::Area* region);
 
   // Returns true if a ground unit can reach position b from position a.
   // Uses BWTA. 
-  static bool canReach(BWAPI::TilePosition a, BWAPI::TilePosition b);
+  bool can_reach(BWAPI::TilePosition a, BWAPI::TilePosition b) const;
 
   // Returns true if an agent can reach position b. 
-  static bool canReach(BaseAgent* agent, BWAPI::TilePosition b);
+  bool can_reach(BaseAgent* agent, BWAPI::TilePosition b) const;
+
+  // Returns Chokepoint path, without length
+  template <class Pos>
+  BWEM::CPPath get_path(const Pos& a, const Pos& b) const {
+    return bwem_.GetPath(BWAPI::Position(a), BWAPI::Position(b));
+  }
+
+  // Returns length without Chokepoint path
+  template <class Pos>
+  BWEM::CPPath get_distance(const Pos& a, const Pos& b) const {
+    auto p = bwem_.GetPath(BWAPI::Position(a), BWAPI::Position(b));
+    return rnp::tile_distance(p, BWAPI::TilePosition(a), BWAPI::TilePosition(b));
+  }
 
   // Sets that a region is explored. The position must be the TilePosition for the center of the
   // region. 
-  void setExplored(BWAPI::TilePosition goal);
+  void set_explored(BWAPI::TilePosition goal);
 
   // Returns true if an enemy is Protoss. 
-  static bool enemyIsProtoss();
+  static bool enemy_is_protoss();
 
   // Returns true if an enemy is Zerg. 
-  static bool enemyIsZerg();
+  static bool enemy_is_zerg();
 
   // Returns true if an enemy is Terran. 
-  static bool enemyIsTerran();
+  static bool enemy_is_terran();
 
   // All enemy races are currently unknown. 
-  static bool enemyIsUnknown();
+  static bool enemy_is_unknown();
 };

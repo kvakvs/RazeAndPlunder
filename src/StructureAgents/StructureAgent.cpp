@@ -19,17 +19,16 @@ StructureAgent::~StructureAgent() {
 }
 
 StructureAgent::StructureAgent(Unit mUnit) {
-  unit = mUnit;
-  type = unit->getType();
-  unitID = unit->getID();
-  agentType = "StructureAgent";
+  unit_ = mUnit;
+  type_ = unit_->getType();
+  unit_id_ = unit_->getID();
+  agent_type_ = "StructureAgent";
 }
 
 void StructureAgent::debug_showGoal() {
   if (not isAlive()) return;
-  return;
 
-  auto unit_type = unit->getType();
+  auto unit_type = unit_->getType();
 
   //Draw "is working" box
   int total = 0;
@@ -38,36 +37,36 @@ void StructureAgent::debug_showGoal() {
   Color cColor = Colors::Blue;
   int bar_h = 18;
 
-  if (unit->isBeingConstructed()) {
+  if (unit_->isBeingConstructed()) {
     total = unit_type.buildTime();
-    done = total - unit->getRemainingBuildTime();
+    done = total - unit_->getRemainingBuildTime();
     txt = "";
     bar_h = 8;
   }
-  if (not unit->isBeingConstructed() && unit_type.isResourceContainer()) {
-    total = unit->getInitialResources();
-    done = unit->getResources();
+  if (not unit_->isBeingConstructed() && unit_type.isResourceContainer()) {
+    total = unit_->getInitialResources();
+    done = unit_->getResources();
     txt = "";
     cColor = Colors::Orange;
     bar_h = 8;
   }
-  if (unit->isResearching()) {
-    total = unit->getTech().researchTime();
-    done = total - unit->getRemainingResearchTime();
-    txt = unit->getTech().getName();
+  if (unit_->isResearching()) {
+    total = unit_->getTech().researchTime();
+    done = total - unit_->getRemainingResearchTime();
+    txt = unit_->getTech().getName();
   }
-  if (unit->isUpgrading()) {
-    total = unit->getUpgrade().upgradeTime();
-    done = total - unit->getRemainingUpgradeTime();
-    txt = unit->getUpgrade().getName();
+  if (unit_->isUpgrading()) {
+    total = unit_->getUpgrade().upgradeTime();
+    done = total - unit_->getRemainingUpgradeTime();
+    txt = unit_->getUpgrade().getName();
   }
-  if (unit->isTraining()) {
-    auto t_queue = unit->getTrainingQueue();
+  if (unit_->isTraining()) {
+    auto t_queue = unit_->getTrainingQueue();
     if (not  t_queue.empty()) {
       auto& t = *(t_queue.begin());
       total = t.buildTime();
       txt = t.getName();
-      done = total - unit->getRemainingTrainTime();
+      done = total - unit_->getRemainingTrainTime();
     }
   }
 
@@ -76,7 +75,7 @@ void StructureAgent::debug_showGoal() {
     int h = unit_type.tileHeight() * 32;
 
     //Start 
-    Position s(unit->getPosition().x - w / 2, unit->getPosition().y - 30);
+    Position s(unit_->getPosition().x - w / 2, unit_->getPosition().y - 30);
     //End
     Position e(s.x + w, s.y + bar_h);
     //Progress
@@ -89,11 +88,11 @@ void StructureAgent::debug_showGoal() {
     Broodwar->drawTextMap(s.x + 5, s.y + 2, txt.c_str());
   }
 
-  if (not  unit->isBeingConstructed() && unit_type.getID() == UnitTypes::Terran_Bunker.getID()) {
+  if (not  unit_->isBeingConstructed() && unit_type.getID() == UnitTypes::Terran_Bunker.getID()) {
     int w = unit_type.tileWidth() * 32;
     int h = unit_type.tileHeight() * 32;
 
-    auto unit_pos = unit->getPosition();
+    auto unit_pos = unit_->getPosition();
     Broodwar->drawTextMap(unit_pos.x - w / 2, unit_pos.y - 10, unit_type.getName().c_str());
 
     //Draw Loaded box
@@ -101,7 +100,7 @@ void StructureAgent::debug_showGoal() {
     Position b(a.x + 94, a.y + 6);
     Broodwar->drawBoxMap(a.x, a.y, b.x, b.y, Colors::Green, false);
 
-    auto loaded_units = unit->getLoadedUnits();
+    auto loaded_units = unit_->getLoadedUnits();
     if (not  loaded_units.empty()) {
       Position a(unit_pos.x - w / 2, unit_pos.y - h / 2);
       Position b(a.x + loaded_units.size() * 24, a.y + 6);
@@ -113,46 +112,46 @@ void StructureAgent::debug_showGoal() {
 
 void StructureAgent::computeActions() {
   if (isAlive()) {
-    if (not unit->isIdle()) return;
+    if (not unit_->isIdle()) return;
 
     if (rnp::upgrader()->checkUpgrade(this)) return;
 
     if (Constructor::isTerran()) {
       //Check addons here
       if (isOfType(UnitTypes::Terran_Science_Facility)) {
-        if (unit->getAddon() == nullptr) {
-          unit->buildAddon(UnitTypes::Terran_Physics_Lab);
+        if (unit_->getAddon() == nullptr) {
+          unit_->buildAddon(UnitTypes::Terran_Physics_Lab);
         }
       }
       if (isOfType(UnitTypes::Terran_Starport)) {
-        if (unit->getAddon() == nullptr) {
-          unit->buildAddon(UnitTypes::Terran_Control_Tower);
+        if (unit_->getAddon() == nullptr) {
+          unit_->buildAddon(UnitTypes::Terran_Control_Tower);
         }
       }
       if (isOfType(UnitTypes::Terran_Factory)) {
-        if (unit->getAddon() == nullptr) {
-          unit->buildAddon(UnitTypes::Terran_Machine_Shop);
+        if (unit_->getAddon() == nullptr) {
+          unit_->buildAddon(UnitTypes::Terran_Machine_Shop);
         }
       }
     }
 
-    if (not unit->isBeingConstructed() && unit->isIdle() && getUnit()->getType().canProduce()) {
+    if (not unit_->isBeingConstructed() && unit_->isIdle() && getUnit()->getType().canProduce()) {
       //Iterate through all unit types
       for (auto& u : UnitTypes::allUnitTypes()) {
         //Check if we can (and need) to build the unit
         if (canBuildUnit(u)) {
           //Build it!
-          unit->train(u);
+          unit_->train(u);
         }
       }
     }
 
     //Check for Spire upgrade
     if (isOfType(UnitTypes::Zerg_Spire)) {
-      if (Broodwar->canMake(UnitTypes::Zerg_Greater_Spire, unit) && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Hive) > 0) {
+      if (Broodwar->canMake(UnitTypes::Zerg_Greater_Spire, unit_) && rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Hive) > 0) {
         if (rnp::resources()->hasResources(UnitTypes::Zerg_Greater_Spire)) {
           rnp::resources()->lockResources(UnitTypes::Zerg_Greater_Spire);
-          unit->morph(UnitTypes::Zerg_Greater_Spire);
+          unit_->morph(UnitTypes::Zerg_Greater_Spire);
           return;
         }
       }
@@ -162,7 +161,7 @@ void StructureAgent::computeActions() {
     if (isOfType(UnitTypes::Zerg_Creep_Colony)) {
       if (rnp::resources()->hasResources(UnitTypes::Zerg_Sunken_Colony)) {
         rnp::resources()->lockResources(UnitTypes::Zerg_Sunken_Colony);
-        unit->morph(UnitTypes::Zerg_Sunken_Colony);
+        unit_->morph(UnitTypes::Zerg_Sunken_Colony);
         return;
       }
     }
@@ -172,12 +171,12 @@ void StructureAgent::computeActions() {
 bool StructureAgent::canBuild(UnitType type) {
   //1. Check if this unit can construct the unit
   std::pair<UnitType, int> builder = type.whatBuilds();
-  if (builder.first.getID() != unit->getType().getID()) {
+  if (builder.first.getID() != unit_->getType().getID()) {
     return false;
   }
 
   //2. Check canBuild
-  if (not Broodwar->canMake(type, unit)) {
+  if (not Broodwar->canMake(type, unit_)) {
     return false;
   }
 
@@ -198,17 +197,17 @@ bool StructureAgent::canBuildUnit(UnitType type) {
 
   //2. Check if this unit can construct the unit
   std::pair<UnitType, int> builder = type.whatBuilds();
-  if (builder.first.getID() != unit->getType().getID()) {
+  if (builder.first.getID() != unit_->getType().getID()) {
     return false;
   }
 
   //3. Check if we need the unit in a squad
-  if (not rnp::commander()->needUnit(type)) {
+  if (not rnp::commander()->is_unit_needed(type)) {
     return false;
   }
 
   //4. Check canBuild
-  if (not Broodwar->canMake(type, unit)) {
+  if (not Broodwar->canMake(type, unit_)) {
     return false;
   }
 
@@ -222,25 +221,25 @@ bool StructureAgent::canBuildUnit(UnitType type) {
 }
 
 void StructureAgent::printInfo() {
-  int sx = unit->getPosition().x;
-  int sy = unit->getPosition().y;
+  int sx = unit_->getPosition().x;
+  int sy = unit_->getPosition().y;
 
   int h = sy + 46;
-  if (squadID != -1) h += 15;
+  if (squad_id_ != -1) h += 15;
   if (isOfType(UnitTypes::Terran_Bunker)) h += 60;
 
   Broodwar->drawBoxMap(sx - 2, sy, sx + 102, h, Colors::Black, true);
-  Broodwar->drawTextMap(sx, sy, "\x03%s", format(unit->getType().getName()).c_str());
+  Broodwar->drawTextMap(sx, sy, "\x03%s", format(unit_->getType().getName()).c_str());
   Broodwar->drawLineMap(sx, sy + 14, sx + 100, sy + 14, Colors::Purple);
 
-  Broodwar->drawTextMap(sx + 2, sy + 15, "Id: \x11%d", unitID);
-  Broodwar->drawTextMap(sx + 2, sy + 30, "Position: \x11(%d,%d)", unit->getTilePosition().x, unit->getTilePosition().y);
-  if (squadID != -1) Broodwar->drawTextMap(sx + 2, sy + 45, "Squad: \x11%d", squadID);
+  Broodwar->drawTextMap(sx + 2, sy + 15, "Id: \x11%d", unit_id_);
+  Broodwar->drawTextMap(sx + 2, sy + 30, "Position: \x11(%d,%d)", unit_->getTilePosition().x, unit_->getTilePosition().y);
+  if (squad_id_ != -1) Broodwar->drawTextMap(sx + 2, sy + 45, "Squad: \x11%d", squad_id_);
 
   Broodwar->drawLineMap(sx, h - 61, sx + 100, h - 61, Colors::Purple);
 
   if (isOfType(UnitTypes::Terran_Bunker)) {
-    auto sq = rnp::commander()->getSquad(squadID);
+    auto sq = rnp::commander()->getSquad(squad_id_);
     if (sq) {
       int no = 0;
       Agentset agents = sq->getMembers();
@@ -264,7 +263,7 @@ void StructureAgent::sendWorkers() {
     if (a->isAlive() && a->isFreeWorker()) {
       Unit worker = a->getUnit();
       WorkerAgent* wa = (WorkerAgent*)a;
-      worker->rightClick(unit->getPosition());
+      worker->rightClick(unit_->getPosition());
       hasSent++;
     }
 
@@ -276,7 +275,7 @@ void StructureAgent::sendWorkers() {
 
 bool StructureAgent::canMorphInto(UnitType type) {
   //1. Check canBuild
-  if (not Broodwar->canMake(type, unit)) {
+  if (not Broodwar->canMake(type, unit_)) {
     return false;
   }
 
@@ -291,7 +290,7 @@ bool StructureAgent::canMorphInto(UnitType type) {
   }
 
   //3. Check if unit is already morphing
-  if (unit->isMorphing()) {
+  if (unit_->isMorphing()) {
     return false;
   }
 
@@ -301,12 +300,12 @@ bool StructureAgent::canMorphInto(UnitType type) {
 
 bool StructureAgent::canEvolveUnit(UnitType type) {
   //1. Check if we need the unit in a squad
-  if (not rnp::commander()->needUnit(type)) {
+  if (not rnp::commander()->is_unit_needed(type)) {
     return false;
   }
 
   //2. Check canBuild
-  if (not Broodwar->canMake(type, unit)) {
+  if (not Broodwar->canMake(type, unit_)) {
     return false;
   }
 

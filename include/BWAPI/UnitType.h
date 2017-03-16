@@ -844,10 +844,10 @@ namespace BWAPI
     /// Example usage:
     /// @code
     ///   BWAPI::Position myBasePosition( BWAPI::Broodwar->self()->getStartLocation() );
-    ///   BWAPI::UnitSet unitsAroundTheBase = BWAPI::Broodwar->getUnitsInRadius(myBasePosition, 1024, !BWAPI::Filter::IsOwned && !BWAPI::Filter::IsParasited);
+    ///   BWAPI::UnitSet unitsAroundTheBase = BWAPI::Broodwar->getUnitsInRadius(myBasePosition, 1024, !BWAPI::Filter::IsOwned && not BWAPI::Filter::IsParasited);
     ///   for ( auto u : unitsAroundTheBase )
     ///   {
-    ///     if ( u->getType().isCritter() && !u->isInvincible() )
+    ///     if ( u->getType().isCritter() && not u->isInvincible() )
     ///     {
     ///       BWAPI::Unit myQueen = u->getClosestUnit(BWAPI::Filter::GetType == BWAPI::UnitTypes::Zerg_Queen && BWAPI::Filter::IsOwned);
     ///       if ( myQueen )

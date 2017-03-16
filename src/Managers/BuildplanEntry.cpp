@@ -2,20 +2,21 @@
 
 using namespace BWAPI;
 
-BuildplanEntry::BuildplanEntry(UnitType cType, int cSupply) {
-  unittype = cType;
-  supply = cSupply;
-  type = BUILDING;
+BuildplanEntry::BuildplanEntry(UnitType cType, int cSupply)
+    : unit_type_(cType), upgrade_type_(), tech_type_()
+    , supply_(cSupply)
+    , type_(BUILDING) {
 }
 
-BuildplanEntry::BuildplanEntry(UpgradeType cType, int cSupply) {
-  upgradetype = cType;
-  supply = cSupply;
-  type = UPGRADE;
+BuildplanEntry::BuildplanEntry(UpgradeType cType, int cSupply)
+    : unit_type_(), upgrade_type_(cType), tech_type_()
+    , supply_(cSupply)
+    , type_(UPGRADE) {
 }
 
-BuildplanEntry::BuildplanEntry(TechType cType, int cSupply) {
-  techtype = cType;
-  supply = cSupply;
-  type = TECH;
+BuildplanEntry::BuildplanEntry(TechType cType, int cSupply)
+    : unit_type_(), upgrade_type_(), tech_type_(cType)
+    , supply_(cSupply)
+    , type_(TECH)
+{
 }

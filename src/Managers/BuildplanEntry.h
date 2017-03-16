@@ -8,18 +8,17 @@
  */
 class BuildplanEntry {
 
-private:
+public:
+  int type_ = 0;
+  BWAPI::UnitType unit_type_;
+  BWAPI::UpgradeType upgrade_type_;
+  BWAPI::TechType tech_type_;
+  int supply_ = 0;
 
 public:
   BuildplanEntry(BWAPI::UnitType cType, int cSupply);
   BuildplanEntry(BWAPI::UpgradeType cType, int cSupply);
   BuildplanEntry(BWAPI::TechType cType, int cSupply);
-
-  int type;
-  BWAPI::UnitType unittype;
-  BWAPI::UpgradeType upgradetype;
-  BWAPI::TechType techtype;
-  int supply;
 
   static const int BUILDING = 0;
   static const int UPGRADE = 1;

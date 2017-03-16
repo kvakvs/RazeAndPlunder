@@ -3,38 +3,36 @@
 #include "Commander/Commander.h"
 
 struct StrategyStats {
-  std::string mapHash;
-  std::string mapName;
-  std::string strategyId;
-  std::string ownRace;
-  std::string opponentRace;
-  int won;
-  int lost;
-  int draw;
-  int total;
+  std::string map_hash_;
+  std::string map_name_;
+  std::string strat_id_;
+  std::string my_race_;
+  std::string opponent_race_;
+  int won_ = 0;
+  int lost_ = 0;
+  int draw_ = 0;
+  int total_ = 0;
 
-  StrategyStats() {
-    won = 0;
-    lost = 0;
-    draw = 0;
-    total = 0;
+  StrategyStats(): map_hash_(), map_name_(), strat_id_(), my_race_()
+      , opponent_race_()
+  {
   }
 
   int getTotal() {
-    if (total == 0) return 1; //To avoid division by zero.
-    return total;
+    if (total_ == 0) return 1; //To avoid division by zero.
+    return total_;
   }
 
   bool matches() const;
 };
 
 struct Strategy {
-  BWAPI::Race race;
-  std::string strategyId;
+  BWAPI::Race race_;
+  std::string strat_id_;
 
   Strategy(BWAPI::Race mRace, std::string mId) {
-    race = mRace;
-    strategyId = mId;
+    race_ = mRace;
+    strat_id_ = mId;
   }
 };
 

@@ -1,5 +1,5 @@
 #include "UnitAgent.h"
-#include "../Pathfinding/NavigationAgent.h"
+#include "Pathfinding/NavigationAgent.h"
 #include "MainAgents/TargetingAgent.h"
 #include "Glob.h"
 
@@ -14,108 +14,108 @@ UnitAgent::~UnitAgent() {
 }
 
 UnitAgent::UnitAgent(Unit mUnit) {
-  unit = mUnit;
-  type = unit->getType();
-  unitID = unit->getID();
-  agentType = "UnitAgent";
-  goal = TilePosition(-1, -1);
-  infoUpdateFrame = 0;
+  unit_ = mUnit;
+  type_ = unit_->getType();
+  unit_id_ = unit_->getID();
+  agent_type_ = "UnitAgent";
+  goal_ = TilePosition(-1, -1);
+  info_update_frame_ = 0;
 }
 
 void UnitAgent::computeActions() {
   //Prio 1: Use abilities
   if (useAbilities()) {
-    lastOrderFrame = Broodwar->getFrameCount();
+    last_order_frame_ = Broodwar->getFrameCount();
     return;
   }
 
   //Prio 2: Attack enemy
   if (TargetingAgent::checkTarget(this)) {
-    lastOrderFrame = Broodwar->getFrameCount();
+    last_order_frame_ = Broodwar->getFrameCount();
     return;
   }
 
   //Prio 3: Move
-  if (not unit->isLoaded() && !unit->isSieged() && !unit->isBurrowed()) {
-    if (rnp::navigation()->computeMove(this, goal)) {
-      lastOrderFrame = Broodwar->getFrameCount();
+  if (not unit_->isLoaded() && not unit_->isSieged() && not unit_->isBurrowed()) {
+    if (rnp::navigation()->computeMove(this, goal_)) {
+      last_order_frame_ = Broodwar->getFrameCount();
       return;
     }
   }
 }
 
 void UnitAgent::printInfo() {
-  int e = Broodwar->getFrameCount() - infoUpdateFrame;
-  if (e >= infoUpdateTime || (sx == 0 && sy == 0)) {
-    infoUpdateFrame = Broodwar->getFrameCount();
-    sx = unit->getPosition().x;
-    sy = unit->getPosition().y;
+  int e = Broodwar->getFrameCount() - info_update_frame_;
+  if (e >= info_update_time_ || (sx_ == 0 && sy_ == 0)) {
+    info_update_frame_ = Broodwar->getFrameCount();
+    sx_ = unit_->getPosition().x;
+    sy_ = unit_->getPosition().y;
   }
 
-  Broodwar->drawBoxMap(sx - 2, sy, sx + 242, sy + 105, Colors::Black, true);
-  Broodwar->drawTextMap(sx + 4, sy, "\x03%s", format(unit->getType().getName()).c_str());
-  Broodwar->drawLineMap(sx, sy + 14, sx + 240, sy + 14, Colors::Green);
+  Broodwar->drawBoxMap(sx_ - 2, sy_, sx_ + 242, sy_ + 105, Colors::Black, true);
+  Broodwar->drawTextMap(sx_ + 4, sy_, "\x03%s", format(unit_->getType().getName()).c_str());
+  Broodwar->drawLineMap(sx_, sy_ + 14, sx_ + 240, sy_ + 14, Colors::Green);
 
-  Broodwar->drawTextMap(sx + 2, sy + 15, "Id: \x11%d", unitID);
-  Broodwar->drawTextMap(sx + 2, sy + 30, "Position: \x11(%d,%d)", unit->getTilePosition().x, unit->getTilePosition().y);
-  Broodwar->drawTextMap(sx + 2, sy + 45, "Goal: \x11(%d,%d)", goal.x, goal.y);
-  Broodwar->drawTextMap(sx + 2, sy + 60, "Squad: \x11%d", squadID);
+  Broodwar->drawTextMap(sx_ + 2, sy_ + 15, "Id: \x11%d", unit_id_);
+  Broodwar->drawTextMap(sx_ + 2, sy_ + 30, "Position: \x11(%d,%d)", unit_->getTilePosition().x, unit_->getTilePosition().y);
+  Broodwar->drawTextMap(sx_ + 2, sy_ + 45, "Goal: \x11(%d,%d)", goal_.x, goal_.y);
+  Broodwar->drawTextMap(sx_ + 2, sy_ + 60, "Squad: \x11%d", squad_id_);
 
-  int range = unit->getType().seekRange();
-  if (unit->getType().sightRange() > range) {
-    range = unit->getType().sightRange();
+  int range = unit_->getType().seekRange();
+  if (unit_->getType().sightRange() > range) {
+    range = unit_->getType().sightRange();
   }
   int enemyInRange = 0;
   for (auto& u : Broodwar->enemy()->getUnits()) {
-    double dist = unit->getPosition().getDistance(u->getPosition());
+    double dist = unit_->getPosition().getDistance(u->getPosition());
     if (dist <= range) {
       enemyInRange++;
       break;
     }
   }
 
-  Broodwar->drawTextMap(sx + 2, sy + 75, "Range: \x11%d", range);
-  if (enemyInRange == 0) Broodwar->drawTextMap(sx + 2, sy + 90, "Enemies seen: \x11%d", enemyInRange);
-  else Broodwar->drawTextMap(sx + 2, sy + 90, "Enemies seen: \x08%d", enemyInRange);
+  Broodwar->drawTextMap(sx_ + 2, sy_ + 75, "Range: \x11%d", range);
+  if (enemyInRange == 0) Broodwar->drawTextMap(sx_ + 2, sy_ + 90, "Enemies seen: \x11%d", enemyInRange);
+  else Broodwar->drawTextMap(sx_ + 2, sy_ + 90, "Enemies seen: \x08%d", enemyInRange);
 
   std::string str = "\x07No";
-  if (unit->isAttacking() || unit->isStartingAttack()) str = "\x08Yes";
+  if (unit_->isAttacking() || unit_->isStartingAttack()) str = "\x08Yes";
 
   //Column two
-  Broodwar->drawTextMap(sx + 100, sy + 15, "Attacking: %s", str.c_str());
-  int nsy = sy + 30;
-  if (type.groundWeapon().targetsGround()) {
+  Broodwar->drawTextMap(sx_ + 100, sy_ + 15, "Attacking: %s", str.c_str());
+  int nsy = sy_ + 30;
+  if (type_.groundWeapon().targetsGround()) {
     std::stringstream ss;
-    if (unit->getGroundWeaponCooldown() == 0) ss << "\x07Ready";
+    if (unit_->getGroundWeaponCooldown() == 0) ss << "\x07Ready";
     else {
       ss << "\x08";
-      ss << unit->getGroundWeaponCooldown();
+      ss << unit_->getGroundWeaponCooldown();
     }
 
-    Broodwar->drawTextMap(sx + 100, nsy, "Ground CD: %s", ss.str().c_str());
+    Broodwar->drawTextMap(sx_ + 100, nsy, "Ground CD: %s", ss.str().c_str());
     nsy += 15;
   }
 
-  if (type.airWeapon().targetsAir()) {
+  if (type_.airWeapon().targetsAir()) {
     std::stringstream ss;
-    if (unit->getAirWeaponCooldown() == 0) ss << "\x07Ready";
+    if (unit_->getAirWeaponCooldown() == 0) ss << "\x07Ready";
     else {
       ss << "\x08";
-      ss << unit->getAirWeaponCooldown();
+      ss << unit_->getAirWeaponCooldown();
     }
 
-    Broodwar->drawTextMap(sx + 100, nsy, "Air CD: %s", ss.str().c_str());
+    Broodwar->drawTextMap(sx_ + 100, nsy, "Air CD: %s", ss.str().c_str());
     nsy += 15;
   }
 
-  Unit target = unit->getTarget();
-  if (target == nullptr) target = unit->getOrderTarget();
+  Unit target = unit_->getTarget();
+  if (target == nullptr) target = unit_->getOrderTarget();
   str = "";
   if (target != nullptr) {
     str = format(target->getType().getName());
   }
-  Broodwar->drawTextMap(sx + 100, nsy, "Target: \x11%s", str.c_str());
+  Broodwar->drawTextMap(sx_ + 100, nsy, "Target: \x11%s", str.c_str());
   nsy += 15;
 
-  Broodwar->drawLineMap(sx, sy + 104, sx + 240, sy + 104, Colors::Green);
+  Broodwar->drawLineMap(sx_, sy_ + 104, sx_ + 240, sy_ + 104, Colors::Green);
 }

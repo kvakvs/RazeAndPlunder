@@ -7,8 +7,8 @@ using namespace BWAPI;
 Config* Config::instance = nullptr;
 
 Config::Config() {
-  version = "15.4";
-  botName = "OpprimoBot";
+  version = RNP_VERSION;
+  botName = "Raze & Plunder";
 
   std::stringstream ss;
   ss << "\x1C";

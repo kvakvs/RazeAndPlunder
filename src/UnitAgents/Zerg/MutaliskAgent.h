@@ -10,7 +10,7 @@
 class MutaliskAgent : public UnitAgent {
 public:
   explicit MutaliskAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "MutaliskAgent";
+    agent_type_ = "MutaliskAgent";
   }
 
   bool useAbilities() override;

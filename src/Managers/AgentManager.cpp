@@ -102,12 +102,12 @@ void AgentManager::addAgent(Unit unit) {
     agents_.insert(newAgent);
 
     if (newAgent->isBuilding()) {
-      rnp::building_placer()->addConstructedBuilding(unit);
+      rnp::building_placer()->add_constructed_building(unit);
       rnp::constructor()->unlock(unit->getType());
       rnp::resources()->unlockResources(unit->getType());
     }
     else {
-      rnp::commander()->unitCreated(newAgent);
+      rnp::commander()->on_unit_created(newAgent);
     }
   }
 }
@@ -116,17 +116,17 @@ void AgentManager::removeAgent(Unit unit) {
   for (auto& a : agents_) {
     if (a->matches(unit)) {
       if (a->isBuilding()) {
-        rnp::building_placer()->buildingDestroyed(unit);
+        rnp::building_placer()->on_building_destroyed(unit);
       }
 
       a->destroyed();
-      rnp::commander()->unitDestroyed(a);
+      rnp::commander()->on_unit_destroyed(a);
 
       //Special case: If a bunker is destroyed, we need to remove
       //the bunker squad.
       if (unit->getType().getID() == UnitTypes::Terran_Bunker.getID()) {
         int squadID = a->getSquadID();
-        rnp::commander()->removeSquad(squadID);
+        rnp::commander()->remove_squad(squadID);
       }
 
       return;
@@ -269,7 +269,7 @@ int AgentManager::countNoFinishedUnits(UnitType type) {
   int cnt = 0;
   for (auto& a : agents_) {
     if (a->isAlive()) {
-      if (a->isOfType(type) && a->isAlive() && !a->getUnit()->isBeingConstructed()) {
+      if (a->isOfType(type) && a->isAlive() && not a->getUnit()->isBeingConstructed()) {
         cnt++;
       }
     }
@@ -281,7 +281,7 @@ int AgentManager::countNoBases() {
   int cnt = 0;
   for (auto& a : agents_) {
     if (a->isAlive()) {
-      if (a->getUnitType().isResourceDepot() && !a->getUnit()->isBeingConstructed()) {
+      if (a->getUnitType().isResourceDepot() && not a->getUnit()->isBeingConstructed()) {
         cnt++;
       }
     }

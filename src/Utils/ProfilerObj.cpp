@@ -4,104 +4,91 @@
 
 using namespace BWAPI;
 
-ProfilerObj::ProfilerObj(std::string mId) {
-  PCFreq = 0.0;
-  CounterStart = 0;
-  CounterEnd = 0;
-
-  id = mId;
-  total = 0.0;
-  maxTime = 0.0;
-  startCalls = 0;
-  endCalls = 0;
-  lastShowFrame = 0;
-
-  timeouts_short = 0;
-  timeouts_medium = 0;
-  timeouts_long = 0;
+ProfilerObj::ProfilerObj(const std::string& mId): id_(mId) {
 }
 
 ProfilerObj::~ProfilerObj() {
-
 }
 
-bool ProfilerObj::matches(std::string mId) {
-  return mId == id;
+bool ProfilerObj::matches(const std::string& mId) {
+  return mId == id_;
 }
 
 void ProfilerObj::start() {
   LARGE_INTEGER li;
   QueryPerformanceFrequency(&li);
 
-  PCFreq = double(li.QuadPart) / 1000.0;
+  pc_freq_ = double(li.QuadPart) / 1000.0;
 
   QueryPerformanceCounter(&li);
-  CounterStart = li.QuadPart;
+  counter_start_ = li.QuadPart;
 
-  startCalls++;
+  start_calls_++;
 }
 
 void ProfilerObj::end() {
   LARGE_INTEGER li;
   QueryPerformanceCounter(&li);
-  double elapsed = (li.QuadPart - CounterStart) / PCFreq;
+  double elapsed = (li.QuadPart - counter_start_) / pc_freq_;
 
-  total += elapsed;
+  total_ += elapsed;
 
-  endCalls++;
+  end_calls_++;
 
-  if (elapsed >= 10000.0) timeouts_long++;
-  if (elapsed >= 1000.0) timeouts_medium++;
-  if (elapsed >= 55.0) timeouts_short++;
-  if (elapsed > maxTime) maxTime = elapsed;
+  if (elapsed >= 10000.0) timeouts_long_++;
+  if (elapsed >= 1000.0) timeouts_medium_++;
+  if (elapsed >= 85.0) timeouts_short_++;
+  if (elapsed > max_time_) max_time_ = elapsed;
 }
 
 void ProfilerObj::show() {
-  if (Broodwar->getFrameCount() - lastShowFrame < 400) return;
+  if (Broodwar->getFrameCount() - last_show_frame_ < 400) return;
 
-  lastShowFrame = Broodwar->getFrameCount();
+  last_show_frame_ = Broodwar->getFrameCount();
 
-  double avg = (double)total / (double)endCalls;
+  double avg = (double)total_ / (double)end_calls_;
 
-  Broodwar << id << ": AvgFrame: " << (int)avg << " MaxFrame: " << maxTime << " TO_1min: " << timeouts_long << " TO_1sec: " << timeouts_medium << " TO_55ms: " << timeouts_short << std::endl;
-  if (timeouts_long >= 1 || timeouts_medium >= 10 || timeouts_short >= 320) {
-    Broodwar << id << ": Timeout fail!!!" << std::endl;
+  Broodwar << id_ << ": AvgFrame: " << (int)avg << " MaxFrame: " << max_time_
+           << " TO_10k: " << timeouts_long_ << " TO_1k: " << timeouts_medium_
+           << " TO_85ms: " << timeouts_short_ << std::endl;
+  if (timeouts_long_ >= 1 || timeouts_medium_ >= 10 || timeouts_short_ >= 320) {
+    Broodwar << id_ << ": Timeout fail!!!" << std::endl;
   }
-  if (startCalls != endCalls) {
-    Broodwar << id << ": Warning! Start- and endcalls mismatch " << startCalls << "/" << endCalls << std::endl;
+  if (start_calls_ != end_calls_) {
+    Broodwar << id_ << ": Warning! Start- and endcalls mismatch " << start_calls_ << "/" << end_calls_ << std::endl;
   }
 }
 
 std::string ProfilerObj::getDumpStr() {
-  double avg = total / (double)endCalls;
+  double avg = total_ / (double)end_calls_;
 
   std::stringstream ss;
 
   ss << "<tr><td>";
-  ss << id;
+  ss << id_;
   ss << "</td><td>";
   ss << avg;
   ss << "</td><td>";
-  ss << total;
+  ss << total_;
   ss << "</td><td>";
-  if (startCalls == endCalls) {
-    ss << endCalls;
+  if (start_calls_ == end_calls_) {
+    ss << end_calls_;
   }
   else {
     ss << "Calls missmatch (";
-    ss << startCalls;
+    ss << start_calls_;
     ss << "/";
-    ss << endCalls;
+    ss << end_calls_;
     ss << ")";
   }
   ss << "</td><td>";
-  ss << maxTime;
+  ss << max_time_;
   ss << "</td><td>";
-  ss << timeouts_long;
+  ss << timeouts_long_;
   ss << "</td><td>";
-  ss << timeouts_medium;
+  ss << timeouts_medium_;
   ss << "</td><td>";
-  ss << timeouts_short;
+  ss << timeouts_short_;
   ss << "</td>";
   ss << "</tr>\n";
 

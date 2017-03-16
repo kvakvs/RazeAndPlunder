@@ -8,12 +8,13 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class DefilerAgent : public UnitAgent {
-  int darkSwarmFrame;
+  int dark_swarm_frame_ = 0;
 
 public:
-  explicit DefilerAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "DefilerAgent";
-    darkSwarmFrame = 0;
+  explicit DefilerAgent(BWAPI::Unit mUnit)
+      : UnitAgent(mUnit)
+  {
+    agent_type_ = "DefilerAgent";
   }
 
   bool useAbilities() override;

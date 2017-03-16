@@ -13,7 +13,7 @@ private:
 
 public:
   explicit CarrierAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "CarrierAgent";
+    agent_type_ = "CarrierAgent";
   }
 
   bool useAbilities();

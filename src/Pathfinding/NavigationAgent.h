@@ -1,7 +1,7 @@
 #pragma once
 
 #include "MainAgents/BaseAgent.h"
-#include "bwem.h"
+#include "BWEM/bwem.h"
 
 /** The bot uses two techniques for navigation: if no enemy units are close units navigate using the built in pathfinder in
  * Starcraft. If enemy units are close, own units uses potential fields to engage and surround the enemy.
@@ -25,12 +25,12 @@ class NavigationAgent {
   bool moveToGoal(BaseAgent* agent, BWAPI::TilePosition checkpoint, BWAPI::TilePosition goal);
 
   // Calculates the potential field values for an attacking unit. 
-  float getAttackingUnitP(BaseAgent* agent, BWAPI::WalkPosition wp);
-  float getDefendingUnitP(BaseAgent* agent, BWAPI::WalkPosition wp);
+  float getAttackingUnitP(BaseAgent* agent, BWAPI::WalkPosition wp) const;
+  float getDefendingUnitP(BaseAgent* agent, BWAPI::WalkPosition wp) const;
 
-  int getMaxUnitSize(BWAPI::UnitType type);
+  static int getMaxUnitSize(BWAPI::UnitType type);
 
-  BWAPI::Color getColor(float p);
+  static BWAPI::Color getColor(float p);
 
 public:
   /** 
@@ -39,7 +39,12 @@ public:
    * - Hybrid pathfinding with boids
    * - Non-hybrid pathfinding
   */
-  static int pathfinding_version_;
+  enum class PFType {
+    Builtin = 0,
+    HybridBoids = 1,
+    HybridPF = 2
+  };
+  static PFType pathfinding_version_;
 
   NavigationAgent();
   ~NavigationAgent();
@@ -55,8 +60,8 @@ public:
   bool computePotentialFieldMove(BaseAgent* agent);
 
   // Computes a boids move (enemy units within range) 
-  bool computeBoidsMove(BaseAgent* agent);
+  bool computeBoidsMove(BaseAgent* agent) const;
 
   // Displays a debug view of the potential fields for an agent. 
-  void displayPF(BaseAgent* agent);
+  void displayPF(BaseAgent* agent) const;
 };

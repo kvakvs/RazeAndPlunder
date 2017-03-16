@@ -1,13 +1,13 @@
 #pragma once
 
 #include "MainAgents/BaseAgent.h"
-#include "bwem.h"
+#include "BWEM/bwem.h"
 
 struct Corners {
-  int x1;
-  int y1;
-  int x2;
-  int y2;
+  int x1 = 0;
+  int y1 = 0;
+  int x2 = 0;
+  int y2 = 0;
 };
 
 /** The BuildingPlacer class is used to find positions to place new buildings at. It keeps track
@@ -39,79 +39,88 @@ public:
   }; 
 
 private:
-  int range_;
-  int w_;
-  int h_;
-  TileType** cover_map_;
+  int range_ = 0;
+  int w_ = 0;
+  int h_ = 0;
+  TileType** cover_map_ = nullptr;
   BWEM::Map& bwem_;
 
 private:
-  Corners getCorners(BWAPI::Unit unit) const;
-  Corners getCorners(BWAPI::UnitType type, BWAPI::TilePosition center) const;
+  Corners get_corners(BWAPI::Unit unit) const;
+  Corners get_corners(BWAPI::UnitType type, BWAPI::TilePosition center) const;
 
-  BWAPI::TilePosition findSpotAtSide(BWAPI::UnitType toBuild, BWAPI::TilePosition start, BWAPI::TilePosition end);
-  bool canBuildAt(BWAPI::UnitType toBuild, BWAPI::TilePosition pos);
+  BWAPI::TilePosition find_spot_at_side(
+    BWAPI::UnitType toBuild, BWAPI::TilePosition start, BWAPI::TilePosition end);
 
-  void fill(Corners c);
-  void clear(Corners c);
+  bool can_build_at(BWAPI::UnitType toBuild, BWAPI::TilePosition pos) const;
 
-  BWAPI::Unit findWorker(BWAPI::TilePosition spot);
+  void fill(Corners c) const;
 
-  static bool suitableForDetector(BWAPI::TilePosition pos);
+  void clear(Corners c) const;
 
-  static bool baseUnderConstruction(BaseAgent* base);
-  static bool isDefenseBuilding(BWAPI::UnitType toBuild);
-  BWAPI::TilePosition findBuildSpot(BWAPI::UnitType toBuild, BWAPI::TilePosition start);
+  static BWAPI::Unit find_worker(BWAPI::TilePosition spot);
 
-  static BWAPI::Unit hasMineralNear(BWAPI::TilePosition pos);
+  static bool suitable_for_detector(BWAPI::TilePosition pos);
+
+  static bool base_under_construction(BaseAgent* base);
+
+  static bool is_defense_building(BWAPI::UnitType toBuild);
+
+  BWAPI::TilePosition find_build_spot(
+    BWAPI::UnitType toBuild, BWAPI::TilePosition start);
+
+  static BWAPI::Unit has_mineral_near(BWAPI::TilePosition pos);
 
 public:
   BuildingPlacer();
   ~BuildingPlacer();
 
+  BuildingPlacer(const BuildingPlacer&) = delete;
+  BuildingPlacer& operator=(const BuildingPlacer&) = delete;
+
   // Adds a newly constructed building to the cover map. 
-  void addConstructedBuilding(BWAPI::Unit unit);
+  void add_constructed_building(BWAPI::Unit unit) const;
 
   // Used by WorkerAgent when constructing builds. 
-  void fillTemp(BWAPI::UnitType toBuild, BWAPI::TilePosition buildSpot);
+  void fill_temp(BWAPI::UnitType toBuild, BWAPI::TilePosition buildSpot) const;
 
   // Used by WorkerAgent when constructing builds. 
-  void clearTemp(BWAPI::UnitType toBuild, BWAPI::TilePosition buildSpot);
+  void clear_temp(BWAPI::UnitType toBuild, BWAPI::TilePosition buildSpot) const;
 
   // Called when a building is destroyed, to free up the space. 
-  void buildingDestroyed(BWAPI::Unit unit);
+  void on_building_destroyed(BWAPI::Unit unit) const;
 
   // Checks if the specified building type can be built at the buildSpot. True if it can,
   // false otherwise. 
-  bool canBuild(BWAPI::UnitType toBuild, BWAPI::TilePosition buildSpot);
+  bool can_build(BWAPI::UnitType toBuild, BWAPI::TilePosition buildSpot) const;
 
   // Checks if a position is free. 
-  bool positionFree(BWAPI::TilePosition pos);
+  bool is_position_available(BWAPI::TilePosition pos) const;
 
   // Blocks a position from being used as a valid buildSpot. Used when a worker is timedout when
   // moving towards the buildSpot. 
-  void blockPosition(BWAPI::TilePosition buildSpot);
+  void mark_position_blocked(BWAPI::TilePosition buildSpot) const;
 
   // Finds and returns a buildSpot for the specified building type.
   // If no buildspot is found, a TilePosition(-1,-1) is returned. 
-  BWAPI::TilePosition findBuildSpot(BWAPI::UnitType toBuild);
+  BWAPI::TilePosition find_build_spot(BWAPI::UnitType toBuild);
 
   // Searches for the closest vespene gas that is not in use. If no gas is sighted,
   // the ExplorationManager is queried. 
-  BWAPI::TilePosition findRefineryBuildSpot(BWAPI::UnitType toBuild, BWAPI::TilePosition start);
+  BWAPI::TilePosition find_refinery_build_spot(BWAPI::UnitType toBuild, BWAPI::TilePosition start) const;
 
   // Finds and returns the position of the closest free vespene gas around the specified start position.
   // If no gas vein is found, a TilePosition(-1, -1) is returned. 
-  BWAPI::TilePosition findClosestGasWithoutRefinery(BWAPI::UnitType toBuild, BWAPI::TilePosition start);
+  BWAPI::TilePosition find_closest_gas_without_refinery(BWAPI::UnitType toBuild, BWAPI::TilePosition start) const;
 
   // Searches for a spot to build a refinery at. Returns TilePosition(-1, -1) if no spot was found.
-  BWAPI::TilePosition searchRefinerySpot() const;
+  BWAPI::TilePosition search_refinery_spot() const;
 
   // Returns a position of a suitable site for expansion, i.e. new bases. 
-  BWAPI::TilePosition findExpansionSite() const;
+  BWAPI::TilePosition find_expansion_site() const;
 
   // Finds a mineral to gather from. 
-  BWAPI::Unit findClosestMineral(BWAPI::TilePosition workerPos);
+  BWAPI::Unit find_closest_mineral(BWAPI::TilePosition workerPos) const;
 
   // Shows debug info on screen. 
   void debug() const;  

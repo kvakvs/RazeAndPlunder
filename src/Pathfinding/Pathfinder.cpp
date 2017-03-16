@@ -1,6 +1,9 @@
 #include "Pathfinder.h"
 #include "../Managers/ExplorationManager.h"
 #include "Utils/Profiler.h"
+#include <numeric>
+#include "Glob.h"
+#include "RnpUtil.h"
 
 using namespace BWAPI;
 
@@ -30,7 +33,9 @@ int Pathfinder::getDistance(TilePosition start, TilePosition end) {
   PathObj* obj = getPathObj(start, end);
   if (obj != nullptr) {
     if (obj->isFinished()) {
-      return obj->getPath().size();
+      //return obj->getPath().size();
+      auto& p = obj->getPath();
+      return rnp::tile_distance(p, start, end);
     }
   }
   return -1;

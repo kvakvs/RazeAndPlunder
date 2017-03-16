@@ -5,32 +5,32 @@
 
 using namespace BWAPI;
 
-ComsatAgent::ComsatAgent(Unit mUnit) {
-  unit = mUnit;
-  type = unit->getType();
-  unitID = unit->getID();
-  agentType = "ComsatAgent";
-  lastSweepPos = TilePosition(-1, -1);
-  lastSweepFrame = 0;
+ComsatAgent::ComsatAgent(Unit mUnit)
+    : StructureAgent(mUnit), last_sweep_pos_(-1, -1)
+{
+  unit_id_ = unit_->getID();
+  agent_type_ = "ComsatAgent";
 }
 
 void ComsatAgent::computeActions() {
-  if (not unit->isIdle()) return;
+  if (not unit_->isIdle()) return;
 
-  if (Broodwar->getFrameCount() - lastSweepFrame > 100 && unit->getEnergy() >= 50) {
+  if (Broodwar->getFrameCount() - last_sweep_frame_ > 100 && unit_->getEnergy() >= 50) {
     for (auto& u : Broodwar->enemy()->getUnits()) {
       //Enemy seen
       if (u->exists()) {
-        if ((u->isCloaked() || u->isBurrowed()) && !u->isDetected() && u->getType().getID() != UnitTypes::Protoss_Observer.getID()) {
-          if (friendlyUnitsWithinRange(u->getPosition()) > 0 && !anyHasSweeped(u->getTilePosition())) {
+        if ((u->isCloaked() || u->isBurrowed())
+            && not u->isDetected()
+            && u->getType().getID() != UnitTypes::Protoss_Observer.getID()) {
+          if (friendlyUnitsWithinRange(u->getPosition()) > 0 && not anyHasSweeped(u->getTilePosition())) {
             Broodwar << "Use Scanner Sweep at ("
                 << u->getTilePosition().x << "," << u->getTilePosition().y
                 << ") " << u->getType().getName() << " detected" 
                 << std::endl;
-            bool ok = unit->useTech(TechTypes::Scanner_Sweep, u->getPosition());
+            bool ok = unit_->useTech(TechTypes::Scanner_Sweep, u->getPosition());
             if (ok) {
-              lastSweepFrame = Broodwar->getFrameCount();
-              lastSweepPos = u->getTilePosition();
+              last_sweep_frame_ = Broodwar->getFrameCount();
+              last_sweep_pos_ = u->getTilePosition();
               return;
             }
           }
@@ -42,12 +42,12 @@ void ComsatAgent::computeActions() {
     /*if (rnp::commander()->isAttacking())
     {
       TilePosition pos = rnp::map_manager()->findAttackPosition();
-      if (pos.x == -1)
+      if (not rnp::is_valid_position(pos))
       {
         //No attack position found. Sweep a base area
         for (BWTA::BaseLocation* r : BWTA::getBaseLocations())
         {
-          if (not anyHasSweeped(r->getTilePosition()) && !Broodwar->isVisible(r->getTilePosition()))
+          if (not anyHasSweeped(r->getTilePosition()) && not Broodwar->isVisible(r->getTilePosition()))
           {
             bool ok = unit->useTech(TechTypes::Scanner_Sweep, r->getPosition());
             if (ok)
@@ -93,11 +93,11 @@ bool ComsatAgent::anyHasSweeped(TilePosition pos) {
 }
 
 bool ComsatAgent::hasSweeped(TilePosition pos) {
-  if (Broodwar->getFrameCount() - lastSweepFrame > 100) {
+  if (Broodwar->getFrameCount() - last_sweep_frame_ > 100) {
     return false;
   }
 
-  if (pos.getDistance(lastSweepPos) <= 5) {
+  if (pos.getDistance(last_sweep_pos_) <= 5) {
     return true;
   }
 

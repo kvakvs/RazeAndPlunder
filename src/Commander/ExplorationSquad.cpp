@@ -50,7 +50,7 @@ void ExplorationSquad::computeActions() {
   //First, remove dead agents
   removeDestroyed();
 
-  if (agents_.size() > 0 && !active_) {
+  if (agents_.size() > 0 && not active_) {
     //Activate as soon as a unit has been built.
     active_ = true;
   }
@@ -66,7 +66,7 @@ void ExplorationSquad::computeActions() {
       priority_ = active_priority_;
     }
 
-    TilePosition nGoal = rnp::exploration()->getNextToExplore(this);
+    TilePosition nGoal = rnp::exploration()->get_next_to_explore(this);
     if (nGoal.x >= 0) {
       this->goal_ = nGoal;
       setMemberGoals(goal_);

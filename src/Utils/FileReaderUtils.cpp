@@ -23,15 +23,15 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
   std::string filename = "N/A";
 
   if (Constructor::isProtoss()) {
-    if (ExplorationManager::enemyIsProtoss()) {
+    if (ExplorationManager::enemy_is_protoss()) {
       filename = "PvP.txt";
       if (not fileExists(subpath, filename)) filename = "PvX.txt";
     }
-    else if (ExplorationManager::enemyIsTerran()) {
+    else if (ExplorationManager::enemy_is_terran()) {
       filename = "PvT.txt";
       if (not fileExists(subpath, filename)) filename = "PvX.txt";
     }
-    else if (ExplorationManager::enemyIsZerg()) {
+    else if (ExplorationManager::enemy_is_zerg()) {
       filename = "PvZ.txt";
       if (not fileExists(subpath, filename)) filename = "PvX.txt";
     }
@@ -40,15 +40,15 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
     }
   }
   else if (Constructor::isTerran()) {
-    if (ExplorationManager::enemyIsProtoss()) {
+    if (ExplorationManager::enemy_is_protoss()) {
       filename = "TvP.txt";
       if (not fileExists(subpath, filename)) filename = "TvX.txt";
     }
-    else if (ExplorationManager::enemyIsTerran()) {
+    else if (ExplorationManager::enemy_is_terran()) {
       filename = "TvT.txt";
       if (not fileExists(subpath, filename)) filename = "TvX.txt";
     }
-    else if (ExplorationManager::enemyIsZerg()) {
+    else if (ExplorationManager::enemy_is_zerg()) {
       filename = "TvZ.txt";
       if (not fileExists(subpath, filename)) filename = "TvX.txt";
     }
@@ -57,15 +57,15 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
     }
   }
   else if (Constructor::isZerg()) {
-    if (ExplorationManager::enemyIsProtoss()) {
+    if (ExplorationManager::enemy_is_protoss()) {
       filename = "ZvP.txt";
       if (not fileExists(subpath, filename)) filename = "ZvX.txt";
     }
-    else if (ExplorationManager::enemyIsTerran()) {
+    else if (ExplorationManager::enemy_is_terran()) {
       filename = "ZvT.txt";
       if (not fileExists(subpath, filename)) filename = "ZvX.txt";
     }
-    else if (ExplorationManager::enemyIsZerg()) {
+    else if (ExplorationManager::enemy_is_zerg()) {
       filename = "ZvZ.txt";
       if (not fileExists(subpath, filename)) filename = "ZvX.txt";
     }

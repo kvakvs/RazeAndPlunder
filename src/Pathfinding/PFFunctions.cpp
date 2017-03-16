@@ -1,5 +1,6 @@
 #include "PFFunctions.h"
 #include <iso646.h>
+#include "RnpUtil.h"
 
 using namespace BWAPI;
 
@@ -44,7 +45,7 @@ float PFFunctions::calcOwnUnitP(float d, WalkPosition wt, Unit unit, Unit otherO
 
   float p = 0;
 
-  if ((unit->isCloaked() && !otherOwnUnit->isCloaked()) || (unit->isBurrowed() && !otherOwnUnit->isBurrowed())) {
+  if ((unit->isCloaked() && not otherOwnUnit->isCloaked()) || (unit->isBurrowed() && not otherOwnUnit->isBurrowed())) {
     //Let cloaked or burrowed units stay away from visible
     //units to avoid getting killed by splash damage.
     if (d <= 4) {
@@ -112,7 +113,7 @@ float PFFunctions::getTerrainP(BaseAgent* agent, WalkPosition wt) {
 
 float PFFunctions::getGoalP(BaseAgent* agent, WalkPosition wt) {
   TilePosition goal = agent->getGoal();
-  if (goal.x == -1) return 0;
+  if (not rnp::is_valid_position(goal)) return 0;
 
   //Calc max wep range
   int range = 0;
@@ -182,10 +183,10 @@ float PFFunctions::calcOffensiveUnitP(float d, Unit attacker, Unit enemy) {
   }
 
   //Check if we can attack the type
-  if (enemy->getType().isFlyer() && !attacker->getType().airWeapon().targetsAir()) {
+  if (enemy->getType().isFlyer() && not attacker->getType().airWeapon().targetsAir()) {
     return 0;
   }
-  if (not enemy->getType().isFlyer() && !attacker->getType().groundWeapon().targetsGround()) {
+  if (not enemy->getType().isFlyer() && not attacker->getType().groundWeapon().targetsGround()) {
     return 0;
   }
 

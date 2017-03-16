@@ -13,7 +13,7 @@ private:
 
 public:
   explicit ReaverAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "ReaverAgent";
+    agent_type_ = "ReaverAgent";
   }
 
   bool useAbilities() override;

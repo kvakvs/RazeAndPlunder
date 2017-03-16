@@ -50,8 +50,8 @@ void RushSquad::computeActions() {
       active_ = true;
     }
 
-    TilePosition defSpot = rnp::commander()->findChokePoint();
-    if (defSpot.x != -1) {
+    TilePosition defSpot = rnp::commander()->find_chokepoint();
+    if (rnp::is_valid_position(defSpot)) {
       goal_ = defSpot;
     }
     return;
@@ -74,8 +74,8 @@ void RushSquad::computeActions() {
       }
     }
 
-    TilePosition ePos = rnp::exploration()->getClosestSpottedBuilding(Broodwar->self()->getStartLocation());
-    if (ePos.x != -1) {
+    TilePosition ePos = rnp::exploration()->get_closest_spotted_building(Broodwar->self()->getStartLocation());
+    if (rnp::is_valid_position(ePos)) {
       goal_ = ePos;
       setMemberGoals(goal_);
     }

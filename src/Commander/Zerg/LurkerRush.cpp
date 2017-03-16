@@ -47,8 +47,8 @@ LurkerRush::LurkerRush() {
 LurkerRush::~LurkerRush() {
 }
 
-void LurkerRush::computeActions() {
-  computeActionsBase();
+void LurkerRush::on_frame() {
+  on_frame_base();
 
   workers_num_ = rnp::agent_manager()->countNoBases() * 6 + rnp::agent_manager()->countNoUnits(UnitTypes::Zerg_Extractor) * 3;
 
@@ -60,8 +60,10 @@ void LurkerRush::computeActions() {
     //2+ player maps.
     //This is needed to find out where the enemy is before we
     //send out the Lurkers.
-    TilePosition tp = rnp::exploration()->getClosestSpottedBuilding(Broodwar->self()->getStartLocation());
-    if (tp.x == -1 && Broodwar->getStartLocations().size() > 2) {
+    TilePosition tp = rnp::exploration()->get_closest_spotted_building(Broodwar->self()->getStartLocation());
+    if (not rnp::is_valid_position(tp)
+      && Broodwar->getStartLocations().size() > 2) 
+    {
       squads_.push_back(sc2);
     }
     stage_++;

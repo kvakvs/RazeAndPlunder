@@ -10,34 +10,34 @@
  */
 class BaseAgent {
 protected:
-  BWAPI::Unit unit;
-  BWAPI::UnitType type;
-  BWAPI::TilePosition goal;
-  int unitID;
-  int squadID;
-  bool alive;
-  bool bBlock;
-  std::string agentType;
+  BWAPI::Unit unit_;
+  BWAPI::UnitType type_;
+  BWAPI::TilePosition goal_;
+  int unit_id_ = 0;
+  int squad_id_ = 0;
+  bool alive_ = false;
+//  bool bBlock;
+  std::string agent_type_;
 
-  int infoUpdateFrame;
-  int infoUpdateTime;
-  int sx;
-  int sy;
+  int info_update_frame_ = 0;
+  int info_update_time_ = 0;
+  int sx_ = 0;
+  int sy_ = 0;
 
-  int lastOrderFrame;
+  int last_order_frame_ = 0;
 
-  std::vector<BWAPI::WalkPosition> trail;
+  std::vector<BWAPI::WalkPosition> trail_;
 
   // Removes race name from a string (Terran Marine -> Marine) 
   std::string format(std::string str);
 
 public:
-  // Default constructor. Not used. 
   BaseAgent();
-  // Constructor. 
   BaseAgent(BWAPI::Unit mUnit);
-  // Destructor. 
   virtual ~BaseAgent();
+
+  BaseAgent(const BaseAgent&) = delete;
+  BaseAgent& operator=(const BaseAgent&) = delete;
 
   // Returns the frame the last order for the unit was issued. 
   int getLastOrderFrame();

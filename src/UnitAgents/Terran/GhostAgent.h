@@ -14,7 +14,7 @@ class GhostAgent : public UnitAgent {
 
 public:
   explicit GhostAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
-    agentType = "GhostAgent";
+    agent_type_ = "GhostAgent";
   }
 
   bool useAbilities() override;

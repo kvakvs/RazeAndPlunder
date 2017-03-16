@@ -7,18 +7,18 @@
 using namespace BWAPI;
 
 bool HighTemplarAgent::useAbilities() {
-  if (isOfType(unit->getType(), UnitTypes::Protoss_High_Templar)) {
+  if (isOfType(unit_->getType(), UnitTypes::Protoss_High_Templar)) {
     //Not transformed to Archon. Use spells.
 
     //PSI storm
     TechType psiStorm = TechTypes::Psionic_Storm;
-    if (Broodwar->self()->hasResearched(psiStorm) && unit->getEnergy() >= 75) {
+    if (Broodwar->self()->hasResearched(psiStorm) && unit_->getEnergy() >= 75) {
       int range = TechTypes::Psionic_Storm.getWeapon().maxRange();
       //Check if enemy units are visible
       for (auto& u : Broodwar->enemy()->getUnits()) {
         if (u->exists()
-          && (unit->getDistance(u) <= range && !u->isUnderStorm())
-          && unit->useTech(psiStorm, u->getPosition())) 
+          && (unit_->getDistance(u) <= range && not u->isUnderStorm())
+          && unit_->useTech(psiStorm, u->getPosition()))
         {
           Broodwar << "Psionic Storm used on " << u->getType().getName() << std::endl;
           return true;
@@ -28,14 +28,14 @@ bool HighTemplarAgent::useAbilities() {
 
     //Hallucination
     TechType hallucination = TechTypes::Hallucination;
-    if (Broodwar->self()->hasResearched(hallucination) && unit->getEnergy() >= 100) {
+    if (Broodwar->self()->hasResearched(hallucination) && unit_->getEnergy() >= 100) {
       //Check if enemy units are visible
       for (auto& u : Broodwar->enemy()->getUnits()) {
         if (u->exists()) {
-          if (unit->getDistance(u) <= unit->getType().sightRange()) {
+          if (unit_->getDistance(u) <= unit_->getType().sightRange()) {
             BaseAgent* target = findHallucinationTarget();
             if (target != nullptr) {
-              if (unit->useTech(hallucination, target->getUnit())) {
+              if (unit_->useTech(hallucination, target->getUnit())) {
                 Broodwar << "Uses Hallucination on " << target->getUnitType().getName() << std::endl;
                 return true;
               }
@@ -46,16 +46,16 @@ bool HighTemplarAgent::useAbilities() {
     }
 
     //Morph to Archon	
-    if (not  unit->isBeingConstructed()) {
-      auto sq = rnp::commander()->getSquad(squadID);
+    if (not  unit_->isBeingConstructed()) {
+      auto sq = rnp::commander()->getSquad(squad_id_);
       if (sq) {
         if (sq->morphsTo().getID() == UnitTypes::Protoss_Archon.getID() 
-          || unit->getEnergy() < 50) 
+          || unit_->getEnergy() < 50)
         {
-          if (not enemyUnitsVisible() && !hasCastTransform) {
+          if (not enemyUnitsVisible() && not hasCastTransform) {
             BaseAgent* target = findArchonTarget();
             if (target) {
-              if (unit->useTech(TechTypes::Archon_Warp, target->getUnit())) {
+              if (unit_->useTech(TechTypes::Archon_Warp, target->getUnit())) {
                 hasCastTransform = true;
                 return true;
               }
@@ -92,12 +92,12 @@ BaseAgent* HighTemplarAgent::findHallucinationTarget() {
 }
 
 BaseAgent* HighTemplarAgent::findArchonTarget() {
-  auto mSquad = rnp::commander()->getSquad(squadID);
+  auto mSquad = rnp::commander()->getSquad(squad_id_);
   if (mSquad) {
     Agentset agents = mSquad->getMembers();
     for (auto& a : agents) {
-      if (a->isAlive() && a->getUnitID() != unitID && a->isOfType(UnitTypes::Protoss_High_Templar) && !a->getUnit()->isBeingConstructed()) {
-        double dist = a->getUnit()->getPosition().getDistance(unit->getPosition());
+      if (a->isAlive() && a->getUnitID() != unit_id_ && a->isOfType(UnitTypes::Protoss_High_Templar) && not a->getUnit()->isBeingConstructed()) {
+        double dist = a->getUnit()->getPosition().getDistance(unit_->getPosition());
         if (dist <= 64) {
           return a;
         }
@@ -112,7 +112,7 @@ int HighTemplarAgent::friendlyUnitsWithinRange(TilePosition tilePos, int maxRang
   int fCnt = 0;
   auto& agents = rnp::agent_manager()->getAgents();
   for (auto& a : agents) {
-    if (a->isUnit() && !a->isOfType(UnitTypes::Terran_Medic)) {
+    if (a->isUnit() && not a->isOfType(UnitTypes::Terran_Medic)) {
       double dist = a->getUnit()->getDistance(Position(tilePos));
       if (dist <= maxRange) {
         fCnt++;

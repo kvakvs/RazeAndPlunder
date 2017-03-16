@@ -7,10 +7,10 @@
 using namespace BWAPI;
 
 NexusAgent::NexusAgent(Unit mUnit) {
-  unit = mUnit;
-  type = unit->getType();
-  unitID = unit->getID();
-  agentType = "NexusAgent";
+  unit_ = mUnit;
+  type_ = unit_->getType();
+  unit_id_ = unit_->getID();
+  agent_type_ = "NexusAgent";
 
   hasSentWorkers = false;
   if (rnp::agent_manager()->countNoUnits(UnitTypes::Protoss_Nexus) == 0) {
@@ -23,7 +23,7 @@ NexusAgent::NexusAgent(Unit mUnit) {
 
 void NexusAgent::computeActions() {
   if (not hasSentWorkers) {
-    if (not unit->isBeingConstructed()) {
+    if (not unit_->isBeingConstructed()) {
       sendWorkers();
       hasSentWorkers = true;
 
@@ -31,12 +31,12 @@ void NexusAgent::computeActions() {
     }
   }
 
-  if (not unit->isIdle()) return;
+  if (not unit_->isIdle()) return;
 
-  if (rnp::agent_manager()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->getNoWorkers()) {
+  if (rnp::agent_manager()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->get_preferred_workers_count()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
     if (canBuild(worker)) {
-      unit->train(worker);
+      unit_->train(worker);
     }
   }
 }

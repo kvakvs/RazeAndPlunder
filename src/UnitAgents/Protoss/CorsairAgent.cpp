@@ -7,11 +7,11 @@ using namespace BWAPI;
 bool CorsairAgent::useAbilities() {
   //Disruption Web
   TechType web = TechTypes::Disruption_Web;
-  if (Broodwar->self()->hasResearched(web) && unit->getEnergy() >= 125 && Broodwar->getFrameCount() - lastUseFrame >= 40) {
+  if (Broodwar->self()->hasResearched(web) && unit_->getEnergy() >= 125 && Broodwar->getFrameCount() - lastUseFrame >= 40) {
     Unit target = getClosestEnemyAirDefense(320);
     if (target != nullptr) {
       if (target->getEnsnareTimer() == 0) {
-        if (unit->useTech(web, target)) {
+        if (unit_->useTech(web, target)) {
           lastUseFrame = Broodwar->getFrameCount();
           Broodwar << "Use Disruption Web on " << target->getType().getName() << std::endl;
           return true;
@@ -38,7 +38,7 @@ Unit CorsairAgent::getClosestEnemyAirDefense(int maxRange) {
       }
 
       if (canAttackAir) {
-        double cDist = unit->getDistance(u);
+        double cDist = unit_->getDistance(u);
         if (cDist < bestDist) {
           bestDist = cDist;
           enemy = u;

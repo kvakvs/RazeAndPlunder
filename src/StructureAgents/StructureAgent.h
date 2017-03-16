@@ -14,12 +14,12 @@ class StructureAgent : public BaseAgent {
 private:
 
 protected:
-  bool repairing;
+  bool repairing = false;
 
   bool canBuildUnit(BWAPI::UnitType type);
   bool canEvolveUnit(BWAPI::UnitType type);
 
-  std::vector<BWAPI::TilePosition> hasScanned;
+  //std::vector<BWAPI::TilePosition> hasScanned;
 
   // Checks if the specified unit/building can be constructed 
   bool canBuild(BWAPI::UnitType type);

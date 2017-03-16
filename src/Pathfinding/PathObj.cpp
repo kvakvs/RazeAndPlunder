@@ -1,5 +1,5 @@
 #include "PathObj.h"
-#include "gridMap.h"
+#include "BWEM/gridMap.h"
 
 using namespace BWAPI;
 

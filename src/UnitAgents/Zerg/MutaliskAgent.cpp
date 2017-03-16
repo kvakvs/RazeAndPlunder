@@ -8,12 +8,12 @@ using namespace BWAPI;
 bool MutaliskAgent::useAbilities() {
   //Check for morph
   if (rnp::agent_manager()->countNoUnits(UnitTypes::Zerg_Greater_Spire) > 0) {
-    auto sq = rnp::commander()->getSquad(squadID);
+    auto sq = rnp::commander()->getSquad(squad_id_);
     if (sq) {
       if (sq->morphsTo().getID() == UnitTypes::Zerg_Devourer.getID()) {
         if (enemyUnitsVisible()) {
-          if (Broodwar->canMake(UnitTypes::Zerg_Devourer, unit)) {
-            if (unit->morph(UnitTypes::Zerg_Devourer)) {
+          if (Broodwar->canMake(UnitTypes::Zerg_Devourer, unit_)) {
+            if (unit_->morph(UnitTypes::Zerg_Devourer)) {
               return true;
             }
           }
@@ -22,8 +22,8 @@ bool MutaliskAgent::useAbilities() {
 
       if (sq->morphsTo().getID() == UnitTypes::Zerg_Guardian.getID()) {
         if (enemyUnitsVisible()) {
-          if (Broodwar->canMake(UnitTypes::Zerg_Guardian, unit)) {
-            if (unit->morph(UnitTypes::Zerg_Guardian)) {
+          if (Broodwar->canMake(UnitTypes::Zerg_Guardian, unit_)) {
+            if (unit_->morph(UnitTypes::Zerg_Guardian)) {
               return true;
             }
           }

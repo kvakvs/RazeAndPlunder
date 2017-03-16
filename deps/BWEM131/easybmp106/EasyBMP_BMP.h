@@ -27,18 +27,18 @@ bool EasyBMPcheckDataSize(void);
 class BMP {
 private:
 
-  int BitDepth;
-  int Width;
-  int Height;
-  RGBApixel** Pixels;
-  RGBApixel* Colors;
-  int XPelsPerMeter;
-  int YPelsPerMeter;
+  int BitDepth = 0;
+  int Width = 0;
+  int Height = 0;
+  RGBApixel** Pixels = nullptr;
+  RGBApixel* Colors = nullptr;
+  int XPelsPerMeter = 0;
+  int YPelsPerMeter = 0;
 
-  ebmpBYTE* MetaData1;
-  int SizeOfMetaData1;
-  ebmpBYTE* MetaData2;
-  int SizeOfMetaData2;
+  ebmpBYTE* MetaData1 = nullptr;
+  int SizeOfMetaData1 = 0;
+  ebmpBYTE* MetaData2 = nullptr;
+  int SizeOfMetaData2 = 0;
 
   bool Read32bitRow(ebmpBYTE* Buffer, int BufferSize, int Row);
   bool Read24bitRow(ebmpBYTE* Buffer, int BufferSize, int Row);
@@ -68,6 +68,8 @@ public:
   BMP(BMP& Input);
   ~BMP();
   RGBApixel* operator()(int i, int j);
+
+  BMP& operator= (const BMP&) = delete;
 
   RGBApixel GetPixel(int i, int j) const;
   bool SetPixel(int i, int j, RGBApixel NewPixel);
