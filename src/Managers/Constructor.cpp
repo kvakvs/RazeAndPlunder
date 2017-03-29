@@ -209,30 +209,30 @@ bool Constructor::supply_being_built() {
 
 void BuildQueue::remove(size_t i) {
   auto& qitem = item(i);
-  rnp::log()->trace(MODULE_PREFIX "queue remove {}", 
-                    rnp::remove_race(qitem.to_build_));
+  //rnp::log()->trace(MODULE_PREFIX "queue remove {}", 
+  //                  rnp::remove_race(qitem.to_build_));
   q_items_.erase(q_items_.begin() + i);
 }
 
 void BuildQueue::emplace_back(const BWAPI::UnitType& tb, int assignedf, int workerid) {
-  rnp::log()->trace(MODULE_PREFIX "queue emp_back {}", rnp::remove_race(tb));
+  //rnp::log()->trace(MODULE_PREFIX "queue emp_back {}", rnp::remove_race(tb));
   q_items_.emplace_back(tb, assignedf, workerid);
 }
 
 void ConstructionPlan::push_front(const BWAPI::UnitType& ut) {
-  rnp::log()->trace(MODULE_PREFIX "plan push_front {}", rnp::remove_race(ut));
+  //rnp::log()->trace(MODULE_PREFIX "plan push_front {}", rnp::remove_race(ut));
   units_.insert(units_.begin(), ut);
 }
 
 void ConstructionPlan::remove(size_t i) {
   auto& ut = item(i);
-  rnp::log()->trace(MODULE_PREFIX "plan remove {}", rnp::remove_race(ut));
+  //rnp::log()->trace(MODULE_PREFIX "plan remove {}", rnp::remove_race(ut));
   units_.erase(units_.begin() + i);
 }
 
 void Constructor::lock(int build_plan_index, int unit_id) {
   auto& type = plan_.item(build_plan_index);
-  rnp::log()->trace(MODULE_PREFIX "lock {}", type.toString());
+  //rnp::log()->trace(MODULE_PREFIX "lock {}", type.toString());
   plan_.remove(build_plan_index);
 
   queue_.emplace_back(type, Broodwar->getFrameCount(), unit_id);
@@ -486,12 +486,12 @@ bool Constructor::is_covered_by_detector(TilePosition pos) {
 }
 
 void Constructor::add_building(UnitType type) {
-  rnp::log()->trace("ctor: add building {}", type.toString());
+  //rnp::log()->trace(MODULE_PREFIX "add building {}", type.toString());
   plan_.push_back(type);
 }
 
 void Constructor::add_building_first(UnitType type) {
-  rnp::log()->trace("ctor: add building (first) {}", type.toString());
+  //rnp::log()->trace(MODULE_PREFIX "add building (first) {}", type.toString());
   plan_.push_front(type);
 }
 

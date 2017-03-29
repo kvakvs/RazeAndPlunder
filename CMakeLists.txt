@@ -11,6 +11,7 @@ SET(RNP_VERSION 0.1)
 
 if (RNP_MSVC)
     # Parallel build /MP, debug info /Zi
+    SET(ENV{CL} /MP)
     SET(RNP_COMPILE_FLAGS ${RNP_COMPILE_FLAGS}
             /DRNP_VERSION="${RNP_VERSION}"
             /MP /Zi /Gy /DNOMINMAX

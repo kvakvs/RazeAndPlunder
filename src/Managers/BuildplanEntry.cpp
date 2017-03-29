@@ -32,7 +32,7 @@ std::string BuildplanEntry::to_string() const {
 
 void Buildplan::drop(size_t i) {
   auto iter = plan_.begin() + i;
-  rnp::log()->trace("buildplan: drop {}", iter->to_string());
+  //rnp::log()->trace("buildplan: drop {}", iter->to_string());
   plan_.erase(iter);
 }
 
