@@ -10,7 +10,7 @@
 #include "Utils/Profiler.h"
 
 using namespace BWAPI;
-#define MODULE_PREFIX "{constructor} "
+#define MODULE_PREFIX "(constructor) "
 
 Constructor::Constructor(): plan_(), queue_() {
   last_call_frame_ = Broodwar->getFrameCount();
