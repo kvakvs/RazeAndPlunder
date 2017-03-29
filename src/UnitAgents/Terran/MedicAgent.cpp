@@ -5,36 +5,38 @@
 
 using namespace BWAPI;
 
-bool MedicAgent::useAbilities() {
+bool MedicAgent::use_abilities() {
   //Check heal
-  double bestDist = -1;
-  Unit toHeal = nullptr;
+  double best_dist = -1;
+  Unit to_heal = nullptr;
 
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->isAlive() && a->isDamaged()) {
-      if (isMedicTarget(a->getUnit()) && a->getUnitID() != unit_->getID()) {
-        Unit cUnit = a->getUnit();
-        if (cUnit->exists() && cUnit->getHitPoints() > 0) {
-          double dist = unit_->getDistance(cUnit);
-          if (bestDist < 0 || dist < bestDist) {
-            bestDist = dist;
-            toHeal = cUnit;
+  act::for_each_actor<BaseAgent>(
+    [this,&best_dist,&to_heal](const BaseAgent* a) {
+      if (a->is_damaged()) {
+        if (is_medic_target(a->get_unit()) 
+          && a->get_unit_id() != unit_->getID()) 
+        {
+          auto c_unit = a->get_unit();
+          if (c_unit->exists() && c_unit->getHitPoints() > 0) {
+            double dist = unit_->getDistance(c_unit);
+            if (best_dist < 0 || dist < best_dist) {
+              best_dist = dist;
+              to_heal = c_unit;
+            }
           }
         }
       }
-    }
-  }
+    });
 
-  if (bestDist >= 0 && toHeal != nullptr) {
-    unit_->useTech(TechTypes::Healing, toHeal);
+  if (best_dist >= 0 && to_heal != nullptr) {
+    unit_->useTech(TechTypes::Healing, to_heal);
     return true;
   }
 
   return false;
 }
 
-bool MedicAgent::isMedicTarget(Unit mUnit) {
+bool MedicAgent::is_medic_target(Unit mUnit) {
   if (not mUnit->getType().isOrganic()) {
     //Can only heal organic units
     return false;

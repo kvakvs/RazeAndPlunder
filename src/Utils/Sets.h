@@ -3,26 +3,26 @@
 #include <BWAPI.h>
 #include <BWAPI/SetContainer.h>
 #include "MainAgents/BaseAgent.h"
+#include <memory>
 
 /** Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 
-class BaseLocationItem {
+class BaseLocation {
 public:
-  explicit BaseLocationItem(BWAPI::TilePosition pos) : baseLocation(pos) {
-    frameVisited = BWAPI::Broodwar->getFrameCount();
+  using Ptr = std::unique_ptr< BaseLocation >;
+  struct Hasher {
+    size_t operator () (const Ptr &rgn) const {
+      return std::hash<int>()(rgn->base_location_.x)
+        ^ std::hash<int>()(rgn->base_location_.y);
+    }
+  };
+  using Set = std::unordered_set < Ptr >;
+
+  explicit BaseLocation(BWAPI::TilePosition pos) : base_location_(pos) {
+    frame_visited_ = BWAPI::Broodwar->getFrameCount();
   };
 
-  BWAPI::TilePosition baseLocation;
-  int frameVisited = 0;
-};
-
-class BaseLocationSet : public BWAPI::SetContainer<BaseLocationItem*, std::hash<void*>> {
-public:
-
-};
-
-class Agentset : public BWAPI::SetContainer<BaseAgent*, std::hash<void*>> {
-public:
-
+  BWAPI::TilePosition base_location_;
+  int frame_visited_ = 0;
 };

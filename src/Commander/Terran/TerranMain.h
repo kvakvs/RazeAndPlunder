@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Commander/Commander.h"
-#include "../Squad.h"
 
 /**  This is the Commander class for a defensive Marine/Siege Tank/Goliath
  * based strategy.
@@ -11,22 +10,22 @@
 class TerranMain : public Commander {
 
 private:
-  Squad::Ptr main_sq_;
-  Squad::Ptr secondary_sq_;
-  Squad::Ptr backup1_sq_;
-  Squad::Ptr backup2_sq_;
-  Squad::Ptr scout1_sq_;
-  Squad::Ptr scout2_sc_;
+  act::ActorId main_sq_;
+  act::ActorId secondary_sq_;
+  act::ActorId backup1_sq_;
+  act::ActorId backup2_sq_;
+  act::ActorId rush_sq_;
+  act::ActorId scout2_sq_;
 
 public:
   TerranMain();
   ~TerranMain();
 
   // Called each update to issue orders.
-  void on_frame() override;
+  void tick() override;
 
   // Returns the unique id for this strategy. 
-  static std::string getStrategyId() {
+  static std::string get_strategy_id() {
     return "TerranMain";
   }
 };

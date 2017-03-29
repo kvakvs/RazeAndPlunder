@@ -3,30 +3,26 @@
 #include "Managers/ExplorationManager.h"
 #include "Influencemap/MapManager.h"
 #include "Managers/BuildingPlacer.h"
-//#include "Commander/Commander.h"
-//#include "Pathfinding/Pathfinder.h"
 #include "Managers/Upgrader.h"
 #include "Managers/ResourceManager.h"
 #include "Utils/Profiler.h"
 #include "Pathfinding/NavigationAgent.h"
 #include "Utils/Config.h"
 #include "Commander/StrategySelector.h"
-//#include "Utils/Statistics.h"
 
 #include "Managers/AgentManager.h"
 
-//#include <shlwapi.h>
-//#include "BWEM/mapPrinter.h"
 #include "Glob.h"
+#include "RnpConst.h"
 
 using namespace BWAPI;
 
 RnpBot* RnpBot::singleton_ = nullptr;
 
 RnpBot::RnpBot()
-    : BWAPI::AIModule(), bwem_(BWEM::Map::Instance())
-    , commander_(), agent_manager_(), building_placer_(), constructor_()
-    , exploration_(), map_manager_(), navigation_(), pathfinder_()
+    : BWAPI::AIModule(), bwem_(&BWEM::Map::Instance())
+    , commander_id_(), agent_manager_id_(), exploration_id_(), constructor_id_()
+    , building_placer_(), map_manager_(), navigation_(), pathfinder_()
     , profiler_(), resource_manager_(), statistics_(), strategy_selector_()
     , upgrader_()
 {
@@ -43,20 +39,59 @@ void RnpBot::init_early_singletons() {
 }
 
 void RnpBot::init_singletons() {
-  agent_manager_ = std::make_unique<AgentManager>();
-  commander_ = strategy_selector_->getStrategy();
+  agent_manager_ptr_ = act::spawn_get_ptr<AgentManager>(ActorFlavour::Singleton);
+  agent_manager_id_ = agent_manager_ptr_->self();
+
+  commander_ptr_ = strategy_selector_->get_strategy();
+  commander_id_ = commander_ptr_->self();
+
+  exploration_ptr_ = act::spawn_get_ptr<ExplorationManager>(ActorFlavour::Singleton);
+  exploration_id_ = exploration_ptr_->self();
+
+  constructor_ptr_ = act::spawn_get_ptr<Constructor>(ActorFlavour::Singleton);
+  constructor_id_ = constructor_ptr_->self();
+
   building_placer_ = std::make_unique<BuildingPlacer>();
-  exploration_ = std::make_unique<ExplorationManager>();
-  constructor_ = std::make_unique<Constructor>();
   upgrader_ = std::make_unique<Upgrader>();
   resource_manager_ = std::make_unique<ResourceManager>();
   pathfinder_ = std::make_unique<Pathfinder>();
   navigation_ = std::make_unique<NavigationAgent>();
+}
 
-  ai_loop_.register_initial_units();
+void RnpBot::on_start_init_map() {
+  rnp::log()->info("Map initialization: {}", Broodwar->mapFileName());
+
+  if (bwem_->Initialized()) {
+    bwem_->Destroy();
+    bwem_ = &BWEM::Map::Instance();
+  }
+  bwem_->Initialize();
+  bwem_->EnableAutomaticPathAnalysis();
+    
+  auto starting_locations_ok = bwem_->FindBasesForStartingLocations();
+  assert(starting_locations_ok);
+
+  rnp::log()->info("Map dimensions {0}x{1}",
+                   Broodwar->mapWidth(), Broodwar->mapHeight());
+}
+
+void RnpBot::on_start_setup_game() {
+  Broodwar->setCommandOptimizationLevel(2); //0--3
+
+  msg::commander::modify_commander(
+    [](Commander* c) {
+      c->toggle_squads_debug();
+      c->toggle_buildplan_debug();
+    });
+
+  //Set speed
+  speed_ = 0;
+  Broodwar->setLocalSpeed(speed_);
 }
 
 void RnpBot::onStart() {
+  print_help();
+  
   try {
     init_early_singletons();
 
@@ -73,17 +108,8 @@ void RnpBot::onStart() {
     //Uncomment to enable complete map information
     //Broodwar->enableFlag(Flag::CompleteMapInformation);
 
-    //
     // Analyze map // using BWTA
-    // 
-    std::cout << BOT_PREFIX "Map initialization: " 
-              << Broodwar->mapFileName() << std::endl;
-    Broodwar << "Map initialization..." << std::endl;
-
-    bwem_.Initialize();
-    bwem_.EnableAutomaticPathAnalysis();
-    bool starting_locations_ok = bwem_.FindBasesForStartingLocations();
-    assert(starting_locations_ok);
+    on_start_init_map();
 
 //    BWEM::utils::MapPrinter::Initialize(&bwem_);
 //    BWEM::utils::printMap(theMap);      // will print the map into the file <StarCraftFolder>bwapi-data/map.bmp
@@ -93,38 +119,14 @@ void RnpBot::onStart() {
 
     init_singletons();
 
-    //Fill pathfinder
-    for (auto& area : bwem_.Areas()) {
-      for (auto& base : area.Bases()) {
-        auto pos = base.Center();
-        pathfinder_->requestPath(
-          Broodwar->self()->getStartLocation(), 
-          TilePosition(pos));
-      }
-    }
-
     map_manager_ = std::make_unique<MapManager>();
 
-    //Add the units we have from start to agent manager
-    for (auto& u : Broodwar->self()->getUnits()) {
-      rnp::agent_manager()->addAgent(u);
-    }
+    ai_loop_.register_initial_units();
 
     running_ = true;
 
-    Broodwar->setCommandOptimizationLevel(2); //0--3
-
-    //Debug mode. Active panels.
-    commander_->toggle_squads_debug();
-    commander_->toggle_buildplan_debug();
-    upgrader_->toggleDebug();
-    ai_loop_.toggleUnitDebug();
-    //loop.toggleBPDebug();
-    //End Debug mode
-
-    //Set speed
-    speed_ = 0;
-    Broodwar->setLocalSpeed(speed_);
+    // Set debug options and game speed
+    on_start_setup_game();
 
     profiler_->end("OnInit");
   }
@@ -133,36 +135,36 @@ void RnpBot::onStart() {
   }
 }
 
-void RnpBot::gameStopped() {
-  pathfinder_->stop();
-  profiler_->dumpToFile();
+void RnpBot::game_stopped() {
+  profiler_->dump_to_file();
   running_ = false;
+  game_finished_ = true;
 }
 
 void RnpBot::onEnd(bool isWinner) {
   if (Broodwar->elapsedTime() / 60 < 4) return;
 
-  int win = 0;
-  if (isWinner) win = 1;
-  if (Broodwar->elapsedTime() / 60 >= 80) win = 2;
+  auto win = isWinner ? rnp::MatchResult::Win
+                      : rnp::MatchResult::Loss;
+  if (Broodwar->elapsedTime() / 60 >= 80) {
+    win = rnp::MatchResult::Draw;
+  }
 
-  strategy_selector_->addResult(win);
-  strategy_selector_->saveStats();
-  statistics_->saveResult(win);
+  strategy_selector_->add_result(win);
+  strategy_selector_->save_stats();
+  statistics_->save_result(win);
 
-  gameStopped();
+  game_stopped();
 }
 
 void RnpBot::onFrame() {
-  profiler_->start("OnFrame");
-
   if (not running_) {
     //Game over. Do nothing.
     return;
   }
   if (not Broodwar->isInGame()) {
     //Not in game. Do nothing.
-    gameStopped();
+    game_stopped();
     return;
   }
   if (Broodwar->isReplay()) {
@@ -170,13 +172,14 @@ void RnpBot::onFrame() {
     return;
   }
 
+  profiler_->start("OnFrame");
   if (Broodwar->elapsedTime() / 60 >= 81) {
     //Stalled game. Leave it.
     Broodwar->leaveGame();
     return;
   }
 
-  ai_loop_.computeActions();
+  ai_loop_.on_frame();
   ai_loop_.show_debug();
 
   Config::getInstance()->displayBotName();
@@ -184,23 +187,34 @@ void RnpBot::onFrame() {
   profiler_->end("OnFrame");
 }
 
+void RnpBot::print_help() {
+  rnp::log()->info("Console commands: d - all debug, dpf - pot field debug, "
+    "dbp - building debug, dm - map debug, spf# - set pathfinding, "
+    "sq# - squad# debug, + ++ - -- speed setting, dup - upgrader debug, "
+    "du - units debug, ds - toggle all squads debug, db - buildplan debug");
+}
+
 void RnpBot::onSendText(std::string text) {
   if (text == "a") {
-    rnp::commander()->force_begin_attack();
+    msg::commander::modify_commander(
+      [](Commander* c) { c->force_begin_attack(); });
   }
   else if (text == "p") {
     profile_ = !profile_;
   }
   else if (text == "d") {
-    ai_loop_.toggleDebug();
+    ai_loop_.toggle_debug();
   }
-  else if (text == "pf"
+  else if (text == "dpf"
            && NavigationAgent::pathfinding_version_
-              == NavigationAgent::PFType::HybridPF) {
-    ai_loop_.togglePFDebug();
+              == NavigationAgent::PFType::HybridPotentialField) {
+    ai_loop_.toggle_potential_fields_debug();
   }
-  else if (text == "bp") {
-    ai_loop_.toggleBPDebug();
+  else if (text == "dbp") {
+    ai_loop_.toggle_building_placement_debug();
+  }
+  else if (text == "dm") {
+    ai_loop_.toggle_mapmanager_debug();
   }
   else if (text == "spf") {
     int pfver = static_cast<int>(NavigationAgent::pathfinding_version_);
@@ -210,11 +224,11 @@ void RnpBot::onSendText(std::string text) {
   }
   else if (text.substr(0, 2) == "sq") {
     if (text == "sq") {
-      ai_loop_.setDebugSQ(-1);
+      ai_loop_.set_debug_sq(-1);
     }
     else {
       int id = atoi(&text[2]);
-      ai_loop_.setDebugSQ(id);
+      ai_loop_.set_debug_sq(id);
     }
   }
   else if (text == "+") {
@@ -240,20 +254,22 @@ void RnpBot::onSendText(std::string text) {
     Broodwar << "Changed game speed: " << speed_ << std::endl;
     Broodwar->setLocalSpeed(speed_);
   }
-  else if (text == "t") {
-    upgrader_->toggleDebug();
+  else if (text == "dup") {
+    upgrader_->toggle_debug();
   }
-  else if (text == "s") {
-    rnp::commander()->toggle_squads_debug();
+  else if (text == "ds") {
+    msg::commander::modify_commander(
+      [](Commander* c) { c->toggle_squads_debug(); });
   }
-  else if (text == "b") {
-    rnp::commander()->toggle_buildplan_debug();
+  else if (text == "db") {
+    msg::commander::modify_commander(
+      [](Commander* c) { c->toggle_buildplan_debug(); });
   }
-  else if (text == "i") {
-    ai_loop_.toggleUnitDebug();
+  else if (text == "du") {
+    ai_loop_.toggle_unit_debug();
   }
   else {
-    Broodwar << "You typed '" << text << "'!" << std::endl;
+    Broodwar << "Not a recognized command '" << text << "'" << std::endl;
   }
 }
 
@@ -279,8 +295,11 @@ void RnpBot::onUnitDiscover(BWAPI::Unit unit) {
   if (Broodwar->isReplay() || Broodwar->getFrameCount() <= 1) return;
 
   if (unit->getPlayer()->getID() != Broodwar->self()->getID()) {
-    if (not unit->getPlayer()->isNeutral() && not unit->getPlayer()->isAlly(Broodwar->self())) {
-      exploration_->on_unit_spotted(unit);
+    if (not unit->getPlayer()->isNeutral() 
+        && not unit->getPlayer()->isAlly(Broodwar->self())) 
+    {
+      ExplorationManager::modify(
+        [unit](ExplorationManager* e) { e->on_unit_spotted(unit); });
     }
   }
 }
@@ -293,8 +312,11 @@ void RnpBot::onUnitShow(BWAPI::Unit unit) {
   if (Broodwar->isReplay() || Broodwar->getFrameCount() <= 1) return;
 
   if (unit->getPlayer()->getID() != Broodwar->self()->getID()) {
-    if (not unit->getPlayer()->isNeutral() && not unit->getPlayer()->isAlly(Broodwar->self())) {
-      exploration_->on_unit_spotted(unit);
+    if (not unit->getPlayer()->isNeutral() 
+        && not unit->getPlayer()->isAlly(Broodwar->self())) 
+    {
+      ExplorationManager::modify(
+        [unit](ExplorationManager* e) { e->on_unit_spotted(unit); });
     }
   }
 }
@@ -304,8 +326,8 @@ void RnpBot::onUnitHide(BWAPI::Unit unit) {
 }
 
 void RnpBot::onUnitCreate(BWAPI::Unit unit) {
-  if (unit->getPlayer()->getID() == Broodwar->self()->getID()) {
-    ai_loop_.addUnit(unit);
+  if (rnp::is_my_unit(unit)) {
+    ai_loop_.on_unit_added(unit);
   }
 }
 
@@ -318,28 +340,28 @@ void RnpBot::onUnitDestroy(BWAPI::Unit unit) {
 
   try {
     if (unit->getType().isMineralField()) {
-      bwem_.OnMineralDestroyed(unit);
+      bwem_->OnMineralDestroyed(unit);
     }
     else if (unit->getType().isSpecialBuilding()) {
-      bwem_.OnStaticBuildingDestroyed(unit);
+      bwem_->OnStaticBuildingDestroyed(unit);
     }
   }
   catch (const std::exception& e) {
     Broodwar << "EXCEPTION: " << e.what() << std::endl;
   }
 
-  ai_loop_.unitDestroyed(unit);
+  ai_loop_.on_unit_destroyed(unit);
 }
 
 void RnpBot::onUnitMorph(BWAPI::Unit unit) {
   if (Broodwar->isReplay() || Broodwar->getFrameCount() <= 1) return;
 
-  if (unit->getPlayer()->getID() == Broodwar->self()->getID()) {
-    if (Constructor::isZerg()) {
-      ai_loop_.morphUnit(unit);
+  if (rnp::is_my_unit(unit)) {
+    if (Constructor::is_zerg()) {
+      ai_loop_.on_unit_morphed(unit);
     }
     else {
-      ai_loop_.addUnit(unit);
+      ai_loop_.on_unit_added(unit);
     }
   }
 }

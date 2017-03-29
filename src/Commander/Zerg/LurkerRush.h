@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 
 #include "Commander/Commander.h"
 #include "../Squad.h"
@@ -10,10 +11,10 @@
 class LurkerRush : public Commander {
 
 private:
-  Squad::Ptr mainSquad;
-  Squad::Ptr l1;
-  Squad::Ptr sc1;
-  Squad::Ptr sc2;
+  Squad::Ptr main_sq_;
+  Squad::Ptr l1_sq_;
+  Squad::Ptr sc1_sq_;
+  Squad::Ptr sc2_sq_;
 
 public:
   LurkerRush();
@@ -25,7 +26,9 @@ public:
   void on_frame() override;
 
   // Returns the unique id for this strategy. 
-  static std::string getStrategyId() {
+  static std::string get_strategy_id() {
     return "LurkerRush";
   }
 };
+
+#endif // 0

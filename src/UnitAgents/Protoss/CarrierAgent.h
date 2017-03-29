@@ -16,5 +16,5 @@ public:
     agent_type_ = "CarrierAgent";
   }
 
-  bool useAbilities();
+  bool use_abilities();
 };

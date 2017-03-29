@@ -13,5 +13,5 @@ public:
     agent_type_ = "LurkerAgent";
   }
 
-  bool useAbilities() override;
+  bool use_abilities() override;
 };

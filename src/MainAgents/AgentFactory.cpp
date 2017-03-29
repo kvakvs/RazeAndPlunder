@@ -37,257 +37,234 @@
 
 using namespace BWAPI;
 
-bool AgentFactory::instanceFlag = false;
-AgentFactory* AgentFactory::instance = nullptr;
+bool AgentFactory::instance_flag_ = false;
+AgentFactory* AgentFactory::instance_ = nullptr;
 
 AgentFactory::AgentFactory() {
 
 }
 
 AgentFactory::~AgentFactory() {
-  instanceFlag = false;
-  delete instance;
+  instance_flag_ = false;
+  delete instance_;
 }
 
-AgentFactory* AgentFactory::getInstance() {
-  if (not instanceFlag) {
-    instance = new AgentFactory();
-    instanceFlag = true;
+AgentFactory* AgentFactory::get_instance() {
+  if (not instance_flag_) {
+    instance_ = new AgentFactory();
+    instance_flag_ = true;
   }
-  return instance;
+  return instance_;
 }
 
-BaseAgent* AgentFactory::createAgent(Unit unit) {
+act::ActorId AgentFactory::create_agent(Unit unit) {
   if (Broodwar->self()->getRace().getID() == Races::Terran.getID()) {
-    return createTerranAgent(unit);
+    return create_terran_agent(unit);
   }
   if (Broodwar->self()->getRace().getID() == Races::Protoss.getID()) {
-    return createProtossAgent(unit);
+    return create_protoss_agent(unit);
   }
   if (Broodwar->self()->getRace().getID() == Races::Zerg.getID()) {
-    return createZergAgent(unit);
+    return create_zerg_agent(unit);
   }
 
   //Default agents
   if (unit->getType().isWorker()) {
-    return new WorkerAgent(unit);
+    return act::spawn<WorkerAgent>(ActorFlavour::Unit, unit);
   }
-  else if (unit->getType().isBuilding()) {
-    return new StructureAgent(unit);
+  if (unit->getType().isBuilding()) {
+    return act::spawn<StructureAgent>(ActorFlavour::Unit, unit);
   }
-  else {
-    return new UnitAgent(unit);
-  }
+  return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
 }
 
-BaseAgent* AgentFactory::createZergAgent(Unit unit) {
+act::ActorId AgentFactory::create_zerg_agent(Unit unit) {
   UnitType type = unit->getType();
 
   if (type.isWorker()) {
-    return new WorkerAgent(unit);
+    return act::spawn<WorkerAgent>(ActorFlavour::Unit, unit);
   }
-  else if (type.isBuilding()) {
+  if (type.isBuilding()) {
     //Add agents for special buildings here
     if (type.getID() == UnitTypes::Zerg_Hatchery.getID()) {
-      return new HatcheryAgent(unit);
+      return act::spawn<HatcheryAgent>(ActorFlavour::Unit, unit);
     }
-    else if (type.getID() == UnitTypes::Zerg_Lair.getID()) {
-      return new HatcheryAgent(unit);
+    if (type.getID() == UnitTypes::Zerg_Lair.getID()) {
+      return act::spawn<HatcheryAgent>(ActorFlavour::Unit, unit);
     }
-    else if (type.getID() == UnitTypes::Zerg_Hive.getID()) {
-      return new HatcheryAgent(unit);
+    if (type.getID() == UnitTypes::Zerg_Hive.getID()) {
+      return act::spawn<HatcheryAgent>(ActorFlavour::Unit, unit);
     }
-    else if (type.getID() == UnitTypes::Zerg_Extractor.getID()) {
-      return new RefineryAgent(unit);
+    if (type.getID() == UnitTypes::Zerg_Extractor.getID()) {
+      return act::spawn<RefineryAgent>(ActorFlavour::Unit, unit);
     }
-    else {
-      //Default structure agent
-      return new StructureAgent(unit);
-    }
+    //Default structure agent
+    return act::spawn<StructureAgent>(ActorFlavour::Unit, unit);
   }
-  else {
-    if (type.getID() == UnitTypes::Zerg_Overlord.getID()) {
-      return new UnitAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Zergling.getID()) {
-      return new UnitAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Hydralisk.getID()) {
-      return new HydraliskAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Mutalisk.getID()) {
-      return new MutaliskAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Lurker.getID()) {
-      return new LurkerAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Queen.getID()) {
-      return new QueenAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Ultralisk.getID()) {
-      return new UnitAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Guardian.getID()) {
-      return new UnitAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Devourer.getID()) {
-      return new UnitAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Defiler.getID()) {
-      return new DefilerAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Scourge.getID()) {
-      return new UnitAgent(unit);
-    }
-    else if (type.getID() == UnitTypes::Zerg_Infested_Terran.getID()) {
-      return new UnitAgent(unit);
-    }
-    else {
-      //Default unit agent
-      return new UnitAgent(unit);
-    }
+
+  if (type.getID() == UnitTypes::Zerg_Overlord.getID()) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
   }
-  return nullptr;
+  if (type.getID() == UnitTypes::Zerg_Zergling.getID()) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Hydralisk.getID()) {
+    return act::spawn<HydraliskAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Mutalisk.getID()) {
+    return act::spawn<MutaliskAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Lurker.getID()) {
+    return act::spawn<LurkerAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Queen.getID()) {
+    return act::spawn<QueenAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Ultralisk.getID()) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Guardian.getID()) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Devourer.getID()) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Defiler.getID()) {
+    return act::spawn<DefilerAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Scourge.getID()) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (type.getID() == UnitTypes::Zerg_Infested_Terran.getID()) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  //Default unit agent
+  return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
 }
 
-BaseAgent* AgentFactory::createTerranAgent(Unit unit) {
+act::ActorId AgentFactory::create_terran_agent(Unit unit) {
   if (unit->getType().isWorker()) {
-    return new WorkerAgent(unit);
+    return act::spawn<WorkerAgent>(ActorFlavour::Unit, unit);
   }
-  else if (unit->getType().isBuilding()) {
+  if (unit->getType().isBuilding()) {
     //Add agents for special buildings here
-    if (isOfType(unit, UnitTypes::Terran_Command_Center)) {
-      return new CommandCenterAgent(unit);
+    if (is_of_type(unit, UnitTypes::Terran_Command_Center)) {
+      return act::spawn<CommandCenterAgent>(ActorFlavour::Unit, unit);
     }
-    else if (isOfType(unit, UnitTypes::Terran_Comsat_Station)) {
-      return new ComsatAgent(unit);
+    if (is_of_type(unit, UnitTypes::Terran_Comsat_Station)) {
+      return act::spawn<ComsatAgent>(ActorFlavour::Unit, unit);
     }
-    else if (isOfType(unit, UnitTypes::Terran_Refinery)) {
-      return new RefineryAgent(unit);
+    if (is_of_type(unit, UnitTypes::Terran_Refinery)) {
+      return act::spawn<RefineryAgent>(ActorFlavour::Unit, unit);
     }
-    else if (isOfType(unit, UnitTypes::Terran_Bunker)) {
+    if (is_of_type(unit, UnitTypes::Terran_Bunker)) {
       //Make sure we set the squad id to the bunker, so we
       //can remove the squad if the bunker is destroyed.
-      int squadID = rnp::commander()->add_bunker_squad();
-      BaseAgent* a = new StructureAgent(unit);
-      a->setSquadID(squadID);
+      auto squad_id = Commander::add_bunker_squad();
+      auto a = act::spawn<StructureAgent>(ActorFlavour::Unit, unit);
+      msg::unit::set_squad(a, squad_id);
       return a;
     }
-    else {
-      //Default structure agent
-      return new StructureAgent(unit);
-    }
+    //Default structure agent
+    return act::spawn<StructureAgent>(ActorFlavour::Unit, unit);
   }
-  else {
-    if (isOfType(unit, UnitTypes::Terran_Siege_Tank_Tank_Mode)) {
-      return new SiegeTankAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Siege_Tank_Siege_Mode)) {
-      return new SiegeTankAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Marine)) {
-      return new MarineAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Firebat)) {
-      return new FirebatAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Medic)) {
-      return new MedicAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Vulture)) {
-      return new VultureAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Science_Vessel)) {
-      return new ScienceVesselAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Battlecruiser)) {
-      return new BattlecruiserAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Wraith)) {
-      return new WraithAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Ghost)) {
-      return new GhostAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Goliath)) {
-      return new UnitAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Valkyrie)) {
-      return new UnitAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Terran_Dropship)) {
-      return new TransportAgent(unit);
-    }
-    else {
-      //Default unit agent
-      return new UnitAgent(unit);
-    }
+
+  if (is_of_type(unit, UnitTypes::Terran_Siege_Tank_Tank_Mode)) {
+    return act::spawn<SiegeTankAgent>(ActorFlavour::Unit, unit);
   }
-  return nullptr;
+  if (is_of_type(unit, UnitTypes::Terran_Siege_Tank_Siege_Mode)) {
+    return act::spawn<SiegeTankAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Marine)) {
+    return act::spawn<MarineAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Firebat)) {
+    return act::spawn<FirebatAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Medic)) {
+    return act::spawn<MedicAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Vulture)) {
+    return act::spawn<VultureAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Science_Vessel)) {
+    return act::spawn<ScienceVesselAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Battlecruiser)) {
+    return act::spawn<BattlecruiserAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Wraith)) {
+    return act::spawn<WraithAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Ghost)) {
+    return act::spawn<GhostAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Goliath)) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Valkyrie)) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Terran_Dropship)) {
+    return act::spawn<TransportAgent>(ActorFlavour::Unit, unit);
+  }
+  //Default unit agent
+  return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
 }
 
-BaseAgent* AgentFactory::createProtossAgent(Unit unit) {
+act::ActorId AgentFactory::create_protoss_agent(Unit unit) {
   if (unit->getType().isWorker()) {
-    return new WorkerAgent(unit);
+    return act::spawn<WorkerAgent>(ActorFlavour::Unit, unit);
   }
-  else if (unit->getType().isBuilding()) {
+  if (unit->getType().isBuilding()) {
     //Add agents for special buildings here
-    if (isOfType(unit, UnitTypes::Protoss_Nexus)) {
-      return new NexusAgent(unit);
+    if (is_of_type(unit, UnitTypes::Protoss_Nexus)) {
+      return act::spawn<NexusAgent>(ActorFlavour::Unit, unit);
     }
-    else if (isOfType(unit, UnitTypes::Protoss_Assimilator)) {
-      return new RefineryAgent(unit);
+    if (is_of_type(unit, UnitTypes::Protoss_Assimilator)) {
+      return act::spawn<RefineryAgent>(ActorFlavour::Unit, unit);
     }
-    else {
-      //Default structure agent
-      return new StructureAgent(unit);
-    }
+    //Default structure agent
+    return act::spawn<StructureAgent>(ActorFlavour::Unit, unit);
   }
-  else {
-    if (isOfType(unit, UnitTypes::Protoss_Zealot)) {
-      return new UnitAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_Dragoon)) {
-      return new UnitAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_Reaver)) {
-      return new ReaverAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_Observer)) {
-      return new UnitAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_Dark_Templar)) {
-      return new UnitAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_Scout)) {
-      return new UnitAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_Shuttle)) {
-      return new TransportAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_Corsair)) {
-      return new CorsairAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_Carrier)) {
-      return new CarrierAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_High_Templar)) {
-      return new HighTemplarAgent(unit);
-    }
-    else if (isOfType(unit, UnitTypes::Protoss_Arbiter)) {
-      return new UnitAgent(unit);
-    }
-    else {
-      //Default unit agent
-      return new UnitAgent(unit);
-    }
+
+  if (is_of_type(unit, UnitTypes::Protoss_Zealot)) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
   }
-  return nullptr;
+  if (is_of_type(unit, UnitTypes::Protoss_Dragoon)) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Protoss_Reaver)) {
+    return act::spawn<ReaverAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Protoss_Observer)) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Protoss_Dark_Templar)) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Protoss_Scout)) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Protoss_Shuttle)) {
+    return act::spawn<TransportAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Protoss_Corsair)) {
+    return act::spawn<CorsairAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Protoss_Carrier)) {
+    return act::spawn<CarrierAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Protoss_High_Templar)) {
+    return act::spawn<HighTemplarAgent>(ActorFlavour::Unit, unit);
+  }
+  if (is_of_type(unit, UnitTypes::Protoss_Arbiter)) {
+    return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
+  }
+  //Default unit agent
+  return act::spawn<UnitAgent>(ActorFlavour::Unit, unit);
 }
 
-bool AgentFactory::isOfType(Unit unit, UnitType type) {
-  if (unit->getType().getID() == type.getID()) {
-    return true;
-  }
-  return false;
+bool AgentFactory::is_of_type(Unit unit, UnitType type) {
+  return unit->getType().getID() == type.getID();
 }

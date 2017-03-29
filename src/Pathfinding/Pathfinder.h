@@ -3,6 +3,7 @@
 #include "MainAgents/BaseAgent.h"
 #include "PathObj.h"
 #include "Utils/cthread.h"
+#include "PathAB.h"
 
 class PathObjSet : public BWAPI::SetContainer<PathObj*, std::hash<void*>> {
 public:
@@ -17,32 +18,28 @@ public:
  *
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
-class Pathfinder : public CThread {
-  bool running;
-  PathObjSet pathObj;
-  bool isRunning();
+class Pathfinder {
+//  bool running;
+//  PathObjSet pathObj;
+//  bool isRunning();
 
-private:
-  PathObj* getPathObj(BWAPI::TilePosition start, BWAPI::TilePosition end);
+//private:
+//  PathObj* getPathObj(BWAPI::TilePosition start, BWAPI::TilePosition end);
 
 public:
   Pathfinder();
   ~Pathfinder();
 
   // Returns the ground distance between two positions. 
-  int getDistance(BWAPI::TilePosition start, BWAPI::TilePosition end);
+  static int get_dist(const BWAPI::TilePosition& start,
+                      const BWAPI::TilePosition& end);
 
-  void requestPath(BWAPI::TilePosition start, BWAPI::TilePosition end);
+//  void requestPath(BWAPI::TilePosition start, BWAPI::TilePosition end);
 
-  bool isReady(BWAPI::TilePosition start, BWAPI::TilePosition end);
+//  bool isReady(BWAPI::TilePosition start, BWAPI::TilePosition end);
 
   // Returns the path between two positions. 
-  BWEM::CPPath getPath(BWAPI::TilePosition start, BWAPI::TilePosition end);
-
-  // Stops the pathfinder thread. 
-  void stop();
-
-  // Thread update method. 
-  unsigned long Process(void* parameter) override;
+  static rnp::PathAB::Ptr get_path(const BWAPI::TilePosition& start,
+                                   const BWAPI::TilePosition& end);
 };
 

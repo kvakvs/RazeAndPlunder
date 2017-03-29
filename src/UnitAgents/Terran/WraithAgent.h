@@ -13,5 +13,5 @@ public:
     agent_type_ = "WraithAgent";
   }
 
-  bool useAbilities() override;
+  bool use_abilities() override;
 };

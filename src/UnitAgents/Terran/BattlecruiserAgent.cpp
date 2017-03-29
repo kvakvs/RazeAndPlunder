@@ -3,7 +3,7 @@
 
 using namespace BWAPI;
 
-bool BattlecruiserAgent::useAbilities() {
+bool BattlecruiserAgent::use_abilities() {
   //To prevent order spamming
   last_order_frame_ = Broodwar->getFrameCount();
 
@@ -13,7 +13,7 @@ bool BattlecruiserAgent::useAbilities() {
       if (unit_->getEnergy() >= gun.energyCost()) {
         int range = gun.getWeapon().maxRange();
 
-        Unit target = TargetingAgent::findHighprioTarget(this, range, true, true);
+        Unit target = TargetingAgent::find_highprio_target(this, range, true, true);
         if (target != nullptr) {
           Broodwar << "Yamato Gun used on " << target->getType().getName() << std::endl;
           unit_->useTech(gun, target);

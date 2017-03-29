@@ -15,14 +15,14 @@ Upgrader::Upgrader() {
 Upgrader::~Upgrader() {
 }
 
-void Upgrader::toggleDebug() {
+void Upgrader::toggle_debug() {
   debug_ = !debug_;
 }
 
-std::string Upgrader::format(std::string str) const {
+std::string Upgrader::format(const std::string& str) const {
   std::string res = str;
 
-  std::string raceName = Broodwar->self()->getRace().getName();
+  auto& raceName = Broodwar->self()->getRace().getName();
   if (str.find(raceName) == 0) {
     int i = str.find("_");
     res = str.substr(i + 1, str.length());
@@ -31,7 +31,7 @@ std::string Upgrader::format(std::string str) const {
   return res;
 }
 
-void Upgrader::printInfo() const {
+void Upgrader::debug_print_info() const {
   if (not debug_) return;
 
   //Precalc total lines
@@ -85,18 +85,18 @@ void Upgrader::printInfo() const {
 }
 
 
-bool Upgrader::checkUpgrade(BaseAgent* agent) {
-  if (agent->isAlive() && agent->getUnit()->isIdle()) {
-    Unit unit = agent->getUnit();
+bool Upgrader::check_upgrade(BaseAgent* agent) {
+  if (agent->is_alive() && agent->get_unit()->isIdle()) {
+    Unit unit = agent->get_unit();
 
     //Check techs
     for (int i = 0; i < (int)techs_.size(); i++) {
-      TechType type = techs_.at(i);
+      TechType type = techs_[i];
       if (Broodwar->self()->hasResearched(type)) {
         techs_.erase(techs_.begin() + i);
         return true;
       }
-      if (canResearch(type, unit)) {
+      if (can_research(type, unit)) {
         unit->research(type);
         return true;
       }
@@ -104,8 +104,8 @@ bool Upgrader::checkUpgrade(BaseAgent* agent) {
 
     //Check upgrades
     for (int i = 0; i < (int)upgrades_.size(); i++) {
-      UpgradeType type = upgrades_.at(i);
-      if (canUpgrade(type, unit)) {
+      UpgradeType type = upgrades_[i];
+      if (can_upgrade(type, unit)) {
         if (unit->upgrade(type)) {
           upgrades_.erase(upgrades_.begin() + i);
           return true;
@@ -117,7 +117,7 @@ bool Upgrader::checkUpgrade(BaseAgent* agent) {
   return false;
 }
 
-bool Upgrader::canUpgrade(UpgradeType type, Unit unit) {
+bool Upgrader::can_upgrade(UpgradeType type, Unit unit) {
   //1. Check if unit is idle
   if (not unit->isIdle()) {
     return false;
@@ -139,12 +139,14 @@ bool Upgrader::canUpgrade(UpgradeType type, Unit unit) {
   }
 
   //5. Check if some other building is already doing this upgrade
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->getUnit()->getUpgrade().getID() == type.getID()) {
-      return false;
-    }
-  }
+  auto loop_result = act::interruptible_for_each_actor<BaseAgent>(
+      [&type](const BaseAgent* a) -> act::ForEach {
+          if (a->get_unit()->getUpgrade().getID() == type.getID()) {
+            return act::ForEach::Break;
+          }
+          return act::ForEach::Continue;
+      });
+  if (loop_result == act::ForEachResult::Interrupted) { return false; }
 
   //6. Check if we are currently upgrading it
   if (Broodwar->self()->isUpgrading(type)) {
@@ -155,11 +157,11 @@ bool Upgrader::canUpgrade(UpgradeType type, Unit unit) {
   return true;
 }
 
-bool Upgrader::canResearch(TechType type, Unit unit) const {
+bool Upgrader::can_research(TechType type, Unit unit) const {
   //Seems Broodwar->canResearch bugs when Lurker Aspect is requested without
   //having an upgraded Lair.
   if (type.getID() == TechTypes::Lurker_Aspect.getID()) {
-    if (rnp::agent_manager()->countNoFinishedUnits(UnitTypes::Zerg_Lair) == 0) return false;
+    if (rnp::agent_manager()->get_finished_units_count(UnitTypes::Zerg_Lair) == 0) return false;
   }
 
   //1. Check if unit can do this upgrade
@@ -183,12 +185,14 @@ bool Upgrader::canResearch(TechType type, Unit unit) const {
   }
 
   //5. Check if some other building is already doing this upgrade
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->getUnit()->getTech().getID() == type.getID()) {
-      return false;
-    }
-  }
+  auto loop_result = act::interruptible_for_each_actor<BaseAgent>(
+      [&type](const BaseAgent* a) {
+          if (a->get_unit()->getTech().getID() == type.getID()) {
+            return act::ForEach::Break;
+          }
+          return act::ForEach::Continue;
+      });
+  if (loop_result == act::ForEachResult::Interrupted) { return false; }
 
   //6. Check if we are currently researching it
   if (Broodwar->self()->isResearching(type)) {
@@ -199,10 +203,10 @@ bool Upgrader::canResearch(TechType type, Unit unit) const {
   return true;
 }
 
-void Upgrader::addUpgrade(UpgradeType type) {
+void Upgrader::add_upgrade(UpgradeType type) {
   upgrades_.push_back(type);
 }
 
-void Upgrader::addTech(TechType type) {
+void Upgrader::add_tech(TechType type) {
   techs_.push_back(type);
 }

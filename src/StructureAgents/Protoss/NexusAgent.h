@@ -7,11 +7,11 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class NexusAgent : public StructureAgent {
-  bool hasSentWorkers = false;
+  bool has_sent_workers_ = false;
 
 public:
   explicit NexusAgent(BWAPI::Unit mUnit);
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 };

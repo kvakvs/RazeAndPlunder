@@ -2,7 +2,7 @@
 
 using namespace BWAPI;
 
-bool VultureAgent::useAbilities() {
+bool VultureAgent::use_abilities() {
   //Mines
   if (unit_->getSpiderMineCount() > 0 && Broodwar->getFrameCount() - mine_drop_frame_ >= 100) {
     //Check if enemy units are visible

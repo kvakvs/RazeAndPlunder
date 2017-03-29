@@ -24,7 +24,7 @@ private:
   std::map<std::string, ProfilerObj::Ptr> profile_objects_;
   bool active_ = true;
 
-  ProfilerObj* getObj(const std::string& mId);
+  ProfilerObj* get_profiler_obj(const std::string& mId);
 
 public:
   Profiler();
@@ -38,7 +38,7 @@ public:
   void end(const std::string& mId);
 
   // Stores all profiling data to file. 
-  void dumpToFile();
+  void dump_to_file();
 
   // Enable profiling. 
   void enable() {
@@ -48,5 +48,18 @@ public:
   // Disable profiling. 
   void disable() {
     active_ = false;
+  }
+};
+
+class ProfilerAuto {
+private:
+  std::string id_;
+  Profiler& p_;
+public:
+  ProfilerAuto(Profiler& p, const std::string& id): id_(id), p_(p) {
+    p_.start(id);
+  }
+  ~ProfilerAuto() {
+    p_.end(id_);
   }
 };

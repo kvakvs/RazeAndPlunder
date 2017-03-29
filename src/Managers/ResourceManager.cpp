@@ -3,7 +3,7 @@
 using namespace BWAPI;
 
 ResourceManager::ResourceManager() {
-  locks_.push_back(ResourceLock(Broodwar->self()->getRace().getCenter()));
+  locks_.push_back(ResourceLock(Broodwar->self()->getRace().getResourceDepot()));
 }
 
 ResourceManager::~ResourceManager() {
@@ -46,7 +46,7 @@ void ResourceManager::lockResources(UnitType type) {
 
 void ResourceManager::unlockResources(UnitType type) {
   for (int i = 0; i < (int)locks_.size(); i++) {
-    if (locks_.at(i).unit_.getID() == type.getID()) {
+    if (locks_[i].unit_.getID() == type.getID()) {
       locks_.erase(locks_.begin() + i);
       return;
     }
@@ -57,7 +57,7 @@ int ResourceManager::calcLockedMinerals() {
   int nMinerals = 0;
 
   for (int i = 0; i < (int)locks_.size(); i++) {
-    nMinerals += locks_.at(i).mineral_cost_;
+    nMinerals += locks_[i].mineral_cost_;
   }
 
   return nMinerals;
@@ -67,7 +67,7 @@ int ResourceManager::calcLockedGas() {
   int nGas = 0;
 
   for (int i = 0; i < (int)locks_.size(); i++) {
-    nGas += locks_.at(i).gas_cost_;
+    nGas += locks_[i].gas_cost_;
   }
 
   return nGas;

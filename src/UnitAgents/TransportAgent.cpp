@@ -3,91 +3,95 @@
 #include "Commander/Commander.h"
 #include "Commander/Squad.h"
 #include "Glob.h"
+#include "RnpUtil.h"
 
 using namespace BWAPI;
 
 TransportAgent::TransportAgent(Unit mUnit) {
   unit_ = mUnit;
   type_ = unit_->getType();
-  maxLoad = type_.spaceProvided();
-  currentLoad = 0;
+  max_load_ = type_.spaceProvided();
+  current_load_ = 0;
   unit_id_ = unit_->getID();
   agent_type_ = "TransportAgent";
 
-  goal_ = TilePosition(-1, -1);
+  goal_ = rnp::make_bad_position();
 }
 
-int TransportAgent::getCurrentLoad() {
-  auto sq = rnp::commander()->getSquad(squad_id_);
+int TransportAgent::get_current_load() {
+  auto sq = rnp::commander()->get_squad(squad_id_);
   if (sq) {
     int load = 0;
-    Agentset agents = sq->getMembers();
-    for (auto& a : agents) {
-      if (a->isAlive()) {
-        if (a->getUnit()->isLoaded()) {
-          if (a->getUnit()->getTransport()->getID() == unit_->getID()) {
-            load += a->getUnitType().spaceRequired();
-          }
+
+    act::for_each_in<BaseAgent>(
+      sq->get_members(),
+      [this,&load](const BaseAgent* a) {
+        auto aunit = a->get_unit();
+        if (a->is_alive()
+          && aunit->isLoaded()
+          && aunit->getTransport()->getID() == unit_->getID()) 
+        {
+          load += a->unit_type().spaceRequired();
         }
-      }
-    }
-    currentLoad = load;
+      });
+
+    current_load_ = load;
   }
 
-  return currentLoad;
+  return current_load_;
 }
 
-bool TransportAgent::isValidLoadUnit(BaseAgent* a) {
-  if (a->getUnitType().isFlyer()) return false;
-  if (a->getUnit()->isLoaded()) return false;
-  if (a->getUnit()->isBeingConstructed()) return false;
-  if (a->getUnitID() == unit_->getID()) return false;
+bool TransportAgent::is_valid_load_unit(const BaseAgent* a) const {
+  if (a->unit_type().isFlyer()) return false;
+  if (a->get_unit()->isLoaded()) return false;
+  if (a->get_unit()->isBeingConstructed()) return false;
+  if (a->get_unit_id() == unit_->getID()) return false;
   return true;
 }
 
-BaseAgent* TransportAgent::findUnitToLoad(int spaceLimit) {
-  BaseAgent* agent = nullptr;
-  double bestDist = 100000;
+const BaseAgent* TransportAgent::find_unit_to_load(int spaceLimit) {
+  const BaseAgent* agent = nullptr;
+  float best_dist = 1e+12f;
 
-  auto sq = rnp::commander()->getSquad(squad_id_);
+  auto sq = rnp::commander()->get_squad(squad_id_);
   if (sq) {
-    Agentset agents = sq->getMembers();
-    for (auto& a : agents) {
-      if (isValidLoadUnit(a)) {
-        double cDist = unit_->getPosition().getDistance(a->getUnit()->getPosition());
-        if (cDist < bestDist) {
-          bestDist = cDist;
+    act::for_each_in<BaseAgent>(
+      sq->get_members(),
+      [this,&agent,&best_dist](const BaseAgent* a) {
+        auto a_pos = a->get_unit()->getPosition();
+        float c_dist = rnp::distance(a_pos, unit_->getPosition());
+        if (c_dist < best_dist) {
+          best_dist = c_dist;
           agent = a;
         }
-      }
-    }
-  }
+      });
+  } // if sq
 
   return agent;
 }
 
-void TransportAgent::computeActions() {
+void TransportAgent::tick() {
   if (unit_->isBeingConstructed()) return;
 
-  int currentLoad = getCurrentLoad();
-  int eCnt = enemyUnitsVisible();
+  int current_load = get_current_load();
+  int enemy_count = any_enemy_units_visible();
 
-  if (eCnt == 0) {
-    if (currentLoad < maxLoad) {
-      BaseAgent* toLoad = findUnitToLoad(maxLoad - currentLoad);
-      if (toLoad != nullptr) {
-        unit_->load(toLoad->getUnit());
+  if (enemy_count == 0) {
+    if (current_load < max_load_) {
+      auto to_load = find_unit_to_load(max_load_ - current_load);
+      if (to_load != nullptr) {
+        unit_->load(to_load->get_unit());
         return;
       }
     }
   }
   else {
-    if (currentLoad > 0) {
-      TilePosition t = unit_->getTilePosition();
+    if (current_load > 0) {
+      TilePosition t(unit_->getTilePosition());
       unit_->unloadAll();
       return;
     }
   }
 
-  rnp::navigation()->computeMove(this, goal_);
+  rnp::navigation()->compute_move(this, goal_);
 }

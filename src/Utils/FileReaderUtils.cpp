@@ -1,6 +1,6 @@
 #include "FileReaderUtils.h"
-#include "../Managers/Constructor.h"
-#include "../Managers/ExplorationManager.h"
+#include "Managers/Constructor.h"
+#include "Managers/ExplorationManager.h"
 #include "Config.h"
 #include <fstream>
 
@@ -22,7 +22,7 @@ FileReaderUtils::FileReaderUtils() {
 std::string FileReaderUtils::getFilename(std::string subpath) {
   std::string filename = "N/A";
 
-  if (Constructor::isProtoss()) {
+  if (Constructor::is_protoss()) {
     if (ExplorationManager::enemy_is_protoss()) {
       filename = "PvP.txt";
       if (not fileExists(subpath, filename)) filename = "PvX.txt";
@@ -39,7 +39,7 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
       filename = "PvX.txt";
     }
   }
-  else if (Constructor::isTerran()) {
+  else if (Constructor::is_terran()) {
     if (ExplorationManager::enemy_is_protoss()) {
       filename = "TvP.txt";
       if (not fileExists(subpath, filename)) filename = "TvX.txt";
@@ -56,7 +56,7 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
       filename = "TvX.txt";
     }
   }
-  else if (Constructor::isZerg()) {
+  else if (Constructor::is_zerg()) {
     if (ExplorationManager::enemy_is_protoss()) {
       filename = "ZvP.txt";
       if (not fileExists(subpath, filename)) filename = "ZvX.txt";
@@ -190,8 +190,8 @@ Tokens FileReaderUtils::split(std::string line, std::string delimiter) {
 
 std::string FileReaderUtils::nameToHash(std::string name) {
   for (int i = 0; i < (int)nameHash.size(); i++) {
-    if (nameHash.at(i).key == name) {
-      return nameHash.at(i).value;
+    if (nameHash[i].key == name) {
+      return nameHash[i].value;
     }
   }
   return "N/A";
@@ -199,8 +199,8 @@ std::string FileReaderUtils::nameToHash(std::string name) {
 
 std::string FileReaderUtils::hashToName(std::string hash) {
   for (int i = 0; i < (int)nameHash.size(); i++) {
-    if (nameHash.at(i).value == hash) {
-      return nameHash.at(i).key;
+    if (nameHash[i].value == hash) {
+      return nameHash[i].key;
     }
   }
   return "N/A";

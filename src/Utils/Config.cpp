@@ -1,6 +1,6 @@
 #include "Config.h"
-#include "../Managers/Constructor.h"
-#include "../Managers/ExplorationManager.h"
+#include "Managers/Constructor.h"
+#include "Managers/ExplorationManager.h"
 
 using namespace BWAPI;
 

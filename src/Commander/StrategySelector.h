@@ -2,6 +2,10 @@
 
 #include "Commander/Commander.h"
 
+namespace rnp {
+  enum class MatchResult;
+}
+
 struct StrategyStats {
   std::string map_hash_;
   std::string map_name_;
@@ -27,10 +31,10 @@ struct StrategyStats {
 };
 
 struct Strategy {
-  BWAPI::Race race_;
+  BWAPI::Race race_ = BWAPI::Races::Unknown;
   std::string strat_id_;
 
-  Strategy(BWAPI::Race mRace, std::string mId) {
+  Strategy(BWAPI::Race mRace, std::string mId): strat_id_() {
     race_ = mRace;
     strat_id_ = mId;
   }
@@ -45,38 +49,42 @@ struct Strategy {
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class StrategySelector {
+private:
   std::vector<Strategy> strategies_;
   std::vector<StrategyStats> stats_;
 
   std::string current_strategy_id_;
-  bool active_;
+  bool active_ = false;
 
 private:
-  std::string getFilename();
-  std::string getWriteFilename();
-  void addEntry(std::string line);
-  int toInt(std::string& str);
+  static std::string get_filename();
 
-  void selectStrategy();
+  static std::string get_write_filename();
+
+  void add_entry(const std::string& line);
+
+  static int to_int(std::string& str);
+
+  void select_strategy();
 
 public:
   StrategySelector();
   ~StrategySelector();
 
   // Returns the selected strategy for this game. 
-  Commander::Ptr getStrategy();
+  const Commander* get_strategy();
 
   // Loads the stats file. 
-  void loadStats();
+  void load_stats();
 
   // Prints debug info to the screen. 
-  void printInfo();
+  void print_info() const;
 
   // Adds the result after a game is finished. 
-  void addResult(int win);
+  void add_result(rnp::MatchResult win);
 
   // Saves the stats file. 
-  void saveStats();
+  void save_stats();
 
   // Enable strategy updates. 
   void enable();

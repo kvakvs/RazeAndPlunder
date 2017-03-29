@@ -16,22 +16,23 @@ class AgentFactory {
 
 private:
   AgentFactory();
-  static AgentFactory* instance;
-  static bool instanceFlag;
-  BaseAgent* createTerranAgent(BWAPI::Unit unit);
-  BaseAgent* createProtossAgent(BWAPI::Unit unit);
-  BaseAgent* createZergAgent(BWAPI::Unit unit);
+  static AgentFactory* instance_;
+  static bool instance_flag_;
+
+  act::ActorId create_terran_agent(BWAPI::Unit unit);
+  act::ActorId create_protoss_agent(BWAPI::Unit unit);
+  act::ActorId create_zerg_agent(BWAPI::Unit unit);
 
 public:
   ~AgentFactory();
 
   // Returns the instance to the class. 
-  static AgentFactory* getInstance();
+  static AgentFactory* get_instance();
 
   // Creates the BaseAgent 
-  BaseAgent* createAgent(BWAPI::Unit unit);
+  act::ActorId create_agent(BWAPI::Unit unit);
 
   // Returns true if the unit is of the specified type. 
-  bool isOfType(BWAPI::Unit unit, BWAPI::UnitType type);
+  static bool is_of_type(BWAPI::Unit unit, BWAPI::UnitType type);
 
 };

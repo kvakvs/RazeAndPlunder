@@ -1,6 +1,24 @@
 #pragma once
 
 #include "BaseAgent.h"
+#include "MainAgents/WorkerAgentMsg.h"
+
+enum class WorkerState {
+  // Worker is gathering minerals. 
+  GATHER_MINERALS,
+  // Worker is gathering gas. 
+  GATHER_GAS,
+  // Worker is trying to find a buildspot for a requested building. 
+  FIND_BUILDSPOT,
+  // Worker is moving to a found buildspot. 
+  MOVE_TO_SPOT,
+  // Worker is constructing a building. 
+  CONSTRUCT,
+  // Worker is repairing a building (Terran only). 
+  REPAIRING,
+  // Worker is needed to attack an enemy intruder in a base. 
+  ATTACKING,
+};
 
 /** The WorkerAgent class handles all tasks that a worker, for example a Terran SCV, can perform. The tasks
  * involves gathering minerals and gas, move to a selected buildspot and construct the specified building,
@@ -8,68 +26,54 @@
  *
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
+// TODO: Refactor names, constructor initialization, state enum
 class WorkerAgent : public BaseAgent {
-
 private:
-  int currentState;
+  WorkerState current_state_;
 
-  BWAPI::UnitType toBuild;
-  BWAPI::TilePosition buildSpot;
-  BWAPI::TilePosition startSpot;
-  bool buildSpotExplored();
-  bool isBuilt();
-  int startBuildFrame;
+  BWAPI::UnitType to_build_;
+  BWAPI::TilePosition build_spot_;
+  BWAPI::TilePosition start_spot_;
+  int start_build_frame_;
+  int last_frame_;
 
-  bool checkRepair();
-  void computeSquadWorkerActions();
-
-  int lastFrame;
+  bool is_build_spot_explored() const;
+  bool is_built() const;
+  bool check_repair();
+  void compute_squad_worker_actions();
 
 public:
-  // Worker is gathering minerals. 
-  static const int GATHER_MINERALS = 0;
-  // Worker is gathering gas. 
-  static const int GATHER_GAS = 1;
-  // Worker is trying to find a buildspot for a requested building. 
-  static const int FIND_BUILDSPOT = 2;
-  // Worker is moving to a found buildspot. 
-  static const int MOVE_TO_SPOT = 3;
-  // Worker is constructing a building. 
-  static const int CONSTRUCT = 4;
-  // Worker is repairing a building (Terran only). 
-  static const int REPAIRING = 5;
-  // Worker is needed to attack an enemy intruder in a base. 
-  static const int ATTACKING = 6;
-
   // Constructor. 
   explicit WorkerAgent(BWAPI::Unit mUnit);
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 
   // Returns true if this agent is a free worker, i.e. is idle or is gathering minerals. 
-  bool isFreeWorker() override;
+  bool is_available_worker() const override;
 
   // Used to print info about this agent to the screen. 
-  void printInfo() override;
+  void debug_print_info() const override;
 
   // Used in debug modes to show a line to the agents' goal. 
-  void debug_showGoal() override;
+  void debug_show_goal() const override;
 
   // Set the state of the worker. I.e. what does it do right now.// Should only be set if the worker is getting a task not through the functions in this class. Then it is automatic. 
-  void setState(int state);
+  void set_state(WorkerState state);
 
   // Returns the current state of the worker. 
-  int getState();
+  WorkerState get_state() const {
+    return current_state_;
+  }
 
   // Returns true if the Worker agent can create units of the specified type. 
-  bool canBuild(BWAPI::UnitType type);
+  bool can_build(BWAPI::UnitType type) const;
 
   // Assigns the unit to construct a building of the specified type. 
-  bool assignToBuild(BWAPI::UnitType type);
+  bool assign_to_build(BWAPI::UnitType type);
 
   // Returns the state of the agent as text. Good for printouts. 
-  std::string getStateAsText();
+  std::string get_state_as_text() const;
 
   // Called when the unit assigned to this agent is destroyed. 
   void destroyed();
@@ -79,11 +83,25 @@ public:
 
   // Returns true if this worker is in any of the build states, and is constructing
   // the specified building. 
-  bool isConstructing(BWAPI::UnitType type);
+  bool is_constructing(BWAPI::UnitType type) const;
 
   // Assigns this worker to finish an unfinished building. 
-  bool assignToFinishBuild(BWAPI::Unit building);
+  bool assign_to_finish_build(BWAPI::Unit building);
 
   // Assigns this worker to repair a building. 
-  bool assignToRepair(BWAPI::Unit building);
+  bool assign_to_repair(BWAPI::Unit building);
+
+  //
+  // Actor section
+  //
+  void handle_message(act::Message *m) override;
+
+private:
+  void tick_attacking();
+  void tick_repairing();
+  void tick_gather();
+  void tick_find_build_spot();
+  void tick_move_to_spot();
+  void tick_construct();
+  void tick_gather_gas();
 };

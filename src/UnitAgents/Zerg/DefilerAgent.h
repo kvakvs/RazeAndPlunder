@@ -17,5 +17,5 @@ public:
     agent_type_ = "DefilerAgent";
   }
 
-  bool useAbilities() override;
+  bool use_abilities() override;
 };

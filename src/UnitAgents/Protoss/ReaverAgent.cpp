@@ -2,7 +2,7 @@
 
 using namespace BWAPI;
 
-bool ReaverAgent::useAbilities() {
+bool ReaverAgent::use_abilities() {
   int maxLoad = 5;
   if (Broodwar->self()->getUpgradeLevel(UpgradeTypes::Reaver_Capacity) > 0) {
     maxLoad = 10;

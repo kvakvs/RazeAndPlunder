@@ -1,30 +1,32 @@
 #include "BaseAgent.h"
-#include "../Managers/Constructor.h"
-//#include "../Managers/AgentManager.h"
-//#include "../Managers/ResourceManager.h"
-#include "../Managers/ExplorationManager.h"
+#include "Managers/Constructor.h"
+#include "Managers/ExplorationManager.h"
 #include "Glob.h"
 
 using namespace BWAPI;
 
+int BaseAgent::info_update_frame_ = 0;
+int BaseAgent::sx_ = 0;
+int BaseAgent::sy_ = 0;
+
 BaseAgent::BaseAgent()
-    : unit_(), trail_(), goal_(-1, -1)
-    , type_(UnitTypes::Unknown)
+    : unit_(), type_(UnitTypes::Unknown), goal_(-1, -1)
+    , squad_id_()
     , alive_(true)
-    , squad_id_(-1)
-    , info_update_time_(20)
     , agent_type_("What?")
+    , info_update_time_(20)
+    , trail_()
 {
 }
 
 BaseAgent::BaseAgent(Unit mUnit)
-    : trail_(), unit_(mUnit)
-    , type_(mUnit->getType())
-    , alive_(true)
-    , unit_id_(unit_->getID())
-    , squad_id_(-1)
+    : unit_(mUnit), type_(mUnit->getType())
     , goal_(-1, -1)
+    , unit_id_(unit_->getID())
+    , squad_id_()
+    , alive_(true)
     , agent_type_("BaseAgent")
+    , trail_()
 {
 }
 
@@ -32,26 +34,22 @@ BaseAgent::~BaseAgent() {
 
 }
 
-int BaseAgent::getLastOrderFrame() {
+int BaseAgent::get_last_order_frame() const {
   return last_order_frame_;
 }
 
-std::string BaseAgent::getTypeName() {
+const std::string& BaseAgent::get_type_name() const {
   return agent_type_;
 }
 
-void BaseAgent::printInfo() {
-
-}
-
-int BaseAgent::getUnitID() {
+int BaseAgent::get_unit_id() const {
   return unit_id_;
 }
 
-std::string BaseAgent::format(std::string str) {
-  std::string res = str;
+std::string BaseAgent::format(const std::string& str) {
+  auto res(str);
 
-  int i = str.find("_");
+  size_t i = str.find("_");
   if (i >= 0) {
     res = str.substr(i + 1, str.length());
   }
@@ -62,70 +60,61 @@ std::string BaseAgent::format(std::string str) {
   return res;
 }
 
-UnitType BaseAgent::getUnitType() {
+UnitType BaseAgent::unit_type() const {
   return type_;
 }
 
-Unit BaseAgent::getUnit() {
+Unit BaseAgent::get_unit() const {
   return unit_;
 }
 
-bool BaseAgent::matches(Unit mUnit) {
+bool BaseAgent::matches(Unit mUnit) const {
   if (mUnit->getID() == unit_id_) {
     return true;
   }
   return false;
 }
 
-bool BaseAgent::isOfType(UnitType type) {
-  if (unit_->getType().getID() == type.getID()) {
-    return true;
-  }
-  return false;
+bool BaseAgent::is_of_type(UnitType type) const {
+  return rnp::same_type(unit_, type);
 }
 
-bool BaseAgent::isOfType(UnitType mType, UnitType toCheckType) {
-  if (mType.getID() == toCheckType.getID()) {
-    return true;
-  }
-  return false;
-}
-
-bool BaseAgent::isBuilding() {
+bool BaseAgent::is_building() const {
   if (unit_->getType().isBuilding()) {
     return true;
   }
   return false;
 }
 
-bool BaseAgent::isWorker() {
+bool BaseAgent::is_worker() const {
   if (unit_->getType().isWorker()) {
     return true;
   }
   return false;
 }
 
-bool BaseAgent::isUnit() {
+bool BaseAgent::is_unit() const {
   if (unit_->getType().isBuilding() || unit_->getType().isWorker() || unit_->getType().isAddon()) {
     return false;
   }
   return true;
 }
 
-bool BaseAgent::isUnderAttack() {
+bool BaseAgent::is_under_attack() const {
   if (unit_ == nullptr) return false;
   if (not unit_->exists()) return false;
 
   if (unit_->isAttacking()) return true;
   if (unit_->isStartingAttack()) return true;
 
-  double r = unit_->getType().seekRange();
+  float r = static_cast<float>(unit_->getType().seekRange());
   if (unit_->getType().sightRange() > r) {
     r = unit_->getType().sightRange();
   }
 
+  // TODO: Rewrite this with actors in range (grid)
   for (auto& u : Broodwar->enemy()->getUnits()) {
-    double dist = unit_->getPosition().getDistance(u->getPosition());
+    float dist = rnp::distance(unit_->getPosition(), u->getPosition());
     if (dist <= r) {
       return true;
     }
@@ -134,18 +123,14 @@ bool BaseAgent::isUnderAttack() {
   return false;
 }
 
-void BaseAgent::destroyed() {
-  alive_ = false;
-}
-
-bool BaseAgent::isAlive() {
+bool BaseAgent::is_alive() const {
   if (not unit_->exists()) {
     return false;
   }
   return alive_;
 }
 
-bool BaseAgent::isDamaged() {
+bool BaseAgent::is_damaged() const {
   if (unit_->isBeingConstructed()) return false;
   if (unit_->getRemainingBuildTime() > 0) return false;
 
@@ -155,7 +140,7 @@ bool BaseAgent::isDamaged() {
   return false;
 }
 
-bool BaseAgent::isDetectorWithinRange(TilePosition pos, int range) {
+bool BaseAgent::is_enemy_detector_within_range(TilePosition pos, int range) {
   for (auto& u : Broodwar->enemy()->getUnits()) {
     if (u->getType().isDetector()) {
       double dist = u->getDistance(Position(pos));
@@ -167,15 +152,7 @@ bool BaseAgent::isDetectorWithinRange(TilePosition pos, int range) {
   return false;
 }
 
-void BaseAgent::setSquadID(int id) {
-  squad_id_ = id;
-}
-
-int BaseAgent::getSquadID() {
-  return squad_id_;
-}
-
-bool BaseAgent::enemyUnitsVisible() {
+bool BaseAgent::any_enemy_units_visible() const {
   double r = unit_->getType().sightRange();
 
   for (auto& u : Broodwar->enemy()->getUnits()) {
@@ -187,7 +164,7 @@ bool BaseAgent::enemyUnitsVisible() {
   return false;
 }
 
-void BaseAgent::setGoal(TilePosition goal) {
+void BaseAgent::set_goal(TilePosition goal) {
   if (unit_->getType().isFlyer() || unit_->getType().isFlyingBuilding()) {
     //Flyers, can always move to goals.
     this->goal_ = goal;
@@ -200,19 +177,19 @@ void BaseAgent::setGoal(TilePosition goal) {
   }
 }
 
-void BaseAgent::clearGoal() {
-  goal_ = TilePosition(-1, -1);
+void BaseAgent::clear_goal() {
+  goal_ = rnp::make_bad_position();
 }
 
-TilePosition BaseAgent::getGoal() {
+const TilePosition& BaseAgent::get_goal() const {
   return goal_;
 }
 
-void BaseAgent::addTrailPosition(WalkPosition wt) {
+void BaseAgent::add_trail_position(WalkPosition wt) {
   //Check if position already is in trail
-  if (trail_.size() > 0) {
-    WalkPosition lwt = trail_.at(trail_.size() - 1);
-    if (lwt.x == wt.x && lwt.y == wt.y) return;
+  if (not trail_.empty()) {
+    auto& lwt = trail_.back();
+    if (lwt == wt) return;
   }
 
   trail_.push_back(wt);
@@ -221,6 +198,78 @@ void BaseAgent::addTrailPosition(WalkPosition wt) {
   }
 }
 
-std::vector<WalkPosition> BaseAgent::getTrail() {
+const std::vector<WalkPosition>& BaseAgent::get_trail() const {
   return trail_;
+}
+
+bool BaseAgent::can_target_air() const {
+  return type_.groundWeapon().targetsAir()
+    || type_.airWeapon().targetsAir();
+}
+
+bool BaseAgent::can_target_ground() const {
+  return type_.groundWeapon().targetsGround()
+    || type_.airWeapon().targetsGround();
+
+}
+
+void BaseAgent::handle_message(act::Message* incoming) {
+
+  // TODO: distribute attack event to the squad
+  if (auto trpos = dynamic_cast<msg::unit::AddTrailPos*>(incoming)) {
+    add_trail_position(trpos->pos_);
+  }
+  if (auto atk_u = dynamic_cast<msg::unit::AttackBWUnit*>(incoming)) {
+    handle_message_attack_bwunit(atk_u);
+  } 
+  else if (auto atk_a = dynamic_cast<msg::unit::Attack*>(incoming)) {
+    handle_message_attack_actor(atk_a);
+  }
+  else if (auto setg = dynamic_cast<msg::unit::SetGoal*>(incoming)) {
+    set_goal(setg->goal_);
+  }
+  else if (auto sq_join = dynamic_cast<msg::unit::JoinedSquad*>(incoming)) {
+    handle_message_squad_join(sq_join);
+  }
+  else if (auto leave = dynamic_cast<msg::unit::LeftSquad*>(incoming)) {
+    if (leave->squad_ == this->get_squad_id()) {
+      set_squad_id(act::ActorId());
+      set_goal(Broodwar->self()->getStartLocation());
+    }
+  }
+  else if (dynamic_cast<msg::unit::Destroyed*>(incoming)) {
+    destroyed();
+  }
+  else if (auto setsq = dynamic_cast<msg::unit::SetSquad*>(incoming)) {
+    set_squad_id(setsq->squad_);
+  }
+  else {
+    // Since BaseAgent is base class for everything, we don't need to pass the
+    // message to our base, instead create an error
+    unhandled_message(incoming);
+  }
+}
+
+void BaseAgent::handle_message_attack_bwunit(
+  const msg::unit::AttackBWUnit* atk) const 
+{
+  get_unit()->attack(atk->target_);
+}
+
+void BaseAgent::handle_message_attack_actor(msg::unit::Attack* atk) const {
+  auto target = act::whereis<BaseAgent>(atk->target_);
+  if (target) {
+    get_unit()->attack(target->get_unit());
+  }
+}
+
+void BaseAgent::handle_message_squad_join(const msg::unit::JoinedSquad* sq_join) {
+  set_squad_id(sq_join->squad_);
+  if (goal_.x >= 0) {
+      set_goal(sq_join->goal_);
+    }
+}
+
+void BaseAgent::destroyed() {
+  alive_ = false;
 }

@@ -4,7 +4,7 @@
 
 using namespace BWAPI;
 
-bool CorsairAgent::useAbilities() {
+bool CorsairAgent::use_abilities() {
   //Disruption Web
   TechType web = TechTypes::Disruption_Web;
   if (Broodwar->self()->hasResearched(web) && unit_->getEnergy() >= 125 && Broodwar->getFrameCount() - lastUseFrame >= 40) {

@@ -16,5 +16,5 @@ public:
     agent_type_ = "QueenAgent";
   }
 
-  bool useAbilities() override;
+  bool use_abilities() override;
 };

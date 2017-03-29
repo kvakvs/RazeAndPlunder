@@ -3,7 +3,7 @@
 
 using namespace BWAPI;
 
-bool TargetingAgent::canAttack(UnitType type) {
+bool TargetingAgent::can_attack(UnitType type) {
   if (type.isBuilding()) {
     if (type.canAttack()) return true;
     return false;
@@ -17,20 +17,20 @@ bool TargetingAgent::canAttack(UnitType type) {
   return true;
 }
 
-int TargetingAgent::getNoAttackers(BaseAgent* agent) {
+int TargetingAgent::get_no_attackers(const BaseAgent* agent) {
   int cnt = 0;
 
   for (auto& u : Broodwar->enemy()->getUnits()) {
-    if (canAttack(u->getType())) {
+    if (can_attack(u->getType())) {
       int enemyMSD = 0;
-      if (agent->getUnitType().isFlyer()) {
+      if (agent->unit_type().isFlyer()) {
         enemyMSD = u->getType().airWeapon().maxRange();
       }
       else {
         enemyMSD = u->getType().groundWeapon().maxRange();
       }
 
-      double d = agent->getUnit()->getPosition().getDistance(u->getPosition());
+      double d = agent->get_unit()->getPosition().getDistance(u->getPosition());
       if (d <= enemyMSD) {
         cnt++;
       }
@@ -40,12 +40,12 @@ int TargetingAgent::getNoAttackers(BaseAgent* agent) {
   return cnt;
 }
 
-bool TargetingAgent::checkTarget(BaseAgent* agent) {
-  if (not agent->getUnit()->isIdle() && not agent->getUnit()->isMoving()) return false;
+bool TargetingAgent::check_target(const BaseAgent* agent) {
+  if (not agent->get_unit()->isIdle() && not agent->get_unit()->isMoving()) return false;
 
-  Unit pTarget = findTarget(agent);
+  Unit pTarget = find_target(agent);
   if (pTarget != nullptr && pTarget->getPlayer()->isEnemy(Broodwar->self())) {
-    bool ok = agent->getUnit()->attack(pTarget, true);
+    bool ok = agent->get_unit()->attack(pTarget, true);
     if (not ok) {
       //Broodwar << "Switch target failed: " << Broodwar->getLastError() << endl;
     }
@@ -54,7 +54,7 @@ bool TargetingAgent::checkTarget(BaseAgent* agent) {
   return false;
 }
 
-bool TargetingAgent::isHighprioTarget(UnitType type) {
+bool TargetingAgent::is_highprio_target(UnitType type) {
   if (type.getID() == UnitTypes::Terran_Bunker.getID()) return true;
   if (type.getID() == UnitTypes::Terran_Battlecruiser.getID()) return true;
   if (type.getID() == UnitTypes::Terran_Missile_Turret.getID()) return true;
@@ -70,15 +70,15 @@ bool TargetingAgent::isHighprioTarget(UnitType type) {
   return false;
 }
 
-Unit TargetingAgent::findHighprioTarget(BaseAgent* agent, int maxDist, bool targetsAir, bool targetsGround) {
+Unit TargetingAgent::find_highprio_target(const BaseAgent* agent, int maxDist, bool targetsAir, bool targetsGround) {
   Unit target = nullptr;
-  Position cPos = agent->getUnit()->getPosition();
+  Position cPos = agent->get_unit()->getPosition();
   int bestTargetScore = -10000;
 
   for (auto& u : Broodwar->enemy()->getUnits()) {
     if (u->exists()) {
       UnitType t = u->getType();
-      bool targets = isHighprioTarget(t);
+      bool targets = is_highprio_target(t);
       if (t.isFlyer() && not targetsAir) targets = false;
       if (not t.isFlyer() && not targetsGround) targets = false;
 
@@ -97,15 +97,10 @@ Unit TargetingAgent::findHighprioTarget(BaseAgent* agent, int maxDist, bool targ
   return target;
 }
 
-Unit TargetingAgent::findTarget(BaseAgent* agent) {
+Unit TargetingAgent::find_target(const BaseAgent* agent) {
   //Check if the agent targets ground and/or air
-  bool targetsGround = false;
-  if (agent->getUnitType().groundWeapon().targetsGround()) targetsGround = true;
-  if (agent->getUnitType().airWeapon().targetsGround()) targetsGround = true;
-
-  bool targetsAir = false;
-  if (agent->getUnitType().groundWeapon().targetsAir()) targetsAir = true;
-  if (agent->getUnitType().airWeapon().targetsAir()) targetsAir = true;
+  bool targetsGround = agent->can_target_ground();
+  bool targetsAir = agent->can_target_air();
 
   //Iterate through enemies to select a target
   int bestTargetScore = -10000;
@@ -118,18 +113,18 @@ Unit TargetingAgent::findTarget(BaseAgent* agent) {
     if ((t.isFlyer() || u->isLifted()) && targetsAir) canAttack = true;
     if (u->isCloaked() && not u->isDetected()) {
       canAttack = false;
-      handleCloakedUnit(u);
+      handle_cloaked_unit(u);
     }
     if (u->isBurrowed() && not u->isDetected()) {
       canAttack = false;
-      handleCloakedUnit(u);
+      handle_cloaked_unit(u);
     }
 
     int maxRange = 600;
-    if (agent->getUnit()->isSieged() || agent->getUnit()->isBurrowed() || agent->getUnit()->isLoaded()) maxRange = agent->getUnitType().groundWeapon().maxRange();
+    if (agent->get_unit()->isSieged() || agent->get_unit()->isBurrowed() || agent->get_unit()->isLoaded()) maxRange = agent->unit_type().groundWeapon().maxRange();
 
-    if (canAttack && agent->getUnit()->getPosition().getDistance(u->getPosition()) <= maxRange) {
-      double mod = getTargetModifier(agent->getUnit()->getType(), t);
+    if (canAttack && agent->get_unit()->getPosition().getDistance(u->getPosition()) <= maxRange) {
+      double mod = get_target_modifier(agent->get_unit()->getType(), t);
       int cScore = (int)((double)t.destroyScore() * mod);
       if (u->getHitPoints() < u->getInitialHitPoints()) {
         //Prioritize damaged targets
@@ -146,7 +141,7 @@ Unit TargetingAgent::findTarget(BaseAgent* agent) {
   return target;
 }
 
-double TargetingAgent::getTargetModifier(UnitType attacker, UnitType target) {
+double TargetingAgent::get_target_modifier(UnitType attacker, UnitType target) {
   //Non-attacking buildings
   if (target.isBuilding() && not target.canAttack() && not target.getID() == UnitTypes::Terran_Bunker.getID()) {
     return 0.05;
@@ -169,7 +164,7 @@ double TargetingAgent::getTargetModifier(UnitType attacker, UnitType target) {
   }
 
   //Prio to take out detectors when having cloaking units
-  if (isCloakingUnit(attacker) && target.isDetector()) {
+  if (is_cloaking_unit(attacker) && target.isDetector()) {
     return 2;
   }
 
@@ -191,13 +186,13 @@ double TargetingAgent::getTargetModifier(UnitType attacker, UnitType target) {
   return 1; //Default: No modifier
 }
 
-void TargetingAgent::handleCloakedUnit(Unit unit) {
+void TargetingAgent::handle_cloaked_unit(Unit unit) {
   //Terran: Cloaked units are handled by ComSat agent
 
   //Add code for handling cloaked units here.
 }
 
-bool TargetingAgent::isCloakingUnit(UnitType type) {
+bool TargetingAgent::is_cloaking_unit(UnitType type) {
   if (type.isCloakable()) return true;
   return false;
 }

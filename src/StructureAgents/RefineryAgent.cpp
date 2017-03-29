@@ -1,8 +1,9 @@
 #include "RefineryAgent.h"
 #include "MainAgents/WorkerAgent.h"
-#include "../Managers/AgentManager.h"
+#include "Managers/AgentManager.h"
 #include "Commander/Commander.h"
 #include "Glob.h"
+#include "RnpUtil.h"
 
 using namespace BWAPI;
 
@@ -13,23 +14,26 @@ RefineryAgent::RefineryAgent(Unit mUnit): assigned_workers_() {
   agent_type_ = "RefineryAgent";
 }
 
-void RefineryAgent::computeActions() {
-  for (int i = 0; i < (int)assigned_workers_.size(); i++) {
-    if (not assigned_workers_.at(i)->isAlive()) {
-      assigned_workers_.erase(assigned_workers_.begin() + i);
-      return;
-    }
-  }
+void RefineryAgent::tick() {
+//  for (size_t i = 0; i < assigned_workers_.size(); i++) {
+//    if (not assigned_workers_[i]->is_alive()) {
+//      assigned_workers_.erase(assigned_workers_.begin() + i);
+//      return;
+//    }
+//  }
 
   if ((int)assigned_workers_.size() < rnp::commander()->get_workers_per_refinery()) {
     if (not unit_->isBeingConstructed()
-        && unit_->getPlayer()->getID() == Broodwar->self()->getID()) {
+      && rnp::is_my_unit(unit_)) {
 
-      auto worker = (WorkerAgent*)rnp::agent_manager()->findClosestFreeWorker(unit_->getTilePosition());
-      if (worker != nullptr) {
-        worker->getUnit()->rightClick(unit_);
-        worker->setState(WorkerAgent::GATHER_GAS);
-        assigned_workers_.push_back(worker);
+      auto worker = static_cast<const WorkerAgent*>(
+        rnp::agent_manager()->find_closest_free_worker(unit_->getTilePosition())
+        );
+      if (worker) {
+        auto& worker_id = worker->self();
+        msg::worker::right_click_refinery(worker_id, unit_);
+        assigned_workers_.insert(worker_id);
+        ac_monitor(worker_id);
       }
     }
   }

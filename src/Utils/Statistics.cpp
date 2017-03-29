@@ -1,5 +1,7 @@
 #include "Statistics.h"
 #include <fstream>
+#include "Glob.h"
+#include <iso646.h>
 
 using namespace BWAPI;
 
@@ -27,7 +29,7 @@ std::string Statistics::getFilename() {
   return ss.str();
 }
 
-void Statistics::saveResult(int win) {
+void Statistics::save_result(rnp::MatchResult win) {
   if (not active) return;
 
   std::stringstream ss;
@@ -37,9 +39,11 @@ void Statistics::saveResult(int win) {
   ss << ";";
   ss << Broodwar->mapFileName();
   ss << ";";
-  if (win == 1) ss << "Won";
-  if (win == 0) ss << "Lost";
-  if (win == 2) ss << "Draw";
+  switch (win) {
+  case rnp::MatchResult::Win: ss << "Won"; break;
+  case rnp::MatchResult::Loss: ss << "Lost"; break;
+  case rnp::MatchResult::Draw: ss << "Draw"; break;
+  }
   ss << ";";
   ss << Broodwar->self()->getUnitScore();
   ss << ";";

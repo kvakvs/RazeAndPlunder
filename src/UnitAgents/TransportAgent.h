@@ -10,16 +10,18 @@
 class TransportAgent : public UnitAgent {
 
 private:
-  int maxLoad = 0;
-  int currentLoad = 0;
+  int max_load_ = 0;
+  int current_load_ = 0;
 
-  int getCurrentLoad();
-  bool isValidLoadUnit(BaseAgent* a);
-  BaseAgent* findUnitToLoad(int spaceLimit);
+  int get_current_load();
+
+  bool is_valid_load_unit(const BaseAgent* a) const;
+
+  const BaseAgent* find_unit_to_load(int spaceLimit);
 
 public:
   explicit TransportAgent(BWAPI::Unit mUnit);
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 };

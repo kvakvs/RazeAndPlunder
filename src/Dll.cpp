@@ -1,3 +1,4 @@
+#if 0
 #include <BWAPI.h>
 
 #include "RnpBot.h"
@@ -21,3 +22,4 @@ BOOL APIENTRY DllMain(HANDLE hModule, DWORD ul_reason_for_call, LPVOID lpReserve
 extern "C" __declspec(dllexport) BWAPI::AIModule* newAIModule() {
   return RnpBot::setup();
 }
+#endif //0

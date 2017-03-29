@@ -5,10 +5,10 @@
 
 using namespace BWAPI;
 
-bool GhostAgent::useAbilities() {
+bool GhostAgent::use_abilities() {
   //Cloaking
   TechType cloak = TechTypes::Personnel_Cloaking;
-  if (Broodwar->self()->hasResearched(cloak) && not unit_->isCloaked() && unit_->getEnergy() > 25 && not isDetectorWithinRange(unit_->getTilePosition(), 192)) {
+  if (Broodwar->self()->hasResearched(cloak) && not unit_->isCloaked() && unit_->getEnergy() > 25 && not is_enemy_detector_within_range(unit_->getTilePosition(), 192)) {
     //Check if enemy units are visible
     for (auto& u : Broodwar->enemy()->getUnits()) {
       if (u->exists()) {
@@ -63,16 +63,16 @@ Unit GhostAgent::findLockdownTarget() const {
   return target;
 }
 
-int GhostAgent::friendlyUnitsWithinRange(int maxRange) const {
-  int fCnt = 0;
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->isUnit() && not a->isOfType(UnitTypes::Terran_Medic)) {
-      double dist = unit_->getDistance(a->getUnit());
-      if (dist <= maxRange) {
-        fCnt++;
+int GhostAgent::friendlyUnitsWithinRange(int max_range) const {
+  int f_cnt = 0;
+  act::for_each_actor<BaseAgent>(
+    [this,max_range,&f_cnt](const BaseAgent* a) {
+      if (a->is_unit() && not a->is_of_type(UnitTypes::Terran_Medic)) {
+        double dist = unit_->getDistance(a->get_unit());
+        if (dist <= max_range) {
+          f_cnt++;
+        }
       }
-    }
-  }
-  return fCnt;
+    });
+  return f_cnt;
 }

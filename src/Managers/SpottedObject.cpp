@@ -2,32 +2,9 @@
 
 using namespace BWAPI;
 
-SpottedObject::SpottedObject(Unit mUnit) {
-  type = mUnit->getType();
-  position = mUnit->getPosition();
-  tilePosition = mUnit->getTilePosition();
-  unitID = mUnit->getID();
-}
-
-int SpottedObject::getUnitID() {
-  return unitID;
-}
-
-UnitType SpottedObject::getType() {
-  return type;
-}
-
-Position SpottedObject::getPosition() {
-  return position;
-}
-
-TilePosition SpottedObject::getTilePosition() {
-  return tilePosition;
-}
-
-bool SpottedObject::isAt(TilePosition tilePos) {
-  if (tilePos.x == tilePosition.x && tilePos.y == tilePosition.y) {
-    return true;
-  }
-  return false;
+SpottedObject::SpottedObject(Unit m_unit)
+: type_(m_unit->getType())
+, position_(m_unit->getPosition())
+, tile_position_(m_unit->getTilePosition())
+, unit_id_(m_unit->getID()) {
 }

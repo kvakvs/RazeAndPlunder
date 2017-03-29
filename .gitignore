@@ -1,4 +1,10 @@
-cmake-vs/*
+/cmake-vs-debug/*
+/cmake-vs-release/*
+/cmake-build-debug/*
+*.zip
+
+# Some strange VS2017 artifacts
+/*.dir/*
 
 # IntelliJ/CLion projects
 .idea/

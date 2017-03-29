@@ -14,26 +14,29 @@
 class TargetingAgent {
 
 private:
-  static double getTargetModifier(BWAPI::UnitType attacker, BWAPI::UnitType target);
-  static bool isCloakingUnit(BWAPI::UnitType type);
-  static void handleCloakedUnit(BWAPI::Unit unit);
-  static bool isHighprioTarget(BWAPI::UnitType type);
+  static double get_target_modifier(BWAPI::UnitType attacker, BWAPI::UnitType target);
+  static bool is_cloaking_unit(BWAPI::UnitType type);
+  static void handle_cloaked_unit(BWAPI::Unit unit);
+  static bool is_highprio_target(BWAPI::UnitType type);
 
 public:
   // Returns the best target within seekrange for a unit agent, or nullptr if no target
   // was found. 
-  static BWAPI::Unit findTarget(BaseAgent* agent);
+  static BWAPI::Unit find_target(const BaseAgent* agent);
 
   // Returns a high prio target, if any, for strong attacks such as Yamato Gun. 
-  static BWAPI::Unit findHighprioTarget(BaseAgent* agent, int maxDist, bool targetsAir, bool targetsGround);
+  static BWAPI::Unit find_highprio_target(const BaseAgent* agent, 
+                                          int maxDist, 
+                                          bool targetsAir, 
+                                          bool targetsGround);
 
   // Returns the number of enemy units within range to attack an agent. 
-  static int getNoAttackers(BaseAgent* agent);
+  static int get_no_attackers(const BaseAgent* agent);
 
   // Checks if the specified type is an attacking unit or building. 
-  static bool canAttack(BWAPI::UnitType type);
+  static bool can_attack(BWAPI::UnitType type);
 
   // Checks the current target for an agent. If the agent has a bad target (for example
   // attacking a building and ignoring attacking units) a target switch is made. 
-  static bool checkTarget(BaseAgent* agent);
+  static bool check_target(const BaseAgent* agent);
 };

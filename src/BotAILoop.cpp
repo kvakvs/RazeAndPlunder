@@ -11,18 +11,14 @@
 #include "Glob.h"
 
 using namespace BWAPI;
+using BWAPI::Broodwar;
 
 BotAILoop::BotAILoop() : bwem_(BWEM::Map::Instance()) {
-  debug_unit_ = false;
-  debug_pf_ = false;
-  debug_bp_ = false;
-  debug_sq_ = -1;
-  debug_ = true;
 }
 
 void BotAILoop::register_initial_units() {
   for (auto& u : Broodwar->self()->getUnits()) {
-    rnp::agent_manager()->addAgent(u);
+    rnp::agent_manager()->add_agent(u);
   }
 }
 
@@ -30,186 +26,188 @@ BotAILoop::~BotAILoop() {
 
 }
 
-void BotAILoop::toggleDebug() {
-  debug_ = !debug_;
+void BotAILoop::toggle_debug() {
+  debug_ = not debug_;
 }
 
-void BotAILoop::toggleUnitDebug() {
-  debug_unit_ = !debug_unit_;
+void BotAILoop::toggle_unit_debug() {
+  debug_units_ = not debug_units_;
 }
 
-void BotAILoop::togglePFDebug() {
-  debug_pf_ = !debug_pf_;
+void BotAILoop::toggle_potential_fields_debug() {
+  debug_potential_fields_ = not debug_potential_fields_;
 }
 
-void BotAILoop::toggleBPDebug() {
-  debug_bp_ = !debug_bp_;
+void BotAILoop::toggle_building_placement_debug() {
+  debug_building_placement_ = not debug_building_placement_;
 }
 
-void BotAILoop::setDebugSQ(int squadID) {
-  debug_sq_ = squadID;
+void BotAILoop::toggle_mapmanager_debug() {
+  debug_mapmanager_ = not debug_mapmanager_;
 }
 
-void BotAILoop::computeActions() {
+void BotAILoop::set_debug_sq(int squadID) {
+  // Craft the squad actor id
+  debug_squad_id_ = act::ActorId(ActorFlavour::Squad, squadID);
+}
+
+void BotAILoop::on_frame() {
   rnp::profiler()->start("OnFrame_MapManager");
-  rnp::map_manager()->update();
+  rnp::map_manager()->update_influences();
   rnp::profiler()->end("OnFrame_MapManager");
 
-  rnp::profiler()->start("OnFrame_Constructor");
-  rnp::constructor()->computeActions();
-  rnp::profiler()->end("OnFrame_Constructor");
-
-  rnp::profiler()->start("OnFrame_Commander");
-  rnp::commander()->on_frame();
-  rnp::profiler()->end("OnFrame_Commander");
-
-  rnp::profiler()->start("OnFrame_ExplorationManager");
-  rnp::exploration()->on_frame();
-  rnp::profiler()->end("OnFrame_ExplorationManager");
-
-  rnp::profiler()->start("OnFrame_AgentManager");
-  rnp::agent_manager()->computeActions();
-  rnp::profiler()->end("OnFrame_AgentManager");
+  act::sched().tick();
 }
 
-void BotAILoop::addUnit(Unit unit) {
-  rnp::agent_manager()->addAgent(unit);
+void BotAILoop::on_unit_added(Unit unit) {
+  rnp::agent_manager()->add_agent(unit);
 
   //Remove from buildorder if this is a building
   if (unit->getType().isBuilding()) {
-    rnp::constructor()->unlock(unit->getType());
+    Constructor::modify([unit](Constructor* c) {
+        c->unlock(unit->getType());
+      });
   }
 }
 
-void BotAILoop::morphUnit(Unit unit) {
-  rnp::agent_manager()->morphDrone(unit);
-  rnp::constructor()->unlock(unit->getType());
+void BotAILoop::on_unit_morphed(Unit unit) {
+  //rnp::agent_manager()->on_drone_morphed(unit);
+  msg::agentmanager::unit_destroyed(unit);
+  Constructor::modify([unit](Constructor* c) { c->unlock(unit->getType()); });
 }
 
-void BotAILoop::unitDestroyed(Unit unit) {
-  if (unit->getPlayer()->getID() == Broodwar->self()->getID()) {
-    //Remove bunker squads if the destroyed unit
-    //is a bunker
+void BotAILoop::on_unit_destroyed(Unit unit) {
+  if (rnp::is_my_unit(unit)) {
+    //Remove bunker squads if the destroyed unit is a bunker
     if (unit->getType().getID() == UnitTypes::Terran_Bunker.getID()) {
-      rnp::commander()->remove_bunker_squad(unit->getID());
+      msg::commander::bunker_destroyed(unit->getID());
+      //rnp::commander()->remove_bunker_squad(unit->getID());
     }
 
-    rnp::agent_manager()->removeAgent(unit);
+    msg::agentmanager::unit_destroyed(unit);
+
     if (unit->getType().isBuilding()) {
-      rnp::constructor()->buildingDestroyed(unit);
+      Constructor::modify([unit](Constructor* c) {
+          c->on_building_destroyed(unit);
+        });
     }
-
-    rnp::agent_manager()->cleanup();
   }
-  if (unit->getPlayer()->getID() != Broodwar->self()->getID() && not unit->getPlayer()->isNeutral()) {
+
+  if (unit->getPlayer()->getID() != Broodwar->self()->getID() 
+    && not unit->getPlayer()->isNeutral()) {
     //Update spotted buildings
-    rnp::exploration()->on_unit_destroyed(unit);
+    ExplorationManager::modify(
+      [unit](ExplorationManager* e) { e->on_unit_destroyed(unit); });
   }
 }
 
 void BotAILoop::show_debug() {
-  if (debug_) {
-    //Show timer
-    std::stringstream ss;
-    ss << "\x0FTime: ";
-    ss << Broodwar->elapsedTime() / 60;
-    ss << ":";
-    int sec = Broodwar->elapsedTime() % 60;
-    if (sec < 10) ss << "0";
-    ss << sec;
+  if (!debug_) return;
 
-    Broodwar->drawTextScreen(110, 5, ss.str().c_str());
-    //
+  //Show timer
+  std::stringstream ss;
+  ss << "\x0FTime: ";
+  ss << Broodwar->elapsedTime() / 60;
+  ss << ":";
+  int sec = Broodwar->elapsedTime() % 60;
+  if (sec < 10) ss << "0";
+  ss << sec;
 
-    //Show pathfinder version
-    std::stringstream st;
-    st << "\x0FPathfinder: ";
-    switch (NavigationAgent::pathfinding_version_) {
-        case NavigationAgent::PFType::Builtin :
-          st << "Built-in";
-        break;
-        case NavigationAgent::PFType::HybridBoids :
-          st << "Hybrid Boids";
-        break;
-        case NavigationAgent::PFType::HybridPF :
-          st << "Hybrid PF";
-        break;
-    }
+  Broodwar->drawTextScreen(110, 5, ss.str().c_str());
+  //
 
-    Broodwar->drawTextScreen(500, 310, st.str().c_str());
+  //Show pathfinder version
+  std::stringstream st;
+  st << "\x0FPathfinder: ";
+  switch (NavigationAgent::pathfinding_version_) {
+  case NavigationAgent::PFType::Builtin :
+    st << "Built-in";
+    break;
+  case NavigationAgent::PFType::HybridBoids :
+    st << "Hybrid Boids";
+    break;
+  case NavigationAgent::PFType::HybridPotentialField :
+    st << "Hybrid PF";
+    break;
+  }
 
-    rnp::strategy_selector()->printInfo();
+  Broodwar->drawTextScreen(500, 310, st.str().c_str());
 
-    if (debug_bp_) {
-      rnp::building_placer()->debug();
-    }
-    drawTerrainData();
+  rnp::strategy_selector()->print_info();
 
-    rnp::commander()->debug_show_goal();
+  if (debug_building_placement_) {
+    rnp::building_placer()->show_debug();
+  }
+  draw_terrain_data();
 
-    auto& agents = rnp::agent_manager()->getAgents();
-    for (auto& a : agents) {
-      if (a->isBuilding()) a->debug_showGoal();
-    }
+  rnp::commander()->debug_show_goal();
 
-    //Show goal info for selected units
-    auto& selected = Broodwar->getSelectedUnits();
-    if (not selected.empty()) {
-      for (auto& u : selected) {
-        int unitID = (u)->getID();
-        BaseAgent* agent = rnp::agent_manager()->getAgent(unitID);
-        if (agent != nullptr && agent->isAlive()) {
-          agent->debug_showGoal();
-        }
+  act::for_each_actor<BaseAgent>(
+    [](const BaseAgent* a) {
+      if (a->is_building()) a->debug_show_goal();
+    });
+
+  //Show goal info for selected units
+  auto& selected = Broodwar->getSelectedUnits();
+  if (not selected.empty()) {
+    for (auto& u : selected) {
+      int unitID = (u)->getID();
+      auto agent = rnp::agent_manager()->get_agent(unitID);
+      if (agent && agent->is_alive()) {
+        agent->debug_show_goal();
       }
     }
+  }
 
-    if (debug_bp_) {
-      //If we have any unit selected, use that to show PFs.
-      if (not selected.empty()) {
-        for (auto& u : selected) {
-          int unitID = u->getID();
-          BaseAgent* agent = rnp::agent_manager()->getAgent(unitID);
-          if (agent != nullptr) {
-            rnp::navigation()->displayPF(agent);
-          }
+  if (debug_building_placement_) {
+    //If we have any unit selected, use that to show PFs.
+    if (not selected.empty()) {
+      for (auto& u : selected) {
+        int unitID = u->getID();
+        auto agent = rnp::agent_manager()->get_agent(unitID);
+        if (agent) {
+          rnp::navigation()->debug_display_pf(agent);
+        }
+        break;
+      }
+    }
+  }
+
+  if (debug_units_) {
+    //If we have any unit selected, show unit info.
+    if (not selected.empty()) {
+      for (auto& u : selected) {
+        int unitID = u->getID();
+        auto agent = rnp::agent_manager()->get_agent(unitID);
+        if (agent) {
+          agent->debug_print_info();
           break;
         }
       }
     }
-
-    if (debug_unit_) {
-      //If we have any unit selected, show unit info.
-      if (not selected.empty()) {
-        for (auto& u : selected) {
-          int unitID = u->getID();
-          BaseAgent* agent = rnp::agent_manager()->getAgent(unitID);
-          if (agent != nullptr) {
-            agent->printInfo();
-            break;
-          }
-        }
-      }
-    }
-
-    if (debug_sq_ >= 0) {
-      auto squad = rnp::commander()->getSquad(debug_sq_);
-      if (squad) {
-        squad->printInfo();
-      }
-    }
-
-    rnp::upgrader()->printInfo();
-    rnp::commander()->print_info();
   }
+
+  if (act::whereis<Squad>(debug_squad_id_)) {
+    auto squad = rnp::commander()->get_squad(debug_squad_id_);
+    if (squad) {
+      squad->debug_print_info();
+    }
+  }
+
+  if (debug_mapmanager_) {
+    rnp::map_manager()->debug_print_info();
+  }
+
+  rnp::upgrader()->debug_print_info();
+  rnp::commander()->debug_print_info();
 }
 
-void BotAILoop::drawTerrainData() {
+void BotAILoop::draw_terrain_data() {
   // we will iterate through all the base locations, and draw their outlines.
-  for (auto& area : bwem_.Areas()) {
-    for (auto& base : area.Bases()) {
-      TilePosition p(base.Location());
-      Position c(base.Center());
+  rnp::for_each_base(
+    [](const BWEM::Base& base) {
+//      TilePosition p(base.Location());
+//      Position c(base.Center());
 
       //Draw a progress bar at each resource
       for (auto& u : Broodwar->getStaticMinerals()) {
@@ -226,17 +224,18 @@ void BotAILoop::drawTerrainData() {
           //End
           Position e(s.x + w, s.y + 8);
           //Progress
-          int prg = (int)((double)done / (double)total * w);
+          int prg = static_cast<int>(
+            static_cast<float>(done) / static_cast<float>(total) * w
+            );
           Position p(s.x + prg, s.y + 8);
 
           Broodwar->drawBoxMap(s.x, s.y, e.x, e.y, Colors::Orange, false);
           Broodwar->drawBoxMap(s.x, s.y, p.x, p.y, Colors::Orange, true);
         }
       } // for static minerals
-    } // for bases
-  } // for areas
+    });
 
-  if (debug_bp_) {
+  if (debug_building_placement_) {
     //we will iterate through all the regions and draw the polygon outline of it in white.
 //    for (BWEM::Area* r : BWTA::getRegions()) {
 //      auto p = BWTA::PolygonImpl(r->getPolygon());
@@ -258,9 +257,11 @@ void BotAILoop::drawTerrainData() {
   }
 
   //locate zerg eggs and draw progress bars
-  if (Constructor::isZerg()) {
+  if (Constructor::is_zerg()) {
     for (auto& u : Broodwar->getAllUnits()) {
-      if (u->getType().getID() == UnitTypes::Zerg_Egg.getID() || u->getType().getID() == UnitTypes::Zerg_Lurker_Egg.getID() || u->getType().getID() == UnitTypes::Zerg_Cocoon.getID()) {
+      if (u->getType().getID() == UnitTypes::Zerg_Egg.getID() 
+          || u->getType().getID() == UnitTypes::Zerg_Lurker_Egg.getID()
+          || u->getType().getID() == UnitTypes::Zerg_Cocoon.getID()) {
         int total = u->getBuildType().buildTime();
         int done = total - u->getRemainingBuildTime();
 
@@ -271,8 +272,11 @@ void BotAILoop::drawTerrainData() {
         Position s = Position(u->getPosition().x - w / 2, u->getPosition().y - 4);
         //End
         Position e = Position(s.x + w, s.y + 8);
+
         //Progress
-        int prg = (int)((double)done / (double)total * w);
+        int prg = static_cast<int>(
+          static_cast<float>(done) / static_cast<float>(total) * w
+          );
         Position p = Position(s.x + prg, s.y + 8);
 
         Broodwar->drawBoxMap(s.x, s.y, e.x, e.y, Colors::Blue, false);

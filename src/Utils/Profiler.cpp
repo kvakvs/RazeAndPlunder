@@ -8,7 +8,7 @@ Profiler::Profiler() {
 Profiler::~Profiler() {
 }
 
-ProfilerObj* Profiler::getObj(const std::string& mId) {
+ProfilerObj* Profiler::get_profiler_obj(const std::string& mId) {
   auto iter = profile_objects_.find(mId);
   if (iter == profile_objects_.end()) {
     return nullptr;
@@ -20,7 +20,7 @@ ProfilerObj* Profiler::getObj(const std::string& mId) {
 void Profiler::start(const std::string& mId) {
   if (not active_) return;
 
-  ProfilerObj* cObj = getObj(mId);
+  ProfilerObj* cObj = get_profiler_obj(mId);
   if (cObj != nullptr) {
     cObj->start();
   }
@@ -34,11 +34,11 @@ void Profiler::start(const std::string& mId) {
 void Profiler::end(const std::string& mId) {
   if (not active_) return;
 
-  ProfilerObj* cObj = getObj(mId);
+  ProfilerObj* cObj = get_profiler_obj(mId);
   if (cObj != nullptr) cObj->end();
 }
 
-void Profiler::dumpToFile() {
+void Profiler::dump_to_file() {
   if (not active_) return;
 
   std::ofstream ofile;

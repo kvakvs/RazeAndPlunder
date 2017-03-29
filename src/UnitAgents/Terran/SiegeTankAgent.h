@@ -14,5 +14,5 @@ public:
     agent_type_ = "SiegeTankAgent";
   }
 
-  bool useAbilities() override;
+  bool use_abilities() override;
 };

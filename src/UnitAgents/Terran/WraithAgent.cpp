@@ -3,13 +3,13 @@
 
 using namespace BWAPI;
 
-bool WraithAgent::useAbilities() {
+bool WraithAgent::use_abilities() {
   //Cloaking
   TechType cloak = TechTypes::Cloaking_Field;
   if (Broodwar->self()->hasResearched(cloak) 
     && not unit_->isCloaked() 
     && unit_->getEnergy() >= 25 
-    && not isDetectorWithinRange(unit_->getTilePosition(), 192)) 
+    && not is_enemy_detector_within_range(unit_->getTilePosition(), 192)) 
   {
     int range = 10 * 32;
 

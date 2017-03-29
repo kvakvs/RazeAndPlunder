@@ -1,5 +1,7 @@
 #pragma once
-#include <memory>
+#include "Actors/Actor.h"
+#include <spdlog/spdlog.h>
+#include "BWAPI/UnitType.h"
 
 class AgentManager;
 class BuildingPlacer;
@@ -17,19 +19,40 @@ class Upgrader;
 
 namespace rnp {
 
-  // Globally visible functions which access main class singleton
-  AgentManager* agent_manager();
-  BuildingPlacer* building_placer();
-  std::shared_ptr<Commander> commander();
-  Constructor* constructor();
-  ExplorationManager* exploration();
-  MapManager* map_manager();
-  NavigationAgent* navigation();
-  Pathfinder* pathfinder();
-  Profiler* profiler();
-  ResourceManager* resources();
-  Statistics* statistics();
-  StrategySelector* strategy_selector();
-  Upgrader* upgrader();
+enum class MatchResult { Win, Loss, Draw };
+
+// Globally visible functions which access main class singleton
+const AgentManager* agent_manager();
+const act::ActorId& agent_manager_id();
+
+const Commander* commander();
+const act::ActorId& commander_id();
+
+const ExplorationManager* exploration();
+const act::ActorId& exploration_id();
+
+const Constructor* constructor();
+const act::ActorId& constructor_id();
+
+// TODO: Replace singletons with premade actor ids
+BuildingPlacer* building_placer();
+MapManager* map_manager();
+NavigationAgent* navigation();
+Pathfinder* pathfinder();
+Profiler* profiler();
+ResourceManager* resources();
+Statistics* statistics();
+StrategySelector* strategy_selector();
+Upgrader* upgrader();
+
+void start_logging();
+spdlog::logger* log();
+
+// Removes the race from a string, Terran Marine = Marine. 
+std::string remove_race(const std::string& str);
+inline std::string remove_race(BWAPI::UnitType type) {
+  std::string name = type.getName();
+  return remove_race(name);
+}
 
 } // ns rnp

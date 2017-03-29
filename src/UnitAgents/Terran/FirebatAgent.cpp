@@ -2,31 +2,43 @@
 #include "Managers/AgentManager.h"
 #include "../../Commander/Commander.h"
 #include "Glob.h"
+#include "Commander/SquadMsg.h"
 
 using namespace BWAPI;
 
-bool FirebatAgent::useAbilities() {
+bool FirebatAgent::use_abilities() {
   //Load into a Bunker
   if (!unit_->isLoaded()) {
-    auto sq = rnp::commander()->getSquad(squad_id_);
+    auto sq = rnp::commander()->get_squad(squad_id_);
     if (sq) {
-      if (sq->isBunkerDefend()) {
-        auto& agents = rnp::agent_manager()->getAgents();
-        for (auto& a : agents) {
-          if (a->isAlive() && a->isOfType(UnitTypes::Terran_Bunker) && a->getUnit()->exists()) {
-            if (a->getUnit()->getLoadedUnits().size() < 4) {
-              unit_->rightClick(a->getUnit());
-              sq->setBunkerID(a->getUnitID());
-              return true;
+      if (sq->is_bunker_defend_squad()) {
+        auto result = false;
+        act::for_each_actor<BaseAgent>(
+          [this,&result,&sq](const BaseAgent* a) {
+            if (a->is_of_type(UnitTypes::Terran_Bunker) && a->get_unit()->exists()) {
+              if (a->get_unit()->getLoadedUnits().size() < 4) {
+                unit_->rightClick(a->get_unit());
+                //msg::squad::set_bunker_id(sq->self(), a->get_unit_id());
+                act::modify_actor<Squad>(sq->self(),
+                                         [a](Squad* sq) {
+                                           sq->set_bunker_id(a->get_unit_id());
+                                         });
+                result = true;
+                return;
+              }
             }
-          }
-        }
+          });
+        if (result) { return true; }
       }
     }
   }
 
   //Use Stim Packs
-  if (Broodwar->self()->hasResearched(TechTypes::Stim_Packs) && not unit_->isStimmed() && unit_->getHitPoints() >= 20 && not unit_->isLoaded()) {
+  if (Broodwar->self()->hasResearched(TechTypes::Stim_Packs) 
+      && not unit_->isStimmed() 
+      && unit_->getHitPoints() >= 20 
+      && not unit_->isLoaded()) 
+  {
     //Check if enemy units are visible
     for (auto& u : Broodwar->enemy()->getUnits()) {
       if (u->exists()) {

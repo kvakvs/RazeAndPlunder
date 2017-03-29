@@ -6,298 +6,335 @@
 #include "ResourceManager.h"
 #include "MainAgents/WorkerAgent.h"
 #include "Utils/Profiler.h"
-#include <windows.h>
-
-#include "Utils/Sets.h"
 #include "Glob.h"
+#include "RnpConst.h"
+
+#include <BWAPI.h>
 
 using namespace BWAPI;
-
-int AgentManager::start_frame_ = 0;
 
 AgentManager::AgentManager() {
   last_call_frame_ = Broodwar->getFrameCount();
 }
 
 AgentManager::~AgentManager() {
-  for (auto& a : agents_) {
-    delete a;
-  }
 }
 
-const Agentset& AgentManager::getAgents() const {
-  return agents_;
+const BaseAgent* AgentManager::get_agent(int unit_id) const {
+  // Construct an actor ID from its unit ID and use it as a key
+  return act::whereis<BaseAgent>(rnp::unit_actor_key(unit_id));
 }
 
-BaseAgent* AgentManager::getAgent(int unitID) {
-  for (auto& a : agents_) {
-    if (a->getUnitID() == unitID) {
-      return a;
-    }
-  }
+const BaseAgent* AgentManager::get_closest_base(const TilePosition& pos) const {
+  const BaseAgent* agent = nullptr;
+  float best_dist = 1e+12f;
 
-  return nullptr;
-}
-
-BaseAgent* AgentManager::getClosestBase(TilePosition pos) {
-  BaseAgent* agent = nullptr;
-  double bestDist = 100000;
-
-  for (auto& a : agents_) {
-    if (a->getUnitType().isResourceDepot() && a->isAlive()) {
-      double dist = a->getUnit()->getDistance(Position(pos));
-      if (dist < bestDist) {
-        bestDist = dist;
-        agent = a;
+  // TODO: this can maybe be optimized? cache depots?
+  act::for_each_actor<BaseAgent>(
+    [&pos,&agent,&best_dist](const BaseAgent* a) {
+      if (a->unit_type().isResourceDepot()) {
+        float dist = rnp::distance(pos, a->get_unit()->getTilePosition());
+        if (dist < best_dist) {
+          best_dist = dist;
+          agent = a;
+        }
       }
     }
-  }
+  );
   return agent;
 }
 
-BaseAgent* AgentManager::getClosestAgent(TilePosition pos, UnitType type) {
-  BaseAgent* agent = nullptr;
-  double bestDist = 100000;
+const BaseAgent* AgentManager::get_closest_agent(TilePosition pos, UnitType type) const {
+  const BaseAgent* agent = nullptr;
+  float best_dist = 1e+12f;
 
-  for (auto& a : agents_) {
-    if (a->isOfType(type) && a->isAlive()) {
-      double dist = a->getUnit()->getDistance(Position(pos));
-      if (dist < bestDist) {
-        bestDist = dist;
-        agent = a;
+  // TODO: optimize? sensitivity radius and use grid?
+  act::for_each_actor<BaseAgent>(
+    [&pos,&type,&best_dist,&agent](const BaseAgent* a) {
+      if (a->is_of_type(type)) {
+        float dist = rnp::distance(pos, a->get_unit()->getTilePosition());
+        if (dist < best_dist) {
+          best_dist = dist;
+          agent = a;
+        }
       }
-    }
-  }
+    });
   return agent;
 }
 
-void AgentManager::addAgent(Unit unit) {
-  if (unit->getType().getID() == UnitTypes::Zerg_Larva.getID()) {
-    //Special case: Dont add Zerg larva as agents.
-    return;
-  }
-  if (unit->getType().getID() == UnitTypes::Zerg_Egg.getID()) {
-    //Special case: Dont add Zerg eggs as agents.
-    return;
-  }
-  if (unit->getType().getID() == UnitTypes::Zerg_Cocoon.getID()) {
-    //Special case: Dont add Zerg cocoons as agents.
-    return;
-  }
-  if (unit->getType().getID() == UnitTypes::Zerg_Lurker_Egg.getID()) {
-    //Special case: Dont add Zerg eggs as agents.
+void AgentManager::add_agent(Unit unit) const {
+  //Special case: Dont add some Zerg things as agents.
+  if ( rnp::same_type(unit, UnitTypes::Zerg_Larva)
+    || rnp::same_type(unit, UnitTypes::Zerg_Egg)
+    || rnp::same_type(unit, UnitTypes::Zerg_Cocoon)
+    || rnp::same_type(unit, UnitTypes::Zerg_Lurker_Egg)) {
     return;
   }
 
   bool found = false;
-  for (auto& a : agents_) {
-    if (a->matches(unit)) {
-      found = true;
-      break;
-    }
-  }
+  act::for_each_actor<BaseAgent>(
+    [unit,&found](const BaseAgent* a) {
+      if (a->matches(unit)) {
+        found = true;
+        return;
+      }
+    });
 
   if (not found) {
-    BaseAgent* newAgent = AgentFactory::getInstance()->createAgent(unit);
-    agents_.insert(newAgent);
+    auto new_agent_id = AgentFactory::get_instance()->create_agent(unit);
+    auto new_agent = act::whereis<BaseAgent>(new_agent_id);
+//    std::cout << "agentmgr::add_agent: created agent for " 
+//      << unit->getType() << std::endl;
 
-    if (newAgent->isBuilding()) {
+    if (new_agent->is_building()) {
       rnp::building_placer()->add_constructed_building(unit);
-      rnp::constructor()->unlock(unit->getType());
+      Constructor::modify([unit](Constructor* c) {
+          c->unlock(unit->getType());
+        });
       rnp::resources()->unlockResources(unit->getType());
     }
     else {
-      rnp::commander()->on_unit_created(newAgent);
+      msg::commander::unit_created(new_agent_id);
     }
   }
 }
 
-void AgentManager::removeAgent(Unit unit) {
-  for (auto& a : agents_) {
-    if (a->matches(unit)) {
-      if (a->isBuilding()) {
-        rnp::building_placer()->on_building_destroyed(unit);
-      }
+void AgentManager::handle_unit_destroyed(msg::agentmanager::UnitDestroyed* incoming) {
+  auto unit_id = incoming->dead_->getID();
+  auto actor_id = rnp::unit_actor_key(unit_id);
+  auto a = act::whereis<BaseAgent>(actor_id);
 
-      a->destroyed();
-      rnp::commander()->on_unit_destroyed(a);
-
-      //Special case: If a bunker is destroyed, we need to remove
-      //the bunker squad.
-      if (unit->getType().getID() == UnitTypes::Terran_Bunker.getID()) {
-        int squadID = a->getSquadID();
-        rnp::commander()->remove_squad(squadID);
-      }
-
-      return;
+  if (a) {
+    if (a->is_building()) {
+      rnp::building_placer()->on_building_destroyed(incoming->dead_);
     }
+
+    act::send_message<msg::unit::Destroyed>(actor_id);
+    msg::commander::unit_destroyed(actor_id);
+
+    //Special case: If a bunker is destroyed, we need to remove
+    //the bunker squad.
+    if (incoming->dead_->getType().getID() == UnitTypes::Terran_Bunker.getID()) {
+      auto& squad_id = a->get_squad_id();
+      msg::commander::remove_squad(squad_id);
+    }
+
+    act::signal(actor_id, act::Signal::Kill);
+    //dead_agents_[unit_id] = std::move(iter->second);
+    //agents_.erase(iter);
   }
 }
 
-void AgentManager::morphDrone(Unit unit) {
-  for (auto& a : agents_) {
-    if (a->matches(unit)) {
-      agents_.erase(a);
-      addAgent(unit);
-      return;
-    }
-  }
+void AgentManager::on_drone_morphed(Unit unit) {
+//  act::for_each_alive(
+//    [this,unit](const BaseAgent* a) {
+//      if (a->matches(unit)) {
+//        agents_.erase(unit->getID());
+//        add_agent(unit);
+//        return;
+//      }
+//    });
   //No match found. Add it anyway.
   if (unit->exists()) {
-    addAgent(unit);
+    add_agent(unit);
   }
 }
 
-void AgentManager::cleanup() {
-  for (auto& a : agents_) {
-    if (not a->isAlive()) {
-      agents_.erase(a);
-      //delete a;
-      return cleanup();
-    }
-  }
-}
+//void AgentManager::cleanup() {
+//  for_each_alive(
+//    [this](BaseAgent* a) {
+//      if (not a->is_alive()) {
+//        // If dead, move to the dead
+//        auto unit_id = a->get_unit_id();
+//        auto iter = agents_.find(unit_id);
+//        if (iter != agents_.end()) {
+//          dead_agents_[unit_id] = std::move(iter->second);
+//          agents_.erase(iter);
+//        }
+//      }
+//    });
+//}
 
-void AgentManager::computeActions() {
+void AgentManager::tick() {
+  rnp::profiler()->start("OnFrame_AgentManager");
+
   //Start time
   LARGE_INTEGER li;
   QueryPerformanceFrequency(&li);
-  double PCFreq = double(li.QuadPart) / 1000.0;
+  auto pc_freq = double(li.QuadPart) / 1000.0;
   QueryPerformanceCounter(&li);
-  __int64 CounterStart = li.QuadPart;
+  auto counter_start = li.QuadPart;
+  auto now = Broodwar->getFrameCount();
 
-  for (auto& a : agents_) {
-    if (a->isAlive() && Broodwar->getFrameCount() - a->getLastOrderFrame() > 30) {
-      a->computeActions();
-    }
-
-    LARGE_INTEGER le;
-    QueryPerformanceCounter(&le);
-    double elapsed = (le.QuadPart - CounterStart) / PCFreq;
-    if (elapsed >= 30.0) return;
-  }
-}
-
-int AgentManager::getNoWorkers() {
-  int wCnt = 0;
-  for (auto& a : agents_) {
-    if (a->isAlive() && a->isWorker()) {
-      wCnt++;
-    }
-  }
-  return wCnt;
-}
-
-int AgentManager::noMiningWorkers() {
-  int cnt = 0;
-  for (auto& a : agents_) {
-    if (a->isAlive() && a->isWorker()) {
-      auto w = static_cast<WorkerAgent*>(a);
-      if (w->getState() == WorkerAgent::GATHER_MINERALS) {
-        cnt++;
+  act::for_each_actor<BaseAgent>(
+    [this,now,counter_start,pc_freq](const BaseAgent* a) {
+      const auto FRAME_LIMIT = 83.0;
+      if (now - a->get_last_order_frame() > 30) {
+        //a->on_frame();
+        // Thinking is done with signal, to avoid growing message queue by
+        // sending repeated think commands, we set a flag to true instead
+        //act::signal(a->get_ac_id(), act::Signal::PeriodicThink);
+        const_cast<BaseAgent*>(a)->ac_tick();
       }
-    }
-  }
+
+//      LARGE_INTEGER le;
+//      QueryPerformanceCounter(&le);
+//      auto elapsed = (le.QuadPart - counter_start) / pc_freq;
+//      if (elapsed >= FRAME_LIMIT) {
+//        std::cout << BOT_PREFIX_DEBUG "Frame limit exceeded " << FRAME_LIMIT << " ms\n";
+//        return; // note this return must break on_frame, not the inner lambda!
+//      }
+    });
+  rnp::profiler()->end("OnFrame_AgentManager");
+}
+
+size_t AgentManager::get_workers_count() const {
+  size_t w_cnt = 0;
+  act::for_each_actor<BaseAgent>(
+    [&w_cnt](const BaseAgent* a) {
+      if (a->is_worker()) {
+        w_cnt++;
+      }
+    });
+  return w_cnt;
+}
+
+size_t AgentManager::get_mining_workers_count() const {
+  size_t cnt = 0;
+  act::for_each_actor<BaseAgent>(
+    [&cnt](const BaseAgent* a) {
+      if (a->is_worker()) {
+        auto w = static_cast<const WorkerAgent*>(a);
+        if (w->get_state() == WorkerState::GATHER_MINERALS) {
+          cnt++;
+        }
+      }
+    });
   return cnt;
 }
 
-BaseAgent* AgentManager::findClosestFreeWorker(TilePosition pos) {
-  BaseAgent* bestAgent = nullptr;
-  double bestDist = 10000;
+const BaseAgent*
+AgentManager::find_closest_free_worker(const TilePosition& pos) const {
+  const BaseAgent* base_agent = nullptr;
+  float best_dist = 1e+12f;
 
-  for (auto& a : agents_) {
-    if (a->isFreeWorker()) {
-      double cDist = a->getUnit()->getDistance(Position(pos));
-      if (cDist < bestDist) {
-        bestDist = cDist;
-        bestAgent = a;
+  act::for_each_actor<BaseAgent>(
+    [&best_dist,&base_agent,&pos](const BaseAgent* a) {
+      if (a->is_available_worker()) {
+        float c_dist = rnp::distance(pos, a->get_unit()->getTilePosition());
+        if (c_dist < best_dist) {
+          best_dist = c_dist;
+          base_agent = a;
+        }
       }
-    }
-  }
-  return bestAgent;
+    });
+  return base_agent;
 }
 
-bool AgentManager::isAnyAgentRepairingThisAgent(BaseAgent* repairedAgent) {
-  for (auto& a : agents_) {
-    if (a->isAlive() && a->isWorker()) {
-      Unit unit = a->getUnit();
-      if (unit->getTarget() != nullptr && unit->getTarget()->getID() == repairedAgent->getUnitID()) {
-        //Already have an assigned builder
-        return true;
+bool AgentManager::is_any_agent_repairing_this_agent(
+  const BaseAgent* repaired_agent) const 
+{
+  auto result = false;
+
+  act::for_each_actor<BaseAgent>(
+    [&result,repaired_agent](const BaseAgent* a) {
+      if (a->is_worker()) {
+        auto unit = a->get_unit();
+        if (unit->getTarget() != nullptr 
+          && unit->getTarget()->getID() == repaired_agent->get_unit_id()) {
+          //Already have an assigned builder
+          result = true;
+          return;
+        }
       }
-    }
-  }
-  return false;
+    });
+  return result;
 }
 
-int AgentManager::noInProduction(UnitType type) {
-  int cnt = 0;
-  for (auto& a : agents_) {
-    if (a->isAlive()) {
-      if (a->isOfType(type) && a->getUnit()->isBeingConstructed()) {
+size_t AgentManager::get_in_production_count(UnitType type) const {
+  size_t cnt = 0;
+  act::for_each_actor<BaseAgent>(
+    [&type,&cnt](const BaseAgent* a) {
+      if (a->is_of_type(type) && a->get_unit()->isBeingConstructed()) {
         cnt++;
       }
-    }
-  }
+    });
   return cnt;
 }
 
-bool AgentManager::hasBuilding(UnitType type) {
-  for (auto& a : agents_) {
-    if (a->isOfType(type) && a->isAlive()) {
-      if (not a->getUnit()->isBeingConstructed()) {
-        return true;
+bool AgentManager::have_a_completed_building(UnitType type) const {
+  auto result = false;
+
+  act::for_each_actor<BaseAgent>(
+    [&result,&type](const BaseAgent* a) {
+      if (a->is_of_type(type)) {
+        if (not a->get_unit()->isBeingConstructed()) {
+          result = true;
+          return;
+        }
       }
-    }
-  }
-  return false;
+    });
+  return result;
 }
 
-int AgentManager::countNoUnits(UnitType type) {
-  int cnt = 0;
-  for (auto& a : agents_) {
-    if (a->isAlive()) {
-      if (a->isOfType(type) && a->isAlive()) {
-        cnt++;
+size_t AgentManager::get_units_of_type_count(UnitType type) const {
+  size_t cnt = 0;
+  act::for_each_actor<BaseAgent>(
+    [&cnt,&type](const BaseAgent* a) {
+      if (a->is_alive()) {
+        if (a->is_of_type(type)) {
+          cnt++;
+        }
       }
-    }
-  }
+    });
   return cnt;
 }
 
-int AgentManager::countNoFinishedUnits(UnitType type) {
-  int cnt = 0;
-  for (auto& a : agents_) {
-    if (a->isAlive()) {
-      if (a->isOfType(type) && a->isAlive() && not a->getUnit()->isBeingConstructed()) {
-        cnt++;
+size_t AgentManager::get_finished_units_count(UnitType type) const {
+  size_t cnt = 0;
+  act::for_each_actor<BaseAgent>(
+    [&cnt,&type](const BaseAgent* a) {
+      if (a->is_alive()) {
+        if (a->is_of_type(type) && not a->get_unit()->isBeingConstructed()) {
+          cnt++;
+        }
       }
-    }
-  }
+    });
   return cnt;
 }
 
-int AgentManager::countNoBases() {
-  int cnt = 0;
-  for (auto& a : agents_) {
-    if (a->isAlive()) {
-      if (a->getUnitType().isResourceDepot() && not a->getUnit()->isBeingConstructed()) {
-        cnt++;
+size_t AgentManager::get_bases_count() const {
+  size_t cnt = 0;
+  act::for_each_actor<BaseAgent>(
+    [&cnt](const BaseAgent* a) {
+      if (a->is_alive()) {
+        if (a->unit_type().isResourceDepot() && not a->get_unit()->isBeingConstructed()) {
+          cnt++;
+        }
       }
-    }
-  }
+    });
   return cnt;
 }
 
-bool AgentManager::workerIsTargeting(Unit target) {
-  for (auto& a : agents_) {
-    if (a->isWorker() && a->isAlive()) {
-      auto unit = a->getUnit();
-      auto unitTarget = a->getUnit()->getTarget();
-      if (unitTarget != nullptr && unitTarget->getID() == target->getID()) {
-        return true;
+bool AgentManager::is_worker_targeting_unit(Unit target) const {
+  auto result = false;
+  act::for_each_actor<BaseAgent>(
+    [&result,target](const BaseAgent* a) {
+      if (a->is_worker()) {
+        //auto unit = a->get_unit();
+        auto unitTarget = a->get_unit()->getTarget();
+        if (unitTarget != nullptr && unitTarget->getID() == target->getID()) {
+          result = true;
+          return;
+        }
       }
-    }
-  }
-  return false;
+    });
+  return result;
+}
+
+void AgentManager::handle_message(act::Message* incoming) {
+  if (auto died = dynamic_cast<msg::agentmanager::UnitDestroyed*>(incoming)) {
+    handle_unit_destroyed(died);
+  } 
+  else unhandled_message(incoming);
 }

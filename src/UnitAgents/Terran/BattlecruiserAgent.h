@@ -17,5 +17,5 @@ public:
     agent_type_ = "BattlecruiserAgent";
   }
 
-  bool useAbilities() override;
+  bool use_abilities() override;
 };

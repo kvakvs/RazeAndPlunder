@@ -4,7 +4,7 @@
 
 using namespace BWAPI;
 
-bool SiegeTankAgent::useAbilities() {
+bool SiegeTankAgent::use_abilities() {
   //Siege Mode
   if (Broodwar->self()->hasResearched(TechTypes::Tank_Siege_Mode)) {
     int range = UnitTypes::Terran_Siege_Tank_Siege_Mode.groundWeapon().maxRange();
@@ -21,9 +21,9 @@ bool SiegeTankAgent::useAbilities() {
 
     //If we are defending and are at the defense position, go
     //in siege mode
-    auto sq = rnp::commander()->getSquad(squad_id_);
+    auto sq = rnp::commander()->get_squad(squad_id_);
     if (sq) {
-      if (not sq->isActive()) {
+      if (not sq->is_active()) {
         double d = unit_->getDistance(Position(goal_));
         if (d <= range * 0.5) goSiege = true;
       }

@@ -1,6 +1,6 @@
 #include "NavigationAgent.h"
 #include "PFFunctions.h"
-#include "../Managers/AgentManager.h"
+#include "Managers/AgentManager.h"
 #include "Influencemap/MapManager.h"
 #include "Commander/Commander.h"
 #include "Utils/Profiler.h"
@@ -13,7 +13,9 @@ using namespace BWAPI;
 NavigationAgent::PFType NavigationAgent::pathfinding_version_
     = NavigationAgent::PFType::HybridBoids;
 
-NavigationAgent::NavigationAgent() : bwem_(BWEM::Map::Instance()) {
+NavigationAgent::NavigationAgent()
+    : bwem_(BWEM::Map::Instance())
+{
   check_range_ = 5;
   map_w_ = Broodwar->mapWidth() * 4;
   map_h_ = Broodwar->mapHeight() * 4;
@@ -22,16 +24,18 @@ NavigationAgent::NavigationAgent() : bwem_(BWEM::Map::Instance()) {
 NavigationAgent::~NavigationAgent() {
 }
 
-bool NavigationAgent::computeMove(BaseAgent* agent, TilePosition goal) {
+bool NavigationAgent::compute_move(const BaseAgent* agent, TilePosition goal) {
   bool cmd = false;
-  double r = agent->getUnitType().seekRange();
-  if (agent->getUnitType().sightRange() > r) {
-    r = agent->getUnitType().sightRange();
+  auto agent_pos = agent->get_unit()->getPosition();
+
+  double r = agent->unit_type().seekRange();
+  if (agent->unit_type().sightRange() > r) {
+    r = agent->unit_type().sightRange();
   }
 
   bool enemyInRange = false;
   for (auto& u : Broodwar->enemy()->getUnits()) {
-    double dist = agent->getUnit()->getPosition().getDistance(u->getPosition());
+    double dist = agent_pos.getDistance(u->getPosition());
     if (dist <= r) {
       enemyInRange = true;
       break;
@@ -40,24 +44,24 @@ bool NavigationAgent::computeMove(BaseAgent* agent, TilePosition goal) {
 
   //Retreat to center of the squad if the enemy
   //is overwhelming.
-  if (agent->isUnderAttack() && (agent->getUnit()->isIdle() || agent->getUnit()->isInterruptible())) {
-    int ownI = rnp::map_manager()->getOwnGroundInfluenceIn(agent->getUnit()->getTilePosition());
-    int enI = rnp::map_manager()->getEnemyGroundInfluenceIn(agent->getUnit()->getTilePosition());
+  if (agent->is_under_attack() && (agent->get_unit()->isIdle() || agent->get_unit()->isInterruptible())) {
+    int ownI = rnp::map_manager()->get_my_influence_at(agent->get_unit()->getTilePosition());
+    int enI = rnp::map_manager()->get_ground_influence_at(agent->get_unit()->getTilePosition());
     if (enI > ownI) {
       //Broodwar << "Retreat from (" << agent->getUnit()->getTilePosition().x << "," << agent->getUnit()->getTilePosition().y << " " << ownI << "<" << enI << endl;
-      auto sq = rnp::commander()->getSquad(agent->getSquadID());
-      if (sq && not sq->isExplorer()) {
-        TilePosition center = sq->getCenter();
-        if (center.getDistance(agent->getUnit()->getTilePosition()) >= 4 && not agent->getUnit()->isCloaked()) {
-          if (agent->getUnit()->isSieged()) {
-            agent->getUnit()->unsiege();
+      auto sq = rnp::commander()->get_squad(agent->get_squad_id());
+      if (sq && not sq->is_explorer_squad()) {
+        TilePosition center = sq->get_center();
+        if (center.getDistance(agent->get_unit()->getTilePosition()) >= 4 && not agent->get_unit()->isCloaked()) {
+          if (agent->get_unit()->isSieged()) {
+            agent->get_unit()->unsiege();
             return true;
           }
-          if (agent->getUnit()->isBurrowed()) {
-            agent->getUnit()->unburrow();
+          if (agent->get_unit()->isBurrowed()) {
+            agent->get_unit()->unburrow();
             return true;
           }
-          agent->getUnit()->rightClick(Position(center));
+          agent->get_unit()->rightClick(Position(center));
           return true;
         }
       }
@@ -68,32 +72,32 @@ bool NavigationAgent::computeMove(BaseAgent* agent, TilePosition goal) {
     switch (pathfinding_version_) {
       case PFType::Builtin :
         rnp::profiler()->start("NormMove");
-        cmd = computePathfindingMove(agent, goal);
+        cmd = compute_pathfinding_move(agent, goal);
         rnp::profiler()->end("NormMove");
         break;
 
       case PFType::HybridBoids :
         rnp::profiler()->start("BoidsMove");
-        cmd = computeBoidsMove(agent);
+        cmd = compute_boids_move(agent);
         rnp::profiler()->end("BoidsMove");
         break;
 
-      case PFType::HybridPF :
+      case PFType::HybridPotentialField :
         rnp::profiler()->start("PFmove");
-        computePotentialFieldMove(agent);
+        compute_potential_field_move(agent);
         rnp::profiler()->end("PFmove");
         break;
     }
   }
   else {
     rnp::profiler()->start("NormMove");
-    cmd = computePathfindingMove(agent, goal);
+    cmd = compute_pathfinding_move(agent, goal);
     rnp::profiler()->end("NormMove");
   }
   return cmd;
 }
 
-int NavigationAgent::getMaxUnitSize(UnitType type) {
+int NavigationAgent::get_max_unit_size(UnitType type) {
   int size = type.dimensionDown();
   if (type.dimensionLeft() > size) size = type.dimensionLeft();
   if (type.dimensionRight() > size) size = type.dimensionRight();
@@ -102,145 +106,158 @@ int NavigationAgent::getMaxUnitSize(UnitType type) {
 }
 
 
-bool NavigationAgent::computeBoidsMove(BaseAgent* agent) const {
-  if (not agent->getUnit()->isIdle() && not agent->getUnit()->isMoving()) return false;
+bool NavigationAgent::compute_boids_move(const BaseAgent* agent) const {
+  if (not agent->get_unit()->isIdle() && not agent->get_unit()->isMoving()) return false;
 
-  Unit unit = agent->getUnit();
+  Unit unit = agent->get_unit();
   if (unit->isSieged() || unit->isBurrowed() || unit->isLoaded()) {
     return false;
   }
 
   //The difference from current position the agent
   //shall move to.
-  double aDiffX = 0;
-  double aDiffY = 0;
+  double a_diffx = 0;
+  double a_diffy = 0;
+  auto agent_pos = agent->get_unit()->getPosition();
 
   //Apply goal
-  if (rnp::is_valid_position(agent->getGoal())) {
-    Position goal = Position(agent->getGoal());
-    double addX = ((double)goal.x - (double)agent->getUnit()->getPosition().x) / 100.0;
-    double addY = ((double)goal.y - (double)agent->getUnit()->getPosition().y) / 100.0;
+  if (rnp::is_valid_position(agent->get_goal())) {
+    Position goal = Position(agent->get_goal());
+    double add_x = ((double)goal.x - (double)agent_pos.x) / 100.0;
+    double add_y = ((double)goal.y - (double)agent_pos.y) / 100.0;
 
-    aDiffX += addX;
-    aDiffY += addY;
+    a_diffx += add_x;
+    a_diffy += add_y;
   }
 
   //Apply average position for the squad
-  double totDX = 0;
-  double totDY = 0;
-  auto sq = rnp::commander()->getSquad(agent->getSquadID());
+  double total_dx = 0.0;
+  double total_dy = 0.0;
+  auto sq = rnp::commander()->get_squad(agent->get_squad_id());
   if (sq != nullptr) {
-    Agentset agents = sq->getMembers();
-    int no = 0;
-    for (auto& a : agents) {
-      if (a->isAlive() && a->getUnitID() != agent->getUnitID()) {
-        totDX += (double)a->getUnit()->getPosition().x;
-        totDY += (double)a->getUnit()->getPosition().y;
-        no++;
-      }
-    }
+    int count = 0;
+    act::for_each_in<BaseAgent>(
+        sq->get_members(),
+        [agent,&count,&total_dx,&total_dy](const BaseAgent* a) {
+            if (a->is_alive() && a->get_unit_id() != agent->get_unit_id()) {
+              auto a_pos = a->get_unit()->getPosition();
+              total_dx += static_cast<double>(a_pos.x);
+              total_dy += static_cast<double>(a_pos.y);
+              count++;
+            }
+        });
 
-    totDX = totDX / (double)(no - 1);
-    totDY = totDY / (double)(no - 1);
+    total_dx /= count - 1.0;
+    total_dy /= count - 1.0;
 
-    double addX = (totDX - (double)agent->getUnit()->getPosition().x) / 100.0;
-    double addY = (totDY - (double)agent->getUnit()->getPosition().y) / 100.0;
+    double addX = (total_dx - (double)agent_pos.x) / 100.0;
+    double addY = (total_dy - (double)agent_pos.y) / 100.0;
 
-    aDiffX += addX;
-    aDiffY += addY;
+    a_diffx += addX;
+    a_diffy += addY;
   }
 
   //Apply average heading for the squad
-  totDX = 0;
-  totDY = 0;
+  total_dx = 0;
+  total_dy = 0;
   if (sq != nullptr) {
-    Agentset agents = sq->getMembers();
     int no = 0;
-    for (auto& a : agents) {
-      if (a->isAlive() && a->getUnitID() != agent->getUnitID()) {
-        totDX += cos(a->getUnit()->getAngle());
-        totDY += sin(a->getUnit()->getAngle());
-        no++;
-      }
-    }
+    act::for_each_in<BaseAgent>(
+        sq->get_members(),
+        [agent,&no,&total_dx,&total_dy](const BaseAgent* a) {
+            if (a->is_alive() && a->get_unit_id() != agent->get_unit_id()) {
+              auto a_angle = a->get_unit()->getAngle();
+              total_dx += cos(a_angle);
+              total_dy += sin(a_angle);
+              no++;
+            }
+        });
 
-    totDX = totDX / (double)(no - 1);
-    totDY = totDY / (double)(no - 1);
+    total_dx = total_dx / (double)(no - 1);
+    total_dy = total_dy / (double)(no - 1);
 
-    double addX = (totDX - cos(agent->getUnit()->getAngle())) / 5.0;
-    double addY = (totDY - sin(agent->getUnit()->getAngle())) / 5.0;
+    double addX = (total_dx - cos(agent->get_unit()->getAngle())) / 5.0;
+    double addY = (total_dy - sin(agent->get_unit()->getAngle())) / 5.0;
 
-    aDiffX += addX;
-    aDiffY += addY;
+    a_diffx += addX;
+    a_diffy += addY;
   }
 
   //Apply separation from own units. Does not apply for air units
-  totDX = 0;
-  totDY = 0;
-  double detectionLimit = 10.0;
+  total_dx = 0;
+  total_dy = 0;
+  double detection_lim = 10.0;
 
-  if (sq != nullptr && not agent->getUnitType().isFlyer()) {
-    Agentset agents = sq->getMembers();
+  if (sq != nullptr && not agent->unit_type().isFlyer()) {
     int cnt = 0;
-    for (auto& a : agents) {
-      //Set detection limit to be the radius of both units + 2
-      detectionLimit = (double)(getMaxUnitSize(agent->getUnitType()) + getMaxUnitSize(a->getUnitType()) + 2);
+    act::for_each_in<BaseAgent>(
+        sq->get_members(),
+        [&agent_pos,agent,&detection_lim,&cnt,&total_dx,&total_dy]
+        (const BaseAgent* a) {
+            //Set detection limit to be the radius of both units + 2
+            detection_lim = (double) (
+                get_max_unit_size(agent->unit_type())
+                + get_max_unit_size(a->unit_type()) + 2);
 
-      if (a->isAlive() && a->getUnitID() != agent->getUnitID()) {
-        double d = agent->getUnit()->getPosition().getDistance(a->getUnit()->getPosition());
-        if (d <= detectionLimit) {
-          totDX -= (a->getUnit()->getPosition().x - agent->getUnit()->getPosition().x);
-          totDY -= (a->getUnit()->getPosition().y - agent->getUnit()->getPosition().y);
-          cnt++;
-        }
-      }
-    }
+            if (a->is_alive() && a->get_unit_id() != agent->get_unit_id()) {
+              auto a_pos = a->get_unit()->getPosition();
+              double d = agent_pos.getDistance(a_pos);
+              if (d <= detection_lim) {
+                total_dx -= (a_pos.x - agent_pos.x);
+                total_dy -= (a_pos.y - agent_pos.y);
+                cnt++;
+              }
+            }
+        });
     if (cnt > 0) {
-      double addX = totDX / 5.0;
-      double addY = totDY / 5.0;
+      double addX = total_dx / 5.0;
+      double addY = total_dy / 5.0;
 
-      aDiffX += addX;
-      aDiffY += addY;
+      a_diffx += addX;
+      a_diffy += addY;
     }
   }
 
   //Apply separation from enemy units
-  totDX = 0;
-  totDY = 0;
+  total_dx = 0;
+  total_dy = 0;
 
   //Check if the agent targets ground and/or air
   //Check range of weapons
   bool targetsGround = false;
+  auto ground_weapon = agent->unit_type().groundWeapon();
   int groundRange = 0;
-  if (agent->getUnitType().groundWeapon().targetsGround()) {
+  if (ground_weapon.targetsGround()) {
     targetsGround = true;
-    if (agent->getUnitType().groundWeapon().maxRange() > groundRange) {
-      groundRange = agent->getUnitType().groundWeapon().maxRange();
+    if (ground_weapon.maxRange() > groundRange) {
+      groundRange = ground_weapon.maxRange();
     }
   }
-  if (agent->getUnitType().airWeapon().targetsGround()) {
+
+  auto air_weapon = agent->unit_type().airWeapon();
+  if (air_weapon.targetsGround()) {
     targetsGround = true;
-    if (agent->getUnitType().airWeapon().maxRange() > groundRange) {
-      groundRange = agent->getUnitType().airWeapon().maxRange();
+    if (air_weapon.maxRange() > groundRange) {
+      groundRange = air_weapon.maxRange();
     }
   }
 
   bool targetsAir = false;
   int airRange = 0;
-  if (agent->getUnitType().groundWeapon().targetsAir()) {
+  if (ground_weapon.targetsAir()) {
     targetsAir = true;
-    if (agent->getUnitType().groundWeapon().maxRange() > groundRange) {
-      airRange = agent->getUnitType().groundWeapon().maxRange();
+    if (ground_weapon.maxRange() > groundRange) {
+      airRange = ground_weapon.maxRange();
     }
   }
-  if (agent->getUnitType().airWeapon().targetsAir()) {
+  if (air_weapon.targetsAir()) {
     targetsAir = true;
-    if (agent->getUnitType().airWeapon().maxRange() > groundRange) {
-      airRange = agent->getUnitType().airWeapon().maxRange();
+    if (air_weapon.maxRange() > groundRange) {
+      airRange = air_weapon.maxRange();
     }
   }
   //Unit cannot attack
-  if (not agent->getUnitType().canAttack()) {
+  if (not agent->unit_type().canAttack()) {
     groundRange = 6 * 32;
     airRange = 6 * 32;
   }
@@ -253,75 +270,83 @@ bool NavigationAgent::computeBoidsMove(BaseAgent* agent) const {
     int cnt = 0;
     if (u->exists()) {
       UnitType t = u->getType();
-      double detectionLimit = 100000;
-      if (t.isFlyer() && targetsAir) detectionLimit = (double)airRange - getMaxUnitSize(agent->getUnitType()) - 2;
-      if (not t.isFlyer() && targetsGround) detectionLimit = (double)groundRange - getMaxUnitSize(agent->getUnitType()) - 2;
-      if (not agent->getUnitType().canAttack()) {
+      
+      if (t.isFlyer() && targetsAir) {
+        detection_lim = (double)airRange - get_max_unit_size(agent->unit_type()) - 2;
+      }
+      if (not t.isFlyer() && targetsGround) {
+        detection_lim = (double)groundRange - get_max_unit_size(agent->unit_type()) - 2;
+      }
+      if (not agent->unit_type().canAttack()) {
         retreat = true;
-        detectionLimit = t.sightRange();
+        detection_lim = t.sightRange();
       }
       if (unit->getGroundWeaponCooldown() >= 20 || unit->getAirWeaponCooldown() >= 20) {
         retreat = true;
-        detectionLimit = t.sightRange();
+        detection_lim = t.sightRange();
       }
-      if (detectionLimit < 5) detectionLimit = 5; //Minimum separation
+      if (detection_lim < 5) detection_lim = 5; //Minimum separation
 
-      double d = agent->getUnit()->getPosition().getDistance(u->getPosition());
-      if (d <= detectionLimit) {
-        totDX -= (u->getPosition().x - agent->getUnit()->getPosition().x);
-        totDY -= (u->getPosition().y - agent->getUnit()->getPosition().y);
+      double d = agent_pos.getDistance(u->getPosition());
+      if (d <= detection_lim) {
+        total_dx -= (u->getPosition().x - agent_pos.x);
+        total_dy -= (u->getPosition().y - agent_pos.y);
         cnt++;
       }
     }
     if (cnt > 0) {
-      double addX = totDX;
-      double addY = totDY;
+      double addX = total_dx;
+      double addY = total_dy;
 
-      aDiffX += addX;
-      aDiffY += addY;
+      a_diffx += addX;
+      a_diffy += addY;
     }
   }
 
   //Apply separation from terrain
-  totDX = 0;
-  totDY = 0;
+  total_dx = 0;
+  total_dy = 0;
   int cnt = 0;
-  WalkPosition unitWT = WalkPosition(agent->getUnit()->getPosition());
-  detectionLimit = (double)(getMaxUnitSize(agent->getUnitType()) + 16);
+  WalkPosition unitWT(agent_pos);
+  
+  detection_lim = (double)(get_max_unit_size(agent->unit_type()) + 16);
+
   for (int tx = unitWT.x - 2; tx <= unitWT.x + 2; tx++) {
     for (int ty = unitWT.y - 2; ty <= unitWT.y + 2; ty++) {
       if (not Broodwar->isWalkable(tx, ty)) {
-        WalkPosition terrainWT = WalkPosition(tx, ty);
-        WalkPosition uWT = WalkPosition(agent->getUnit()->getPosition());
+
+        WalkPosition terrainWT(tx, ty);
+        WalkPosition uWT(agent_pos);
         double d = terrainWT.getDistance(uWT);
-        if (d <= detectionLimit) {
-          Position tp = Position(terrainWT);
-          totDX -= (tp.x - agent->getUnit()->getPosition().x);
-          totDY -= (tp.y - agent->getUnit()->getPosition().y);
+
+        if (d <= detection_lim) {
+          Position tp(terrainWT);
+          total_dx -= (tp.x - agent_pos.x);
+          total_dy -= (tp.y - agent_pos.y);
           cnt++;
         }
       }
     }
   }
   if (cnt > 0) {
-    double addX = totDX / 10.0;
-    double addY = totDY / 10.0;
+    double addX = total_dx / 10.0;
+    double addY = total_dy / 10.0;
 
-    aDiffX += addX;
-    aDiffY += addY;
+    a_diffx += addX;
+    a_diffy += addY;
   }
 
   //Update new position
-  int newX = (int)(agent->getUnit()->getPosition().x + aDiffX);
-  int newY = (int)(agent->getUnit()->getPosition().y + aDiffY);
-  Position toMove = Position(newX, newY);
+  int newX = (int)(agent_pos.x + a_diffx);
+  int newY = (int)(agent_pos.y + a_diffy);
+  Position toMove(newX, newY);
 
-  if (agent->getUnit()->getPosition().getDistance(toMove) >= 1) {
+  if (agent_pos.getDistance(toMove) >= 1) {
     if (retreat) {
-      return agent->getUnit()->rightClick(toMove);
+      return agent->get_unit()->rightClick(toMove);
     }
     else {
-      return agent->getUnit()->attack(toMove);
+      return agent->get_unit()->attack(toMove);
     }
   }
 
@@ -329,10 +354,10 @@ bool NavigationAgent::computeBoidsMove(BaseAgent* agent) const {
 }
 
 
-bool NavigationAgent::computePotentialFieldMove(BaseAgent* agent) {
-  if (not agent->getUnit()->isIdle() && not agent->getUnit()->isMoving()) return false;
+bool NavigationAgent::compute_potential_field_move(const BaseAgent* agent) const {
+  if (not agent->get_unit()->isIdle() && not agent->get_unit()->isMoving()) return false;
 
-  Unit unit = agent->getUnit();
+  Unit unit = agent->get_unit();
 
   if (unit->isSieged() || unit->isBurrowed() || unit->isLoaded()) {
     return false;
@@ -342,10 +367,10 @@ bool NavigationAgent::computePotentialFieldMove(BaseAgent* agent) {
   int wtX = unitWT.x;
   int wtY = unitWT.y;
 
-  float bestP = getAttackingUnitP(agent, unitWT);
+  float bestP = get_attacking_unit_p(agent, unitWT);
   //bestP += PFFunctions::getGoalP(Position(unitX,unitY), goal);
   //bestP += PFFunctions::getTrailP(agent, unitX, unitY);
-  bestP += PFFunctions::getTerrainP(agent, unitWT);
+  bestP += PFFunctions::get_terrain_p(agent, unitWT);
 
   float cP = 0;
 
@@ -357,10 +382,10 @@ bool NavigationAgent::computePotentialFieldMove(BaseAgent* agent) {
     for (int cY = wtY - check_range_; cY <= wtY + check_range_; cY++) {
       if (cX >= 0 && cY >= 0 && cX <= map_w_ && cY <= map_h_) {
         WalkPosition wt = WalkPosition(cX, cY);
-        cP = getAttackingUnitP(agent, wt);
+        cP = get_attacking_unit_p(agent, wt);
         //cP += PFFunctions::getGoalP(Position(cX,cY), goal);
         //cP += PFFunctions::getTrailP(agent, cX, cY);
-        cP += PFFunctions::getTerrainP(agent, wt);
+        cP += PFFunctions::get_terrain_p(agent, wt);
 
         if (cP > bestP) {
           bestP = cP;
@@ -375,38 +400,40 @@ bool NavigationAgent::computePotentialFieldMove(BaseAgent* agent) {
     WalkPosition wt = WalkPosition(bestX, bestY);
     Position toMove = Position(wt);
 
-    return agent->getUnit()->attack(toMove);
+    return agent->get_unit()->attack(toMove);
   }
 
   return false;
 }
 
-bool NavigationAgent::computePathfindingMove(BaseAgent* agent, TilePosition goal) {
+bool NavigationAgent::compute_pathfinding_move(const BaseAgent* agent,
+                                               TilePosition goal) {
   TilePosition checkpoint = goal;
-  if (agent->getSquadID() >= 0) {
-    auto sq = rnp::commander()->getSquad(agent->getSquadID());
+  if (agent->get_squad_id().is_valid()) {
+    auto sq = rnp::commander()->get_squad(agent->get_squad_id());
     if (sq) {
-      checkpoint = sq->nextMovePosition();
-      if (agent->isOfType(UnitTypes::Terran_SCV)) {
-        checkpoint = sq->nextFollowMovePosition();
-        agent->setGoal(checkpoint);
+      checkpoint = sq->next_move_position();
+      if (agent->is_of_type(UnitTypes::Terran_SCV)) {
+        checkpoint = sq->next_follow_move_position();
+        msg::unit::set_goal(agent->self(), checkpoint);
       }
     }
   }
 
   if (rnp::is_valid_position(goal)) {
-    moveToGoal(agent, checkpoint, goal);
+    move_to_goal(agent, checkpoint, goal);
     return true;
   }
   return false;
 }
 
-void NavigationAgent::displayPF(BaseAgent* agent) const {
-  Unit unit = agent->getUnit();
+void NavigationAgent::debug_display_pf(const BaseAgent* agent) const {
+  Unit unit = agent->get_unit();
   if (unit->isBeingConstructed()) return;
 
   //PF
-  WalkPosition w = WalkPosition(agent->getUnit()->getPosition());
+  auto agent_pos = agent->get_unit()->getPosition();
+  WalkPosition w = WalkPosition(agent_pos);
   int tileX = w.x;
   int tileY = w.y;
   int range = 10 * 3;
@@ -415,22 +442,22 @@ void NavigationAgent::displayPF(BaseAgent* agent) const {
     for (int cTileY = tileY - range; cTileY < tileY + range; cTileY += 3) {
       if (cTileX >= 0 && cTileY >= 0 && cTileX < map_w_ && cTileY < map_h_) {
         WalkPosition wt = WalkPosition(cTileX + 1, cTileY + 1);
-        float p = getAttackingUnitP(agent, wt);
+        float p = get_attacking_unit_p(agent, wt);
         //cP += PFFunctions::getGoalP(Position(cX,cY), goal);
         //cP += PFFunctions::getTrailP(agent, cX, cY);
-        p += PFFunctions::getTerrainP(agent, wt);
+        p += PFFunctions::get_terrain_p(agent, wt);
 
         //print box
         if (p > -950) {
           Position pos = Position(wt);
-          Broodwar->drawBoxMap(pos.x - 8, pos.y - 8, pos.x + 8, pos.y + 8, getColor(p), true);
+          Broodwar->drawBoxMap(pos.x - 8, pos.y - 8, pos.x + 8, pos.y + 8, get_color(p), true);
         }
       }
     }
   }
 }
 
-Color NavigationAgent::getColor(float p) {
+Color NavigationAgent::get_color(float p) {
   if (p >= 0) {
     int v = (int)(p * 3);
     int halfV = (int)(p * 0.6);
@@ -452,69 +479,72 @@ Color NavigationAgent::getColor(float p) {
   }
 }
 
-bool NavigationAgent::moveToGoal(BaseAgent* agent, TilePosition checkpoint, TilePosition goal) {
+bool NavigationAgent::move_to_goal(const BaseAgent* agent,
+                                   TilePosition checkpoint,
+                                   TilePosition goal) {
   if (not rnp::is_valid_position(checkpoint)
     || not rnp::is_valid_position(goal)) 
   {
     return false;
   }
-  Unit unit = agent->getUnit();
+  Unit unit = agent->get_unit();
 
   if (unit->isStartingAttack() || unit->isAttacking()) {
     return false;
   }
 
-  Position toReach = Position(checkpoint.x * 32 + 16, checkpoint.y * 32 + 16);
-  double distToReach = toReach.getDistance(unit->getPosition());
+  Position to_reach = Position(checkpoint.x * 32 + 16, checkpoint.y * 32 + 16);
+  double dist_to_reach = rnp::distance(to_reach, unit->getPosition());
 
-  int engageDist = (int)(unit->getType().groundWeapon() * 0.5);
-  if (engageDist < 2 * 32) engageDist = 2 * 32;
+  int engage_dist = (int)(unit->getType().groundWeapon() * 0.5);
+  if (engage_dist < 2 * 32) engage_dist = 2 * 32;
 
   //Explorer units shall have
   //less engage dist to avoid getting
   //stuck at waypoints.
-  auto sq = rnp::commander()->getSquad(agent->getSquadID());
+  auto sq = rnp::commander()->get_squad(agent->get_squad_id());
   if (sq) {
-    if (sq->isExplorer()) {
-      engageDist = 32;
+    if (sq->is_explorer_squad()) {
+      engage_dist = 32;
     }
     else {
       //Add additional distance to avoid clogging
       //choke points.
-      if (not sq->isActive()) {
-        engageDist += 4 * 32;
+      if (not sq->is_active()) {
+        engage_dist += 4 * 32;
       }
     }
   }
 
-  if (distToReach <= engageDist) {
+  if (dist_to_reach <= engage_dist) {
     //Dont stop close to chokepoints
     TilePosition tp = unit->getTilePosition();
     auto cp = rnp::get_nearest_chokepoint(bwem_, tp);
-    double d = tp.getDistance(TilePosition(cp->Center()));
-    if (d > 4) {
+    float d = rnp::distance(tp, TilePosition(cp->Center()));
+    if (d > 4.0f) {
       if (unit->isMoving()) unit->stop();
       return true;
     }
   }
 
-  int squadID = agent->getSquadID();
-  if (squadID != -1) {
-    auto sq = rnp::commander()->getSquad(squadID);
+  auto squad_id = agent->get_squad_id();
+  if (squad_id.is_valid()) {
+    auto sq = rnp::commander()->get_squad(squad_id);
     if (sq) {
-      if (sq->isAttacking()) {
+      if (sq->is_attacking()) {
         //Squad is attacking. Don't stop
         //at checkpoints.
-        toReach = Position(goal.x * 32 + 16, goal.y * 32 + 16);
+        to_reach = Position(goal.x * 32 + 16, goal.y * 32 + 16);
       }
     }
   }
   //Move
-  if (not unit->isMoving()) return unit->attack(toReach);
+  if (not unit->isMoving()) return unit->attack(to_reach);
   else return true;
 }
 
-float NavigationAgent::getAttackingUnitP(BaseAgent* agent, WalkPosition wp) const {
+float NavigationAgent::get_attacking_unit_p(const BaseAgent* agent,
+                                            WalkPosition wp) const {
   float p = 0;
 
   //Enemy Units
@@ -523,29 +553,39 @@ float NavigationAgent::getAttackingUnitP(BaseAgent* agent, WalkPosition wp) cons
 
     UnitType t = u->getType();
     bool retreat = false;
-    if (not agent->getUnitType().canAttack() && agent->getUnitType().isFlyer()) retreat = true;
-    if (not agent->getUnitType().canAttack() && not agent->getUnitType().isFlyer()) retreat = true;
-    if (agent->getUnit()->getGroundWeaponCooldown() >= 20 || agent->getUnit()->getAirWeaponCooldown() >= 20) retreat = true;
+    if (not agent->unit_type().canAttack() 
+        && agent->unit_type().isFlyer()) retreat = true;
 
-    float dist = PFFunctions::getDistance(wp, u);
-    if (not retreat) p += PFFunctions::calcOffensiveUnitP(dist, agent->getUnit(), u);
-    if (retreat) p += PFFunctions::calcDefensiveUnitP(dist, agent->getUnit(), u);
+    if (not agent->unit_type().canAttack()
+        && not agent->unit_type().isFlyer()) retreat = true;
+
+    if (agent->get_unit()->getGroundWeaponCooldown() >= 20 
+        || agent->get_unit()->getAirWeaponCooldown() >= 20) retreat = true;
+
+    float dist = PFFunctions::get_distance(wp, u);
+
+    if (not retreat) {
+      p += PFFunctions::calc_offensive_unit_p(dist, agent->get_unit(), u);
+    }
+    else {
+      p += PFFunctions::calc_defensive_unit_p(dist, agent->get_unit(), u);
+    }
   }
 
   //Own Units
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->isAlive()) {
-      float dist = PFFunctions::getDistance(wp, a->getUnit());
-      p += PFFunctions::calcOwnUnitP(dist, wp, agent->getUnit(), a->getUnit());
-    }
-  }
+  act::for_each_actor<BaseAgent>(
+    [&p,&wp,agent](const BaseAgent* a) {
+      if (a->is_alive()) {
+        auto dist = PFFunctions::get_distance(wp, a->get_unit());
+        p += PFFunctions::calc_own_unit_p(dist, wp, agent->get_unit(), a->get_unit());
+      }
+    });
 
   //Neutral Units
   for (auto& u : Broodwar->getNeutralUnits()) {
     if (u->getType().getID() == UnitTypes::Terran_Vulture_Spider_Mine.getID()) {
       WalkPosition w2 = WalkPosition(u->getPosition());
-      float dist = PFFunctions::getDistance(wp, u);
+      float dist = PFFunctions::get_distance(wp, u);
       if (dist <= 2) {
         p -= 50.0;
       }
@@ -555,21 +595,20 @@ float NavigationAgent::getAttackingUnitP(BaseAgent* agent, WalkPosition wp) cons
   return p;
 }
 
-float NavigationAgent::getDefendingUnitP(BaseAgent* agent, WalkPosition wp) const {
+float NavigationAgent::get_defending_unit_p(const BaseAgent* agent,
+                                            WalkPosition wp) const {
   float p = 0;
 
-  p += PFFunctions::getGoalP(agent, wp);
-  p += PFFunctions::getTerrainP(agent, wp);
+  p += PFFunctions::get_goal_p(agent, wp);
+  p += PFFunctions::get_terrain_p(agent, wp);
 
   //Own Units
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->isAlive()) {
-      float dist = PFFunctions::getDistance(wp, a->getUnit());
-      float ptmp = PFFunctions::calcOwnUnitP(dist, wp, agent->getUnit(), a->getUnit());
+  act::for_each_actor<BaseAgent>(
+    [&p,&wp,agent](const BaseAgent* a) {
+      auto dist = PFFunctions::get_distance(wp, a->get_unit());
+      auto ptmp = PFFunctions::calc_own_unit_p(dist, wp, agent->get_unit(), a->get_unit());
       p += ptmp;
-    }
-  }
+    });
 
   return p;
 }

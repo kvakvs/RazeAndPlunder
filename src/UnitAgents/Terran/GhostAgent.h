@@ -17,5 +17,5 @@ public:
     agent_type_ = "GhostAgent";
   }
 
-  bool useAbilities() override;
+  bool use_abilities() override;
 };

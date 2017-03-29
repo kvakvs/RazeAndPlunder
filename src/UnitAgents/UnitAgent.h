@@ -22,21 +22,21 @@ public:
   virtual ~UnitAgent();
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 
   // Issues an attack order. True if an order is requested, false otherwise. 
-  bool attack();
+  //bool attack();
 
   // Issues a move order. True if an order is requested, false otherwise. 
-  bool move();
+  //bool move();
 
   /** Issues an order to use special abilities. True if an order is requested, false otherwise. 
    * Must be implemented in specific subclasses for each unit type.
    */
-  virtual bool useAbilities() {
+  virtual bool use_abilities() {
     return false;
   }
 
   // Used to print info about this agent to the screen. 
-  void printInfo() override;
+  void debug_print_info() const override;
 };

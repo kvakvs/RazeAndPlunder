@@ -5,14 +5,14 @@
 
 using namespace BWAPI;
 
-bool ScienceVesselAgent::useAbilities() {
+bool ScienceVesselAgent::use_abilities() {
   //Shielding
   if (unit_->getEnergy() >= 100 && Broodwar->getFrameCount() - last_shield_frame_ > 100) {
-    BaseAgent* agent = findImportantUnit();
-    if (agent != nullptr) {
-      if (agent->isAlive() && TargetingAgent::getNoAttackers(agent) > 0) {
-        if (unit_->useTech(TechTypes::Defensive_Matrix, agent->getUnit())) {
-          Broodwar << "Used Defense Matrix on " << agent->getUnitType().getName() << std::endl;
+    auto agent = find_important_unit();
+    if (agent) {
+      if (agent->is_alive() && TargetingAgent::get_no_attackers(agent) > 0) {
+        if (unit_->useTech(TechTypes::Defensive_Matrix, agent->get_unit())) {
+          Broodwar << "Used Defense Matrix on " << agent->unit_type().getName() << std::endl;
           last_shield_frame_ = Broodwar->getFrameCount();
           return true;
         }
@@ -51,7 +51,7 @@ bool ScienceVesselAgent::useAbilities() {
   if (Broodwar->self()->hasResearched(emp) && unit_->getEnergy() >= emp.energyCost()) {
     int range = emp.getWeapon().maxRange();
     for (auto& a : Broodwar->enemy()->getUnits()) {
-      if (isEMPtarget(a) && unit_->getDistance(a) <= range) {
+      if (is_emp_target(a) && unit_->getDistance(a) <= range) {
         if (unit_->useTech(emp, a->getPosition())) {
           Broodwar << "EMP Shockwave used on " << a->getType().getName() << std::endl;
           return true;
@@ -63,7 +63,7 @@ bool ScienceVesselAgent::useAbilities() {
   return false;
 }
 
-bool ScienceVesselAgent::isEMPtarget(Unit e) {
+bool ScienceVesselAgent::is_emp_target(Unit e) {
   if (e->getShields() < 60) return false;
   if (e->getType().getID() == UnitTypes::Protoss_Carrier.getID()) return true;
   if (e->getType().getID() == UnitTypes::Protoss_Arbiter.getID()) return true;
@@ -74,26 +74,31 @@ bool ScienceVesselAgent::isEMPtarget(Unit e) {
   return false;
 }
 
-BaseAgent* ScienceVesselAgent::findImportantUnit() const {
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (isImportantUnit(a)) {
-      double dist = unit_->getDistance(a->getUnit());
-      if (dist <= 320) {
-        return a;
+const BaseAgent* ScienceVesselAgent::find_important_unit() const {
+  const BaseAgent* result = nullptr;
+
+  act::interruptible_for_each_actor<BaseAgent>(
+    [this,&result](const BaseAgent* a) {
+      if (is_important_unit(a)) {
+        double dist = unit_->getDistance(a->get_unit());
+        if (dist <= 320) {
+          result = a;
+          return act::ForEach::Break;
+        }
       }
-    }
-  }
-  return nullptr;
+      return act::ForEach::Continue;
+    });
+
+  return result;
 }
 
-bool ScienceVesselAgent::isImportantUnit(BaseAgent* agent) {
+bool ScienceVesselAgent::is_important_unit(const BaseAgent* agent) {
 //  UnitType type = agent->getUnitType();
 
-  if (agent->isOfType(UnitTypes::Terran_Siege_Tank_Tank_Mode)) return true;
-  if (agent->isOfType(UnitTypes::Terran_Siege_Tank_Siege_Mode)) return true;
-  if (agent->isOfType(UnitTypes::Terran_Science_Vessel)) return true;
-  if (agent->isOfType(UnitTypes::Terran_Battlecruiser)) return true;
+  if (agent->is_of_type(UnitTypes::Terran_Siege_Tank_Tank_Mode)) return true;
+  if (agent->is_of_type(UnitTypes::Terran_Siege_Tank_Siege_Mode)) return true;
+  if (agent->is_of_type(UnitTypes::Terran_Science_Vessel)) return true;
+  if (agent->is_of_type(UnitTypes::Terran_Battlecruiser)) return true;
 
   return false;
 }

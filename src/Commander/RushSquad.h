@@ -9,19 +9,19 @@
 class RushSquad : public Squad {
 
 private:
-  BWAPI::Unit findWorkerTarget();
+  act::ActorId find_worker_target() const;
 
 public:
   //  Constructor. See Squad.h for more details. 
-  RushSquad(int mId, std::string mName, int mPriority);
+  RushSquad(std::string mName, int mPriority);
 
   /** Returns true if this Squad is active, or false if not.
    * A Squad is active when it first has been filled with agents.
    * A Squad with destroyed units are still considered Active. */
-  bool isActive() override;
+  bool is_active() const override;
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 
   // Orders this squad to defend a position. 
   void defend(BWAPI::TilePosition mGoal) override;
@@ -34,12 +34,25 @@ public:
 
   // Clears the goal for this Squad, i.e. sets the goal
   // to TilePosition(-1,-1). 
-  void clearGoal() override;
+  void clear_goal() override;
 
   // Returns the current goal of this Squad. 
-  BWAPI::TilePosition getGoal() override;
+  BWAPI::TilePosition get_goal() const override {
+    return goal_;
+  }
 
   // Returns true if this squad has an assigned goal. 
-  bool hasGoal() override;
+  bool has_goal() const override;
+
+  //
+  // Actor stuff
+  //
+  template <typename... Args>
+  static act::ActorId spawn(Args&& ...args) {
+    return act::spawn<RushSquad>(ActorFlavour::Squad, std::forward<Args>(args)...);
+  }
+private:
+  void prepare_rush_squad();
+  void tick_active_rush_squad();
 };
 

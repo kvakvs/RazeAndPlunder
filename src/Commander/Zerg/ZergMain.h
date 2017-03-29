@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 
 #include "Commander/Commander.h"
 #include "../Squad.h"
@@ -13,8 +14,8 @@ class ZergMain : public Commander {
 private:
   Squad::Ptr mainSquad;
   Squad::Ptr l1;
-  Squad::Ptr sc1;
-  Squad::Ptr sc2;
+  Squad::Ptr scout_sq_;
+  Squad::Ptr rush_sq_;
 
 public:
   ZergMain();
@@ -26,7 +27,9 @@ public:
   void on_frame() override;
 
   // Returns the unique id for this strategy. 
-  static std::string getStrategyId() {
+  static std::string get_strategy_id() {
     return "ZergMain";
   }
 };
+
+#endif // 0

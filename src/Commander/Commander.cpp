@@ -5,16 +5,22 @@
 #include "Managers/Constructor.h"
 #include "Managers/Upgrader.h"
 #include "MainAgents/WorkerAgent.h"
+#include "Utils/Profiler.h"
 
 #include <algorithm>
 #include <iso646.h>
 
 #include "RnpUtil.h"
 #include "Glob.h"
+#include "RnpConst.h"
+#include "RnpRandom.h"
+#include "SquadMsg.h"
 
 using namespace BWAPI;
 
-Commander::Commander() {
+Commander::Commander()
+: m_find_attack_pos_(), m_time_to_engage_(), squads_(), build_plan_()
+{
   last_call_frame_ = Broodwar->getFrameCount();
   workers_per_refinery_ = 2;
   workers_num_ = 5;
@@ -24,82 +30,159 @@ Commander::~Commander() {
 }
 
 void Commander::check_buildplan() {
-  int cSupply = Broodwar->self()->supplyUsed() / 2;
-
-  for (int i = 0; i < (int)buildplan_.size(); i++) {
-    if (cSupply >= buildplan_.at(i).supply_ && rnp::constructor()->buildPlanLength() == 0) {
-      if (buildplan_.at(i).type_ == BuildplanEntry::BUILDING) {
-        rnp::constructor()->addBuilding(buildplan_.at(i).unit_type_);
-        buildplan_.erase(buildplan_.begin() + i);
-        i--;
-      }
-      else if (buildplan_.at(i).type_ == BuildplanEntry::UPGRADE) {
-        rnp::upgrader()->addUpgrade(buildplan_.at(i).upgrade_type_);
-        buildplan_.erase(buildplan_.begin() + i);
-        i--;
-      }
-      else if (buildplan_.at(i).type_ == BuildplanEntry::TECH) {
-        rnp::upgrader()->addTech(buildplan_.at(i).tech_type_);
-        buildplan_.erase(buildplan_.begin() + i);
-        i--;
-      }
+  int have_supply = Broodwar->self()->supplyUsed() / 2;
+  build_plan_.for_each(
+    have_supply,
+    [](const BuildplanEntry& b) -> bool { // For units/buildings
+      Constructor::modify([&b](Constructor* c) {
+          c->add_building(b.unit_type());
+        });
+      return true;
+    },
+    [](const BuildplanEntry& b) -> bool { // For upgrades
+      rnp::upgrader()->add_upgrade(b.upgrade_type());
+      return true;
+    },
+    [](const BuildplanEntry& b) -> bool { // and for the tech
+      rnp::upgrader()->add_tech(b.tech_type());
+      return true;
     }
-  }
+  );
 }
 
 void Commander::cut_workers_production() {
-  workers_num_ = rnp::agent_manager()->getNoWorkers();
+  workers_num_ = rnp::agent_manager()->get_workers_count();
   Broodwar << "Worker production halted" << std::endl;
 }
 
-int Commander::get_preferred_workers_count() const {
+//void Commander::tick() {
+//  rnp::profiler()->start("OnFrame_Commander");
+//  on_frame();
+//  rnp::profiler()->end("OnFrame_Commander");
+//}
+
+size_t Commander::get_preferred_workers_count() const {
   return workers_num_;
 }
 
-int Commander::get_workers_per_refinery() const {
+size_t Commander::get_workers_per_refinery() const {
   return workers_per_refinery_;
 }
 
 bool Commander::is_time_to_engage() {
-  TilePosition toAttack = find_attack_position();
-  if (not rnp::is_valid_position(toAttack)) {
-    //No enemy sighted. Dont launch attack.
-    return false;
+  // Optimize to not have recalculation very often
+  if (m_time_to_engage_.value_up_to_date(rnp::seconds(10))) {
+    return m_time_to_engage_.value();
   }
 
-  for (auto& s : squads_) {
-    if (s->isRequired() && not s->isActive()) {
-      return false;
-    }
+  // Check if required squads are ready
+  auto loop_result = act::interruptible_for_each_in<Squad>(
+      squads_,
+      [](const Squad* s) {
+          if (s->is_required_for_attack() && not s->is_active()) {
+            return act::ForEach::Break;
+          }
+          return act::ForEach::Continue;
+      });
+  if (loop_result == act::ForEachResult::Interrupted) {
+    return m_time_to_engage_.update(false);
   }
-  return true;
+
+  // Check where to attack
+  auto to_attack = find_attack_position();
+  if (not rnp::is_valid_position(to_attack)) {
+    //No enemy sighted. Dont launch attack.
+    return m_time_to_engage_.update(false);
+  }
+
+  return m_time_to_engage_.update(true);
 }
 
 void Commander::update_squad_goals() {
-  TilePosition defSpot = find_chokepoint();
+  TilePosition def_spot(find_chokepoint());
 
-  if (not rnp::is_valid_position(defSpot)) {
-    for (auto& s : squads_) {
-      s->defend(defSpot);
+  if (not rnp::is_valid_position(def_spot)) {
+    act::for_each_in<Squad>(
+        squads_,
+        [&def_spot](const Squad* s) {
+            msg::squad::defend(s->self(), def_spot);
+        });
+  }
+}
+
+void Commander::debug_show_goal() const {
+  act::for_each_in<Squad>(
+      squads_,
+      [](const Squad* s) {
+          s->debug_show_goal();
+      });
+}
+
+void Commander::tick_base_commander_attack_maybe_defend() {
+  bool active_found = std::any_of(
+    squads_.begin(), squads_.end(),
+    [](auto& s_id) {
+      auto s = act::whereis<Squad>(s_id);
+      return (s->is_required_for_attack() && s->is_active());
+    });
+
+  //No active required squads found.
+  //Go back to defend.
+  if (not active_found) {
+    current_state_ = State::DEFEND;
+    TilePosition def_spot = find_chokepoint();
+    for (auto& squad_id : squads_) {
+      msg::squad::set_goal(squad_id, def_spot);
     }
   }
 }
 
-void Commander::debug_show_goal() {
-  for (auto& s : squads_) {
-    s->debug_showGoal();
+void Commander::tick_base_commander_defend() {
+  //Check if we need to attack/kite enemy workers in the base
+  auto start_loc = Broodwar->self()->getStartLocation();
+  check_workers_attack(rnp::agent_manager()->get_closest_base(start_loc));
+
+  TilePosition def_spot = find_chokepoint();
+  if (rnp::is_valid_position(def_spot)) {
+    act::for_each_in<Squad>(
+      squads_,
+      [&def_spot](const Squad* s) {
+        if (not s->has_goal()) {
+          msg::squad::defend(s->self(), def_spot);
+        }
+      });
   }
 }
 
-void Commander::on_frame_base() {
+void Commander::tick_base_commander_attack() {
+  act::for_each_in<Squad>(
+    squads_,
+    [this](const Squad* s) {
+      if (s->is_offensive_squad()) {
+        if (not s->has_goal() && s->is_active()) {
+          auto to_attack = find_attack_position();
+          if (rnp::is_valid_position(to_attack)) {
+            msg::squad::charge(s->self(), to_attack);
+          }
+        }
+      } else {
+        auto def_spot = find_chokepoint();
+        if (rnp::is_valid_position(def_spot)) {
+          msg::squad::defend(s->self(), def_spot);
+        }
+      }
+    });
+}
+
+void Commander::tick_base_commander() {
   check_buildplan();
 
   //Dont call too often
-  int cFrame = Broodwar->getFrameCount();
-  if (cFrame - last_call_frame_ < 5) {
+  int c_frame = Broodwar->getFrameCount();
+  if (c_frame - last_call_frame_ < 5) {
     return;
   }
-  last_call_frame_ = cFrame;
+  last_call_frame_ = c_frame;
 
   //See if we need to assist a base or worker that is under attack
   if (assist_building()) return;
@@ -114,66 +197,21 @@ void Commander::on_frame_base() {
 
   //Check if we shall go back to defend
   if (current_state_ == State::ATTACK) {
-    bool activeFound = false;
-    for (auto& s : squads_) {
-      if (s->isRequired() && s->isActive()) {
-        activeFound = true;
-      }
-    }
-
-    //No active required squads found.
-    //Go back to defend.
-    if (not activeFound) {
-      current_state_ = State::DEFEND;
-      TilePosition defSpot = find_chokepoint();
-      for (auto& s : squads_) {
-        s->setGoal(defSpot);
-      }
-    }
+    tick_base_commander_attack_maybe_defend();
   }
 
   if (current_state_ == State::DEFEND) {
-    //Check if we need to attack/kite enemy workers in the base
-    check_workers_attack(rnp::agent_manager()->getClosestBase(Broodwar->self()->getStartLocation()));
-
-    TilePosition defSpot = find_chokepoint();
-    for (auto& s : squads_) {
-      if (not s->hasGoal()) {
-        if (rnp::is_valid_position(defSpot)) {
-          s->defend(defSpot);
-        }
-      }
-    }
+    tick_base_commander_defend();
   }
 
   if (current_state_ == State::ATTACK) {
-    for (auto& s : squads_) {
-      if (s->isOffensive()) {
-        if (not s->hasGoal() && s->isActive()) {
-          TilePosition toAttack = find_attack_position();
-          if (toAttack.x >= 0) {
-            s->attack(toAttack);
-          }
-        }
-      }
-      else {
-        TilePosition defSpot = find_chokepoint();
-        if (rnp::is_valid_position(defSpot)) {
-          s->defend(defSpot);
-        }
-      }
-    }
-  }
-
-  //Compute Squad actions.
-  for (auto& sq : squads_) {
-    sq->computeActions();
-  }
+    tick_base_commander_attack();
+  } // if state ATTACK
 
   //Attack if we have filled all supply spots
   if (current_state_ == State::DEFEND) {
-    int supplyUsed = Broodwar->self()->supplyUsed() / 2;
-    if (supplyUsed >= 198) {
+    int supply_used = Broodwar->self()->supplyUsed() / 2;
+    if (supply_used >= 198) {
       force_begin_attack();
     }
   }
@@ -182,9 +220,8 @@ void Commander::on_frame_base() {
   check_removable_obstacles();
 
   //Terran only: Check for repairs and finish unfinished buildings
-  if (Constructor::isTerran()) {
-    //Check if there are unfinished buildings we need
-    //to complete.
+  if (Constructor::is_terran()) {
+    //Check if there are unfinished buildings we need to complete.
     check_damaged_buildings();
   }
 
@@ -193,122 +230,189 @@ void Commander::on_frame_base() {
 }
 
 void Commander::check_no_squad_units() {
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    bool notAssigned = true;
-    if (not a->isAlive()) notAssigned = false;
-    if (a->getUnitType().isWorker()) notAssigned = false;
-    if (a->isOfType(UnitTypes::Zerg_Overlord)) notAssigned = false;
-    if (a->getUnitType().isBuilding()) notAssigned = false;
-    if (a->getUnitType().isAddon()) notAssigned = false;
-    if (a->getSquadID() != -1) notAssigned = false;
+  act::for_each_actor<BaseAgent>(
+    [this](const BaseAgent* a) {
+      if (a->unit_type().isWorker()) return;
+      if (a->is_of_type(UnitTypes::Zerg_Overlord)) return;
+      if (a->unit_type().isBuilding()) return;
+      if (a->unit_type().isAddon()) return;
+      if (a->get_squad_id().is_valid()) return;
 
-    if (notAssigned) {
       assign_unit(a);
-    }
-  }
+    });
 }
 
-void Commander::assign_unit(BaseAgent* agent) {
-  //Broodwar << agent->getUnitID() << " (" << agent->getTypeName().c_str() << ") is not assigned to a squad" << endl;
-  for (auto& s : squads_) {
-    if (s->needUnit(agent->getUnitType())) {
-      s->addMember(agent);
-      Broodwar << agent->getUnitID() << " (" << agent->getTypeName().c_str() << ") is assigned to SQ " << s->getID() << std::endl;;
-      return;
-    }
+void Commander::assign_unit(const BaseAgent* agent) {
+  if (squads_.empty()) {
+    return;
   }
+
+  //Broodwar << agent->getUnitID() << " (" << agent->getTypeName().c_str() << ") is not assigned to a squad" << endl;
+  msg::squad::add_member(agent, squads_);
+  
+#if 0
+  act::interruptible_for_each_actor<Squad>(
+      [this,agent,&agent_type](const Squad* squad) {
+          if (squad->need_unit(agent_type)) {
+            // ask squad to take the agent, if it failed - we will get a 
+            // AddMember_Failed message back and should try again
+            msg::squad::add_member(squad->self(), 
+                                   agent->self(),
+                                   self());
+            Broodwar << agent->get_unit_id() << " ("
+                     << agent->get_type_name().c_str()
+                     << ") is assigned to SQ " << squad->get_name() << std::endl;;
+            return act::ForEach::Break;
+          }
+          return act::ForEach::Continue;
+      });
+#endif
 }
 
 TilePosition Commander::find_attack_position() {
-  TilePosition regionPos = rnp::map_manager()->findAttackPosition();
-
-  if (rnp::is_valid_position(regionPos)) {
-    TilePosition toAttack = rnp::exploration()->get_closest_spotted_building(regionPos);
-
-    if (rnp::is_valid_position(toAttack)) {
-      return toAttack;
-    }
-    return regionPos;
+  // Optimize: this is called too often
+  if (m_find_attack_pos_.value_up_to_date(rnp::seconds(5))) {
+    return m_find_attack_pos_.value();
   }
 
-  return TilePosition(-1, -1);
+  return m_find_attack_pos_.update(rnp::exploration()->get_random_spotted_building());
+
+//  auto suitable_pos = rnp::map_manager()->find_suitable_attack_position();
+//
+//  if (rnp::is_valid_position(suitable_pos)) {
+//    auto building_pos = rnp::exploration()->get_random_spotted_building();
+//
+//    if (rnp::is_valid_position(building_pos)) {
+////      std::cout << BOT_PREFIX_DEBUG "Attack: Closest spotted building " << building_pos << std::endl;
+//      return m_find_attack_pos_.update(building_pos);
+//    }
+//
+////    std::cout << BOT_PREFIX_DEBUG "Attack: Suitable pos " << suitable_pos << std::endl;
+//    return m_find_attack_pos_.update(suitable_pos);
+//  }
+//
+////  std::cout << BOT_PREFIX_DEBUG "Attack: no suitable pos" << std::endl;
+//  return m_find_attack_pos_.update(rnp::make_bad_position());
 }
 
-void Commander::remove_squad(int id) {
-  for (int i = 0; i < (int)squads_.size(); i++) {
-    auto& sq = squads_.at(i);
-    if (sq->getID() == id) {
-      sq->disband();
-      squads_.erase(squads_.begin() + i);
-      return;
-    }
-  }
+void Commander::remove_squad(const act::ActorId& id) {
+//  act::for_each_alive<Squad>(
+//    [](const Squad* s) {
+//      msg::squad::disband(s->get_ac_self());
+//    });
+  msg::squad::disband(id);
+  squads_.erase(id);
+
+//  for (size_t i = 0; i < squads_.size(); i++) {
+//    auto& sq = squads_[i];
+//    if (sq->get_id() == id) {
+//      sq->disband();
+//      squads_.erase(squads_.begin() + i);
+//      return;
+//    }
+//  }
 }
 
-Squad::Ptr Commander::getSquad(int id) {
-  for (auto& s : squads_) {
-    if (s->getID() == id) {
-      return s;
-    }
-  }
-  return nullptr;
+const Squad* Commander::get_squad(const act::ActorId& a) const {
+  return act::whereis<Squad>(a);
 }
 
-void Commander::add_squad(Squad::Ptr sq) {
-  squads_.push_back(sq);
+void Commander::add_squad(const act::ActorId& sq) {
+  squads_.insert(sq);
+  ac_monitor(sq);
 }
 
-void Commander::on_unit_destroyed(BaseAgent* agent) {
-  int squadID = agent->getSquadID();
-  if (squadID != -1) {
-    auto squad = getSquad(squadID);
+void Commander::on_unit_destroyed(const act::ActorId& agentid) {
+  auto agent = act::whereis<BaseAgent>(agentid);
+  if (agent) {
+    auto squad_id = agent->get_squad_id();
+    auto squad = act::whereis<Squad>(squad_id);
     if (squad) {
-      squad->removeMember(agent);
+      msg::squad::member_destroyed(squad->self(), agentid);
     }
   }
 }
 
-void Commander::sort_squad_list() {
-  sort(squads_.begin(), squads_.end(), SortSquadList());
+struct SortSquadsByPrio {
+  bool operator()(const act::ActorId& sq1_id, 
+                  const act::ActorId& sq2_id) const {
+    auto sq1 = act::whereis<Squad>(sq1_id);
+    auto sq2 = act::whereis<Squad>(sq2_id);
+    if (sq1->get_priority() != sq2->get_priority()) {
+      return sq1->get_priority() < sq2->get_priority();
+    }
+    return (sq1->is_required_for_attack() && not sq2->is_required_for_attack());
+  }
+};
+
+act::ActorId::Vector Commander::sort_squad_list() {
+  act::ActorId::Vector result;
+  result.reserve(squads_.size());
+  std::copy(squads_.begin(), squads_.end(), std::back_inserter(result));
+  std::sort(result.begin(), result.end(), SortSquadsByPrio());
+  return result;
 }
 
-void Commander::on_unit_created(BaseAgent* agent) {
+void Commander::handle_message(act::Message* incoming) {
+    if (auto unew = dynamic_cast<msg::commander::UnitCreated*>(incoming)) {
+      on_unit_created(unew->new_);
+    }
+    else if (auto udead = dynamic_cast<msg::commander::UnitDestroyed*>(incoming)) {
+      on_unit_destroyed(udead->dead_);
+    }
+    else if (auto snew = dynamic_cast<msg::commander::SquadCreated*>(incoming)) {
+      squads_.insert(snew->squad_);
+    }
+    else if (dynamic_cast<msg::commander::UpdateGoals*>(incoming)) {
+      update_squad_goals();
+    }
+    else if (auto rsq = dynamic_cast<msg::commander::RemoveSquad*>(incoming)) {
+      remove_squad(rsq->squad_);
+    }
+    else if (auto bunk = dynamic_cast<msg::commander::BunkerDestroyed*>(incoming)) {
+      remove_bunker_squad(bunk->unit_id_);
+    }
+//    else if (auto amf = dynamic_cast<msg::squad::AddMember_Failed*>(incoming)) {
+//      std::cout << "Commander: add sq member failed " 
+//        << amf->member_id_.string() << std::endl;
+//    }
+    else {
+      unhandled_message(incoming);
+    }
+}
+
+void Commander::on_unit_created(const act::ActorId& agentid) {
   //Sort the squad list
-  sort_squad_list();
+  auto sorted_squads = sort_squad_list();
 
-  for (auto& s : squads_) {
-    if (s->addMember(agent)) {
-      break;
-    }
+  if (not sorted_squads.empty()) {
+    auto agent = act::whereis<BaseAgent>(agentid);
+    msg::squad::add_member(agent, sorted_squads);
   }
 }
 
-bool Commander::check_workers_attack(BaseAgent* base) const {
-  int noAttack = 0;
+bool Commander::check_workers_attack(const BaseAgent* base) const {
+  int no_attack = 0;
+  auto base_pos = base->get_unit()->getTilePosition();
 
   for (auto& u : Broodwar->enemy()->getUnits()) {
     if (u->exists() && u->getType().isWorker()) {
-      double dist = u->getTilePosition().getDistance(base->getUnit()->getTilePosition());
-      if (dist <= 12) {
+      float dist = rnp::distance(u->getTilePosition(), base_pos);
+
+      if (dist <= 12.0f) {
         //Enemy unit discovered. Attack with some workers.
-        auto& agents = rnp::agent_manager()->getAgents();
-        for (auto& a : agents) {
-          if (a->isAlive() && a->isWorker() && noAttack < 1) {
-            WorkerAgent* wAgent = static_cast<WorkerAgent*>(a);
-            wAgent->setState(WorkerAgent::ATTACKING);
-            a->getUnit()->attack(u);
-            noAttack++;
-          }
-        }
+        act::for_each_actor<BaseAgent>(
+          [&no_attack,u](const BaseAgent* a) {
+            if (a->is_worker() && no_attack < 1) {
+              msg::unit::attack_unit(a->self(), u);
+              no_attack++;
+            }
+          });
       }
     }
   }
 
-  if (noAttack > 0) {
-    return true;
-  }
-  return false;
+  return no_attack > 0;
 }
 
 void Commander::check_removable_obstacles() {
@@ -321,23 +425,28 @@ void Commander::check_removable_obstacles() {
     Unit mineral = nullptr;
     if (Broodwar->self()->getStartLocation().x == 64) {
       for (auto& u : Broodwar->getAllUnits()) {
-        if (u->getType().isResourceContainer() && u->getTilePosition().x == 40 && u->getTilePosition().y == 120) {
+        if (u->getType().isResourceContainer() 
+            && u->getTilePosition().x == 40 
+            && u->getTilePosition().y == 120) {
           mineral = u;
         }
       }
     }
     if (Broodwar->self()->getStartLocation().x == 31) {
       for (auto& u : Broodwar->getAllUnits()) {
-        if (u->getType().isResourceContainer() && u->getTilePosition().x == 54 && u->getTilePosition().y == 6) {
+        if (u->getType().isResourceContainer()
+            && u->getTilePosition().x == 54 
+            && u->getTilePosition().y == 6) {
           mineral = u;
         }
       }
     }
     if (mineral != nullptr) {
-      if (not rnp::agent_manager()->workerIsTargeting(mineral)) {
-        BaseAgent* worker = rnp::agent_manager()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
+      if (not rnp::agent_manager()->is_worker_targeting_unit(mineral)) {
+        auto start_loc = Broodwar->self()->getStartLocation();
+        auto worker = rnp::agent_manager()->find_closest_free_worker(start_loc);
         if (worker != nullptr) {
-          worker->getUnit()->rightClick(mineral);
+          worker->get_unit()->rightClick(mineral);
           removal_done_ = true;
         }
       }
@@ -347,9 +456,9 @@ void Commander::check_removable_obstacles() {
 
 
 TilePosition Commander::find_chokepoint() {
-  const BWEM::ChokePoint* bestChoke = rnp::map_manager()->getDefenseLocation();
+  auto bestChoke = rnp::map_manager()->get_defense_location();
 
-  TilePosition guardPos = Broodwar->self()->getStartLocation();
+  auto guardPos = Broodwar->self()->getStartLocation();
   if (bestChoke != nullptr) {
     guardPos = find_defense_pos(bestChoke);
   }
@@ -357,158 +466,197 @@ TilePosition Commander::find_chokepoint() {
   return guardPos;
 }
 
-TilePosition Commander::find_defense_pos(const BWEM::ChokePoint* choke) const {
-  TilePosition defPos = TilePosition(choke->Center());
-  TilePosition chokePos = defPos;
+TilePosition Commander::find_defense_pos(const BWEM::ChokePoint* choke) {
+  TilePosition def_pos(choke->Center());
+  TilePosition choke_pos(def_pos);
+  TilePosition base_pos = Broodwar->self()->getStartLocation();
 
   double size = rnp::choke_width(choke);
   if (size <= 32 * 3) {
     //Very narrow chokepoint, dont crowd it
-    double bestDist = 10000;
-    TilePosition basePos = Broodwar->self()->getStartLocation();
-
-    int maxD = 3;
-    int minD = 2;
+    float best_dist = 1e+12f;
+    int max_d = 3;
+    int min_d = 2;
 
     //We found a chokepoint. Now we need to find a good place to defend it.
-    for (int cX = chokePos.x - maxD; cX <= chokePos.x + maxD; cX++) {
-      for (int cY = chokePos.y - maxD; cY <= chokePos.y + maxD; cY++) {
-        TilePosition cPos = TilePosition(cX, cY);
-        if (rnp::exploration()->can_reach(basePos, cPos)) {
-          double chokeDist = chokePos.getDistance(cPos);
-          double baseDist = basePos.getDistance(cPos);
+    for (int c_x = choke_pos.x - max_d; c_x <= choke_pos.x + max_d; c_x++) {
+      for (int c_y = choke_pos.y - max_d; c_y <= choke_pos.y + max_d; c_y++) {
+        TilePosition c_pos = TilePosition(c_x, c_y);
+        if (rnp::exploration()->can_reach(base_pos, c_pos)) {
+          auto choke_dist = rnp::distance(choke_pos, c_pos);
+          auto base_dist = rnp::distance(base_pos, c_pos);
 
-          if (chokeDist >= minD && chokeDist <= maxD) {
-            if (baseDist < bestDist) {
-              bestDist = baseDist;
-              defPos = cPos;
+          if (choke_dist >= min_d && choke_dist <= max_d) {
+            if (base_dist < best_dist) {
+              best_dist = base_dist;
+              def_pos = c_pos;
             }
           }
         }
       }
     }
-  }
+  } // if size < 
 
   //Make defenders crowd around defensive structures.
   if (Broodwar->self()->getRace().getID() == Races::Zerg.getID()) {
     UnitType defType;
-    if (Constructor::isZerg()) defType = UnitTypes::Zerg_Sunken_Colony;
-    if (Constructor::isProtoss()) defType = UnitTypes::Protoss_Photon_Cannon;
-    if (Constructor::isTerran()) defType = UnitTypes::Terran_Bunker;
+    if (Constructor::is_zerg()) defType = UnitTypes::Zerg_Sunken_Colony;
+    if (Constructor::is_protoss()) defType = UnitTypes::Protoss_Photon_Cannon;
+    if (Constructor::is_terran()) defType = UnitTypes::Terran_Bunker;
 
-    BaseAgent* turret = rnp::agent_manager()->getClosestAgent(defPos, defType);
+    auto turret = rnp::agent_manager()->get_closest_agent(def_pos, defType);
     if (turret != nullptr) {
-      TilePosition tPos = turret->getUnit()->getTilePosition();
-      double dist = tPos.getDistance(defPos);
+      TilePosition tPos = turret->get_unit()->getTilePosition();
+      double dist = tPos.getDistance(def_pos);
       if (dist <= 22) {
-        defPos = tPos;
+        def_pos = tPos;
       }
     }
   }
 
-  return defPos;
+  return def_pos;
 }
 
-bool Commander::is_unit_needed(UnitType type) {
-  int prevPrio = 1000;
+bool Commander::is_unit_needed(UnitType type) const {
+  int prev_prio = 1000;
+  bool result = false;
+  auto loop_result = act::interruptible_for_each_in<Squad>(
+    squads_,
+    [&prev_prio,&result,&type](const Squad* s) {
+      if (not s->is_full()) {
+        if (s->get_priority() > prev_prio) {
+          result = false;
+          return act::ForEach::Break;
+        }
 
-  for (auto& s : squads_) {
-    if (not s->isFull()) {
-      if (s->getPriority() > prevPrio) {
-        return false;
+        if (s->need_unit(type)) {
+          result = true;
+          return act::ForEach::Break;
+        }
+
+        prev_prio = s->get_priority();
       }
-
-      if (s->needUnit(type)) {
-        return true;
-      }
-
-      prevPrio = s->getPriority();
-    }
-  }
+      return act::ForEach::Continue;
+    });
+  if (loop_result == act::ForEachResult::Interrupted) { return result; }
   return false;
 }
 
 bool Commander::assist_building() {
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->isAlive() && a->isBuilding() && a->isUnderAttack()) {
-      for (auto& s : squads_) {
-        bool ok = true;
-        if (s->isExplorer()) ok = false;
-        if (s->isBunkerDefend()) ok = false;
-        if (s->isRush() && s->isActive()) ok = false;
+  // TODO: Estimate threat power, choose adequate response?
+  auto result = false;
+  act::interruptible_for_each_actor<BaseAgent>(
+    [this,&result](const BaseAgent* a) {
+      if (a->is_building() && a->is_under_attack()) {
+        
+        auto inner_result = act::interruptible_for_each_in<Squad>(
+          squads_,
+          [a,&result](const Squad* s) {
+          bool ok = true;
+          if (s->is_explorer_squad()) ok = false;
+          if (s->is_bunker_defend_squad()) ok = false;
+          if (s->is_rush_squad() && s->is_active()) ok = false;
 
-        if (ok) {
-          s->assist(a->getUnit()->getTilePosition());
-          return true;
+          if (ok) {
+            msg::squad::assist(s->self(), a->get_unit()->getTilePosition());
+            result = true;
+            return act::ForEach::Break;
+          }
+          return act::ForEach::Continue;
+        }); // each squad
+
+        if (inner_result == act::ForEachResult::Interrupted) {
+          return act::ForEach::Break;
         }
-      }
-    }
-  }
 
-  return false;
+      } // is building under attack
+      return act::ForEach::Continue;
+    });
+
+  if (result) rnp::log()->trace("assist building?");
+  return result;
 }
 
 bool Commander::assist_worker() {
-  for (auto& a : rnp::agent_manager()->getAgents()) {
-    if (a->isAlive() && a->isWorker() && a->isUnderAttack()) {
-      for (auto& s : squads_) {
-        bool ok = true;
-        if (s->isExplorer()) ok = false;
-        if (s->isBunkerDefend()) ok = false;
-        if (s->isRush() && s->isActive()) ok = false;
+  auto result = false;
+  act::interruptible_for_each_actor<BaseAgent>(
+    [this,&result](const BaseAgent* a) {
+      if (a->is_worker() && a->is_under_attack()) {
+        auto inner_result = act::interruptible_for_each_in<Squad>(
+          squads_,
+          [a, &result](const Squad* s) {
+            bool ok = true;
+            if (s->is_explorer_squad()) ok = false;
+            if (s->is_bunker_defend_squad()) ok = false;
+            if (s->is_rush_squad() && s->is_active()) ok = false;
 
-        if (ok) {
-          s->assist(a->getUnit()->getTilePosition());
-          return true;
+            if (ok) {
+              msg::squad::assist(s->self(), a->get_unit()->getTilePosition());
+              result = true;
+              return act::ForEach::Break;
+            }
+            return act::ForEach::Continue;
+          });
+
+        if (inner_result == act::ForEachResult::Interrupted) {
+          return act::ForEach::Break;
         }
-      }
-    }
-  }
 
-  return false;
+      } // if worker under attack
+      return act::ForEach::Continue;
+    });
+
+  if (result) rnp::log()->trace("assist worker?");
+  return result;
 }
 
 void Commander::force_begin_attack() {
-  TilePosition cGoal = find_attack_position();
-  Broodwar << "Launch attack at (" << cGoal.x << "," << cGoal.y << ")" << std::endl;
-  if (cGoal.x == -1) {
+  auto attack_goal = find_attack_position();
+  if (not rnp::is_valid_position(attack_goal)) {
+    rnp::log()->debug("force_begin_attack but no goal");
     return;
   }
 
-  for (auto& s : squads_) {
-    if (s->isOffensive() || s->isSupport()) {
-      if (cGoal.x >= 0) {
-        s->forceActive();
-        s->attack(cGoal);
-      }
-    }
-  }
+  Broodwar << "Launch attack at " << attack_goal << std::endl;
+  rnp::log()->debug("Launch attack at {0};{1}", attack_goal.x, attack_goal.y);
+
+  act::for_each_in<Squad>(squads_,
+                          [&attack_goal](const Squad* s) {
+                            if (s->is_offensive_squad() || s->is_support_squad()) {
+                              if (attack_goal.x >= 0) {
+                                msg::squad::force_active(s->self());
+                                msg::squad::attack(s->self(), attack_goal);
+                              }
+                            }
+                          });
 
   current_state_ = State::ATTACK;
 }
 
-void Commander::assist_unfinished_construction(BaseAgent* baseAgent) {
+void Commander::assist_unfinished_construction(const BaseAgent* base_agent) {
   //First we must check if someone is repairing this building
-  if (rnp::agent_manager()->isAnyAgentRepairingThisAgent(baseAgent)) return;
+  if (rnp::agent_manager()->is_any_agent_repairing_this_agent(base_agent)) {
+    return;
+  }
 
-  BaseAgent* repUnit = rnp::agent_manager()->findClosestFreeWorker(baseAgent->getUnit()->getTilePosition());
-  if (repUnit != nullptr) {
-    WorkerAgent* w = (WorkerAgent*)repUnit;
-    w->assignToRepair(baseAgent->getUnit());
+  auto begin_pos = base_agent->get_unit()->getTilePosition();
+  auto rep_unit = rnp::agent_manager()->find_closest_free_worker(begin_pos);
+  if (rep_unit != nullptr) {
+    auto w = static_cast<const WorkerAgent*>(rep_unit);
+    msg::worker::assign_repair(w->self(), base_agent->get_unit());
   }
 }
 
 bool Commander::check_damaged_buildings() {
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->isAlive() && a->isBuilding() && a->isDamaged()) {
-      Unit builder = a->getUnit()->getBuildUnit();
-      if (builder == nullptr || !builder->isConstructing()) {
-        assist_unfinished_construction(a);
+  act::for_each_actor<BaseAgent>(
+    [](const BaseAgent* a) {
+      if (a->is_building() && a->is_damaged()) {
+        auto builder = a->get_unit()->getBuildUnit();
+        if (builder == nullptr || !builder->isConstructing()) {
+          assist_unfinished_construction(a);
+        }
       }
-    }
-  }
+    });
   return false;
 }
 
@@ -520,141 +668,126 @@ void Commander::toggle_squads_debug() {
   debug_sq_ = !debug_sq_;
 }
 
-std::string Commander::format(const std::string& str) {
-  std::string res(str);
-
-  std::string raceName = Broodwar->self()->getRace().getName();
-  if (str.find(raceName) == 0) {
-    int i = str.find("_");
-    res = str.substr(i + 1, str.length());
-  }
-
-  if (res == "Siege Tank Tank Mode") res = "Siege Tank";
-
-  return res;
-}
-
-void Commander::print_info() {
+void Commander::debug_print_info() const {
   if (debug_sq_) {
-    int totLines = 0;
-    for (auto& s : squads_) {
-      bool vis = true;
-      if (s->getTotalUnits() == 0) vis = false;
-      if (s->isBunkerDefend()) vis = false;
-      if (s->getPriority() == 1000 && not s->isActive()) vis = false;
+    int tot_lines = 0;
+    act::for_each_in<Squad>(squads_,
+                            [&tot_lines](const Squad* s) {
+                              if (s->get_total_units() == 0) return;
+                              if (s->is_bunker_defend_squad()) return;
+                              if (s->get_priority() == 1000
+                                  && not s->is_active()) return;
 
-      if (vis) {
-        totLines++;
-      }
+                              tot_lines++;
+                            });
+    if (tot_lines == 0) tot_lines++;
+
+    Broodwar->drawBoxScreen(168, 25, 292, 41 + tot_lines * 16, Colors::Black, true);
+    if (current_state_ == State::DEFEND) {
+      Broodwar->drawTextScreen(170, 25, "\x03Squads \x07(Defending)");
     }
-    if (totLines == 0) totLines++;
-
-    Broodwar->drawBoxScreen(168, 25, 292, 41 + totLines * 16, Colors::Black, true);
-    if (current_state_ == State::DEFEND) Broodwar->drawTextScreen(170, 25, "\x03Squads \x07(Defending)");
-    if (current_state_ == State::ATTACK) Broodwar->drawTextScreen(170, 25, "\x03Squads \x08(Attacking)");
+    if (current_state_ == State::ATTACK) {
+      Broodwar->drawTextScreen(170, 25, "\x03Squads \x08(Attacking)");
+    }
     Broodwar->drawLineScreen(170, 39, 290, 39, Colors::Orange);
     int no = 0;
-    for (auto& s : squads_) {
-      bool vis = true;
-      if (s->getTotalUnits() == 0) vis = false;
-      if (s->isBunkerDefend()) vis = false;
-      if (s->getPriority() == 1000 && not s->isActive()) vis = false;
+    act::for_each_in<Squad>(
+      squads_,
+      [&no](const Squad* s) {
+        bool vis = true;
+        if (s->get_total_units() == 0) vis = false;
+        if (s->is_bunker_defend_squad()) vis = false;
+        if (s->get_priority() == 1000 && not s->is_active()) vis = false;
 
-      if (vis) {
-        int cSize = s->getSize();
-        int totSize = s->getTotalUnits();
+        if (vis) {
+          int cSize = s->get_squad_size();
+          int totSize = s->get_total_units();
 
-        if (s->isRequired()) {
-          if (cSize < totSize) Broodwar->drawTextScreen(170, 41 + no * 16, "*SQ %d: \x18(%d/%d)", s->getID(), s->getSize(), s->getTotalUnits());
-          else Broodwar->drawTextScreen(170, 41 + no * 16, "*SQ %d: \x07(%d/%d)", s->getID(), s->getSize(), s->getTotalUnits());
-          no++;
+          if (s->is_required_for_attack()) {
+            if (cSize < totSize) {
+              Broodwar->drawTextScreen(
+                170, 41 + no * 16, "*%s: \x18(%d/%d)",
+                s->string().c_str(), s->get_squad_size(),
+                s->get_total_units());
+            } 
+            else {
+              Broodwar->drawTextScreen(
+                170, 41 + no * 16, "*%s: \x07(%d/%d)", 
+                s->string().c_str(), s->get_squad_size(), 
+                s->get_total_units());
+            }
+            no++;
+          }
+          else {
+            if (cSize < totSize) {
+              Broodwar->drawTextScreen(
+                170, 41 + no * 16, "%s: \x18(%d/%d)",
+                s->string().c_str(), s->get_squad_size(),
+                s->get_total_units());
+            }
+            else {
+              Broodwar->drawTextScreen(
+                170, 41 + no * 16, "%s: \x07(%d/%d)", 
+                s->string().c_str(), s->get_squad_size(), 
+                s->get_total_units());
+            }
+            no++;
+          }
         }
-        else {
-          if (cSize < totSize) Broodwar->drawTextScreen(170, 41 + no * 16, "SQ %d: \x18(%d/%d)", s->getID(), s->getSize(), s->getTotalUnits());
-          else Broodwar->drawTextScreen(170, 41 + no * 16, "SQ %d: \x07(%d/%d)", s->getID(), s->getSize(), s->getTotalUnits());
-          no++;
-        }
-      }
-    }
+      });
     if (no == 0) no++;
     Broodwar->drawLineScreen(170, 40 + no * 16, 290, 40 + no * 16, Colors::Orange);
   }
 
-  if (debug_bp_ && buildplan_.size() > 0) {
-    int totLines = (int)buildplan_.size();
-    if (totLines > 4) totLines = 4;
-    if (totLines == 0) totLines = 1;
-
-    Broodwar->drawBoxScreen(298, 25, 482, 41 + totLines * 16, Colors::Black, true);
-    Broodwar->drawTextScreen(300, 25, "\x03Strategy Plan");
-    Broodwar->drawLineScreen(300, 39, 480, 39, Colors::Orange);
-    int no = 0;
-
-    int max = (int)buildplan_.size();
-    if (max > 4) max = 4;
-
-    for (int i = 0; i < max; i++) {
-      std::string name = "";
-      if (buildplan_.at(i).type_ == BuildplanEntry::BUILDING) name = buildplan_.at(i).unit_type_.getName();
-      if (buildplan_.at(i).type_ == BuildplanEntry::UPGRADE) name = buildplan_.at(i).upgrade_type_.getName();
-      if (buildplan_.at(i).type_ == BuildplanEntry::TECH) name = buildplan_.at(i).tech_type_.getName();
-      name = format(name);
-
-      std::stringstream ss;
-      ss << name;
-      ss << " \x0F(@";
-      ss << buildplan_.at(i).supply_;
-      ss << ")";
-
-      Broodwar->drawTextScreen(300, 40 + no * 16, ss.str().c_str());
-      no++;
-    }
-    if (no == 0) no++;
-    Broodwar->drawLineScreen(300, 40 + no * 16, 480, 40 + no * 16, Colors::Orange);
-    rnp::constructor()->printInfo();
+  if (debug_bp_ && not build_plan_.empty()) {
+    build_plan_.debug_print_info();
+    rnp::constructor()->debug_print_info();
   }
 }
 
-int Commander::add_bunker_squad() {
-  auto bSquad = std::make_shared<Squad>(
-    100 + rnp::agent_manager()->countNoUnits(UnitTypes::Terran_Bunker), 
-    Squad::SquadType::BUNKER, 
-    "BunkerSquad", 
-    5);
-  bSquad->addSetup(UnitTypes::Terran_Marine, 4);
-  squads_.push_back(bSquad);
+// static
+act::ActorId Commander::add_bunker_squad() {
+  auto b_squad = act::spawn<Squad>(ActorFlavour::Squad,
+                                   Squad::SquadType::BUNKER, "Bunker", 5);
+  msg::squad::add_setup(b_squad, UnitTypes::Terran_Marine, 4);
+  msg::commander::squad_created(b_squad);
 
+#if 0
   //Try to fill from other squads.
   int added = 0;
-  for (auto& s : squads_) {
-    if (s->isOffensive() || s->isDefensive()) {
-      for (int i = 0; i < 4 - added; i++) {
-        if (s->hasUnits(UnitTypes::Terran_Marine, 1)) {
-          if (added < 4) {
-            BaseAgent* ma = s->removeMember(UnitTypes::Terran_Marine);
-            if (ma != nullptr) {
-              added++;
-              bSquad->addMember(ma);
-              ma->clearGoal();
+  act::for_each_in<Squad>(
+    squads_,
+    [](const Squad* s) {
+      if (s->is_offensive_squad() || s->is_defensive_squad()) {
+        for (int i = 0; i < 4 - added; i++) {
+          if (s->has_units(UnitTypes::Terran_Marine, 1)) {
+            if (added < 4) {
+              BaseAgent* ma = s->remove_member(UnitTypes::Terran_Marine);
+              if (ma != nullptr) {
+                added++;
+                b_squad->add_member(ma);
+                ma->clear_goal();
+              }
             }
           }
         }
       }
-    }
-  }
-
-  return bSquad->getID();
+    });
+#endif //0
+  return b_squad;
 }
 
-bool Commander::remove_bunker_squad(int unitID) {
-  for (auto& s : squads_) {
-    if (s->isBunkerDefend()) {
-      if (s->getBunkerID() == unitID) {
-        int sID = s->getID();
-        remove_squad(sID);
-        return true;
+bool Commander::remove_bunker_squad(int unit_id) {
+  auto loop_result = act::interruptible_for_each_in<Squad>(
+    squads_,
+    [unit_id](const Squad* s) {
+      if (s->is_bunker_defend_squad()) {
+        if (s->get_bunker_id() == unit_id) {
+          msg::commander::remove_squad(s->self());
+          return act::ForEach::Break;
+        }
       }
-    }
-  }
-  return false;
+      return act::ForEach::Continue;
+    });
+  return loop_result == act::ForEachResult::Interrupted;
 }

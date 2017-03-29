@@ -2,7 +2,7 @@
 
 using namespace BWAPI;
 
-bool QueenAgent::useAbilities() {
+bool QueenAgent::use_abilities() {
   //Spawn Broodlings
   if (unit_->getEnergy() >= 150) {
     //Count enemy units and find an enemy organic unit

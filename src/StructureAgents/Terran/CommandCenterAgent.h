@@ -20,5 +20,5 @@ public:
   explicit CommandCenterAgent(BWAPI::Unit mUnit);
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 };

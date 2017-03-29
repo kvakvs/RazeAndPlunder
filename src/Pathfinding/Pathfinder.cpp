@@ -1,92 +1,25 @@
 #include "Pathfinder.h"
-#include "../Managers/ExplorationManager.h"
 #include "Utils/Profiler.h"
-#include <numeric>
-#include "Glob.h"
-#include "RnpUtil.h"
+#include "PathAB.h"
 
 using namespace BWAPI;
 
 Pathfinder::Pathfinder() {
-  running = true;
-  CreateThread();
 }
 
 Pathfinder::~Pathfinder() {
-  running = false;
-
-  for (auto& p : pathObj) {
-    delete p;
-  }
 }
 
-PathObj* Pathfinder::getPathObj(TilePosition start, TilePosition end) {
-  for (auto& p : pathObj) {
-    if (p->matches(start, end)) {
-      return p;
-    }
-  }
-  return nullptr;
-}
-
-int Pathfinder::getDistance(TilePosition start, TilePosition end) {
-  PathObj* obj = getPathObj(start, end);
-  if (obj != nullptr) {
-    if (obj->isFinished()) {
-      //return obj->getPath().size();
-      auto& p = obj->getPath();
-      return rnp::tile_distance(p, start, end);
-    }
+int Pathfinder::get_dist(const BWAPI::TilePosition& start,
+                         const BWAPI::TilePosition& end) {
+  rnp::PathAB path(start, end);
+  if (path.is_good()) {
+    return path.length();
   }
   return -1;
 }
 
-void Pathfinder::requestPath(TilePosition start, TilePosition end) {
-  PathObj* obj = getPathObj(start, end);
-  if (obj == nullptr) {
-    obj = new PathObj(start, end);
-    pathObj.insert(obj);
-  }
-}
-
-bool Pathfinder::isReady(TilePosition start, TilePosition end) {
-  PathObj* obj = getPathObj(start, end);
-  if (obj != nullptr) {
-    return obj->isFinished();
-  }
-  return false;
-}
-
-BWEM::CPPath Pathfinder::getPath(TilePosition start, TilePosition end) {
-  PathObj* obj = getPathObj(start, end);
-  if (obj != nullptr) {
-    if (obj->isFinished()) {
-      return obj->getPath();
-    }
-  }
-  return BWEM::CPPath();
-}
-
-void Pathfinder::stop() {
-  running = false;
-}
-
-bool Pathfinder::isRunning() {
-  if (not Broodwar->isInGame()) running = false;
-  return running;
-}
-
-unsigned long Pathfinder::Process(void* parameter) {
-  while (running) {
-    if (not isRunning()) return 0;
-    for (auto& p : pathObj) {
-      if (not isRunning()) return 0;
-      if (not p->isFinished()) {
-        p->calculatePath();
-      }
-    }
-    Sleep(5);
-  }
-
-  return 0;
+rnp::PathAB::Ptr Pathfinder::get_path(const BWAPI::TilePosition& start,
+                                      const BWAPI::TilePosition& end) {
+  return std::make_unique<rnp::PathAB>(start, end);
 }

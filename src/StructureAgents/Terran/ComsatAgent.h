@@ -17,8 +17,9 @@ public:
   explicit ComsatAgent(BWAPI::Unit mUnit);
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 
-  // Checks if this Comsat has sweeped the specified position within the previos 100 frames. 
-  bool hasSweeped(BWAPI::TilePosition pos);
+  // Checks if this Comsat has sweeped the specified position within the
+  // previous 100 frames.
+  bool hasSweeped(BWAPI::TilePosition pos) const;
 };

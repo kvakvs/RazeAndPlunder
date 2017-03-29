@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 
 #include "Commander/Commander.h"
 #include "../Squad.h"
@@ -25,7 +26,9 @@ public:
   void on_frame() override;
 
   // Returns the unique id for this strategy. 
-  static std::string getStrategyId() {
+  static std::string get_strategy_id() {
     return "ProtossMain";
   }
 };
+
+#endif // 0

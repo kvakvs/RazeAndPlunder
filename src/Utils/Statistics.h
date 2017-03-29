@@ -1,8 +1,11 @@
 #pragma once
 
-#include "Commander/Commander.h"
+//#include "Commander/Commander.h"
 #include <BWAPI.h>
 
+namespace rnp {
+  enum class MatchResult;
+}
 
 /** This class saves results (winner, building score, unit score, kill score) from
  * played games. The results are stored to a semicolon-separated csv file in the bwapi-data/AI/
@@ -19,7 +22,7 @@ public:
   ~Statistics();
 
   // Saves result from a game to file. 
-  void saveResult(int win);
+  void save_result(rnp::MatchResult win);
 
   // Enable statistics. 
   void enable();

@@ -11,12 +11,13 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class HatcheryAgent : public StructureAgent {
-  bool hasSentWorkers = false;
-  bool checkBuildUnit(BWAPI::UnitType type);
+  bool has_sent_workers_ = false;
+  
+  bool check_build_unit(BWAPI::UnitType type);
 
 public:
   explicit HatcheryAgent(BWAPI::Unit mUnit);
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 };

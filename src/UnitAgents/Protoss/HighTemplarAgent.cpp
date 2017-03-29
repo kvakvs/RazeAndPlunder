@@ -3,11 +3,12 @@
 #include "Managers/AgentManager.h"
 #include "../../Commander/Commander.h"
 #include "Glob.h"
+#include "RnpUtil.h"
 
 using namespace BWAPI;
 
-bool HighTemplarAgent::useAbilities() {
-  if (isOfType(unit_->getType(), UnitTypes::Protoss_High_Templar)) {
+bool HighTemplarAgent::use_abilities() {
+  if (rnp::same_type(unit_, UnitTypes::Protoss_High_Templar)) {
     //Not transformed to Archon. Use spells.
 
     //PSI storm
@@ -28,15 +29,17 @@ bool HighTemplarAgent::useAbilities() {
 
     //Hallucination
     TechType hallucination = TechTypes::Hallucination;
-    if (Broodwar->self()->hasResearched(hallucination) && unit_->getEnergy() >= 100) {
+
+    if (Broodwar->self()->hasResearched(hallucination)
+      && unit_->getEnergy() >= 100) {
       //Check if enemy units are visible
       for (auto& u : Broodwar->enemy()->getUnits()) {
         if (u->exists()) {
           if (unit_->getDistance(u) <= unit_->getType().sightRange()) {
-            BaseAgent* target = findHallucinationTarget();
-            if (target != nullptr) {
-              if (unit_->useTech(hallucination, target->getUnit())) {
-                Broodwar << "Uses Hallucination on " << target->getUnitType().getName() << std::endl;
+            auto target = find_hallucination_target();
+            if (target) {
+              if (unit_->useTech(hallucination, target->get_unit())) {
+                Broodwar << "Uses Hallucination on " << target->unit_type().getName() << std::endl;
                 return true;
               }
             }
@@ -46,17 +49,17 @@ bool HighTemplarAgent::useAbilities() {
     }
 
     //Morph to Archon	
-    if (not  unit_->isBeingConstructed()) {
-      auto sq = rnp::commander()->getSquad(squad_id_);
+    if (not unit_->isBeingConstructed()) {
+      auto sq = rnp::commander()->get_squad(squad_id_);
       if (sq) {
-        if (sq->morphsTo().getID() == UnitTypes::Protoss_Archon.getID() 
+        if (sq->morphs_to().getID() == UnitTypes::Protoss_Archon.getID() 
           || unit_->getEnergy() < 50)
         {
-          if (not enemyUnitsVisible() && not hasCastTransform) {
-            BaseAgent* target = findArchonTarget();
+          if (not any_enemy_units_visible() && not has_cast_transform_) {
+            auto target = find_archon_target();
             if (target) {
-              if (unit_->useTech(TechTypes::Archon_Warp, target->getUnit())) {
-                hasCastTransform = true;
+              if (unit_->useTech(TechTypes::Archon_Warp, target->get_unit())) {
+                has_cast_transform_ = true;
                 return true;
               }
             }
@@ -70,54 +73,63 @@ bool HighTemplarAgent::useAbilities() {
 }
 
 
-BaseAgent* HighTemplarAgent::findHallucinationTarget() {
-  int maxRange = TechTypes::Hallucination.getWeapon().maxRange();
+const BaseAgent* HighTemplarAgent::find_hallucination_target() const {
+  //int maxRange = TechTypes::Hallucination.getWeapon().maxRange();
 
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    bool targetUnit = false;
-    if (a->isOfType(UnitTypes::Protoss_Carrier)) targetUnit = true;
-    if (a->isOfType(UnitTypes::Protoss_Scout)) targetUnit = true;
-    if (a->isOfType(UnitTypes::Protoss_Archon)) targetUnit = true;
-    if (a->isOfType(UnitTypes::Protoss_Reaver)) targetUnit = true;
+  const BaseAgent* result = nullptr;
+  act::interruptible_for_each_actor<BaseAgent>(
+      [&result](const BaseAgent* a) {
+          if (a->is_of_type(UnitTypes::Protoss_Carrier)
+              || a->is_of_type(UnitTypes::Protoss_Scout)
+              || a->is_of_type(UnitTypes::Protoss_Archon)
+              || a->is_of_type(UnitTypes::Protoss_Reaver)
+              || a->get_unit()->isHallucination()) {
+            return act::ForEach::Continue;
+          }
+          result = a;
+          return act::ForEach::Break;
+      });
 
-    if (a->isAlive() && targetUnit) {
-      if (not a->getUnit()->isHallucination()) {
-        return a;
-      }
-    }
-  }
-
-  return nullptr;
+  return result;
 }
 
-BaseAgent* HighTemplarAgent::findArchonTarget() {
-  auto mSquad = rnp::commander()->getSquad(squad_id_);
-  if (mSquad) {
-    Agentset agents = mSquad->getMembers();
-    for (auto& a : agents) {
-      if (a->isAlive() && a->getUnitID() != unit_id_ && a->isOfType(UnitTypes::Protoss_High_Templar) && not a->getUnit()->isBeingConstructed()) {
-        double dist = a->getUnit()->getPosition().getDistance(unit_->getPosition());
-        if (dist <= 64) {
-          return a;
+const BaseAgent* HighTemplarAgent::find_archon_target() const {
+  auto m_squad = rnp::commander()->get_squad(squad_id_);
+  const BaseAgent* result = nullptr;
+
+  if (m_squad) {
+    act::interruptible_for_each_in<BaseAgent>(
+      m_squad->get_members(),
+      [this,&result](const BaseAgent* a) {
+        if (a->is_alive()
+          && a->get_unit_id() != unit_id_
+          && a->is_of_type(UnitTypes::Protoss_High_Templar) 
+          && not a->get_unit()->isBeingConstructed()) 
+        {
+          double dist = a->get_unit()->getPosition().getDistance(unit_->getPosition());
+          if (dist <= 64) {
+            result = a;
+            return act::ForEach::Break;
+          }
+        }
+        return act::ForEach::Continue;
+      });
+  }
+
+  return result;
+}
+
+int HighTemplarAgent::get_friendly_units_within_range(TilePosition tile_pos, int max_range) {
+  int f_cnt = 0;
+  act::for_each_actor<BaseAgent>(
+    [&tile_pos,&max_range,&f_cnt](const BaseAgent* a) {
+      if (a->is_unit()
+        && not a->is_of_type(UnitTypes::Terran_Medic)) {
+        double dist = a->get_unit()->getDistance(Position(tile_pos));
+        if (dist <= max_range) {
+          f_cnt++;
         }
       }
-    }
-  }
-
-  return nullptr;
-}
-
-int HighTemplarAgent::friendlyUnitsWithinRange(TilePosition tilePos, int maxRange) {
-  int fCnt = 0;
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->isUnit() && not a->isOfType(UnitTypes::Terran_Medic)) {
-      double dist = a->getUnit()->getDistance(Position(tilePos));
-      if (dist <= maxRange) {
-        fCnt++;
-      }
-    }
-  }
-  return fCnt;
+    });
+  return f_cnt;
 }

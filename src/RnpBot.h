@@ -5,13 +5,7 @@
 
 #include "BWEM/bwem.h"
 #include "Utils/Statistics.h"
-
-// This is used as a prefix to console/broodwar outputs
-#define BOT_PREFIX "[Raze&Plunder] " 
-
-#define TOURNAMENT_NAME "SSCAIT 2017"
-#define SPONSORS "the Sponsors!"
-#define MINIMUM_COMMAND_OPTIMIZATION 1
+#include "Actors/Actor.h"
 
 // Remember not to use "Broodwar" in any global class constructor!
 
@@ -41,6 +35,7 @@ class Upgrader;
 class RnpBot : public BWAPI::AIModule {
   bool running_ = false;
   bool profile_ = false;
+  bool game_finished_ = false;
   
   // The singleton
   static RnpBot* singleton_;
@@ -50,12 +45,26 @@ class RnpBot : public BWAPI::AIModule {
 
 public:
   // Globally visible resources via the singleton
-  BWEM::Map& bwem_;
-  std::shared_ptr<Commander> commander_;
-  std::unique_ptr<AgentManager> agent_manager_;
+  BWEM::Map* bwem_;
+
+//  template <class T> struct ActorAndId {
+//    const T* ptr_ = nullptr;
+//    act::ActorId id_;
+//  };
+
+  const Commander* commander_ptr_ = nullptr;
+  act::ActorId commander_id_;
+
+  const AgentManager* agent_manager_ptr_ = nullptr;
+  act::ActorId agent_manager_id_;
+
+  const ExplorationManager* exploration_ptr_ = nullptr;
+  act::ActorId exploration_id_;
+
+  const Constructor* constructor_ptr_ = nullptr;
+  act::ActorId constructor_id_;
+
   std::unique_ptr<BuildingPlacer> building_placer_;
-  std::unique_ptr<Constructor> constructor_;
-  std::unique_ptr<ExplorationManager> exploration_;
   std::unique_ptr<MapManager> map_manager_;
   std::unique_ptr<NavigationAgent> navigation_;
   std::unique_ptr<Pathfinder> pathfinder_;
@@ -68,6 +77,8 @@ public:
 public:
   RnpBot();
   ~RnpBot();
+  RnpBot(const RnpBot& other) = delete;
+  RnpBot& operator = (const RnpBot& other) = delete;
 
   static RnpBot* singleton() {
     bwem_assert(singleton_);
@@ -77,9 +88,12 @@ public:
     return new RnpBot();
   }
 
+  bool is_game_finished() const { return game_finished_;  }
+
   // Virtual functions for callbacks, leave these as they are.
   void onEnd(bool isWinner) override;
   void onFrame() override;
+  void print_help();
   void onNukeDetect(BWAPI::Position target) override;
   void onPlayerLeft(BWAPI::Player player) override;
   void onReceiveText(BWAPI::Player player, std::string text) override;
@@ -97,7 +111,16 @@ public:
   void onUnitShow(BWAPI::Unit unit) override;
 
 private:
-  void gameStopped();
-  void init_early_singletons(); // called first onStart
-  void init_singletons(); // called in the middle of onStart
+  void game_stopped();
+  
+  // called before everything in onStart
+  void init_early_singletons(); 
+  
+  // called in the middle of onStart
+  void init_singletons(); 
+
+  void on_start_init_map();
+  
+  // Set debug options and game speed
+  void on_start_setup_game();
 };

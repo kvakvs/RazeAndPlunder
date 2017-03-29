@@ -4,7 +4,7 @@
 
 using namespace BWAPI;
 
-bool LurkerAgent::useAbilities() {
+bool LurkerAgent::use_abilities() {
   //Check if enemy units are visible
   bool enemyVisible = false;
   for (auto& u : Broodwar->enemy()->getUnits()) {

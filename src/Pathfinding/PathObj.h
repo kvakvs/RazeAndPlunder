@@ -1,4 +1,5 @@
 #pragma once
+#if 1
 
 #include "MainAgents/BaseAgent.h"
 #include "BWEM/graph.h"
@@ -11,11 +12,10 @@
 class PathObj {
 
 private:
-  BWAPI::TilePosition start;
-  BWAPI::TilePosition end;
-  //std::vector<TilePosition> path;
-  BWEM::CPPath path;
-  bool finished;
+  BWAPI::TilePosition start_;
+  BWAPI::TilePosition end_;
+  BWEM::CPPath path_;
+  bool finished_;
 
 public:
   // Constructor 
@@ -28,11 +28,13 @@ public:
   bool matches(BWAPI::TilePosition cStart, BWAPI::TilePosition cEnd);
 
   // Checks if this path has been calculated. 
-  bool isFinished();
+  bool is_finished();
 
   // Calculates the path. 
-  void calculatePath();
+  void calculate_path();
 
   // Returns the path. 
-  const BWEM::CPPath& getPath();
+  const BWEM::CPPath& get_path();
 };
+
+#endif //0

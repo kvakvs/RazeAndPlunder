@@ -12,7 +12,7 @@ ComsatAgent::ComsatAgent(Unit mUnit)
   agent_type_ = "ComsatAgent";
 }
 
-void ComsatAgent::computeActions() {
+void ComsatAgent::tick() {
   if (not unit_->isIdle()) return;
 
   if (Broodwar->getFrameCount() - last_sweep_frame_ > 100 && unit_->getEnergy() >= 50) {
@@ -65,41 +65,40 @@ void ComsatAgent::computeActions() {
 }
 
 int ComsatAgent::friendlyUnitsWithinRange(Position pos) {
-  int fCnt = 0;
-  double maxRange = 384; //Range of sieged tanks
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->isUnit() && a->isAlive() && a->getUnitType().canAttack()) {
-      double dist = a->getUnit()->getPosition().getDistance(pos);
-      if (dist <= maxRange) {
-        fCnt++;
+  int f_cnt = 0;
+  double max_range = 384; //Range of sieged tanks
+  act::for_each_actor<BaseAgent>(
+    [this,&pos,&max_range,&f_cnt](const BaseAgent* a) {
+      if (a->is_unit() && a->unit_type().canAttack()) {
+        auto dist = a->get_unit()->getPosition().getDistance(pos);
+        if (dist <= max_range) {
+          f_cnt++;
+        }
       }
-    }
-  }
-  return fCnt;
+    });
+  return f_cnt;
 }
 
 bool ComsatAgent::anyHasSweeped(TilePosition pos) {
-  auto& agents = rnp::agent_manager()->getAgents();
-  for (auto& a : agents) {
-    if (a->isAlive() && a->getUnitType().getID() == UnitTypes::Terran_Comsat_Station.getID()) {
-      ComsatAgent* ca = (ComsatAgent*)a;
-      if (ca->hasSweeped(pos)) {
-        return true;
-      }
-    }
-  }
-  return false;
+  auto loop_result = act::interruptible_for_each_actor<BaseAgent>(
+      [&pos](const BaseAgent* a) {
+          auto a_id = a->unit_type().getID();
+          if (a_id == UnitTypes::Terran_Comsat_Station.getID()) {
+            auto ca = static_cast<const ComsatAgent*>(a);
+            if (ca->hasSweeped(pos)) {
+              return act::ForEach::Break;
+            }
+          }
+          return act::ForEach::Continue;
+      });
+  // Early loop interrupted means we've found a swept position
+  return loop_result == act::ForEachResult::Interrupted;
 }
 
-bool ComsatAgent::hasSweeped(TilePosition pos) {
+bool ComsatAgent::hasSweeped(TilePosition pos) const {
   if (Broodwar->getFrameCount() - last_sweep_frame_ > 100) {
     return false;
   }
 
-  if (pos.getDistance(last_sweep_pos_) <= 5) {
-    return true;
-  }
-
-  return false;
+  return pos.getApproxDistance(last_sweep_pos_) <= 5;
 }

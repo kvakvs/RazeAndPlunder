@@ -14,15 +14,15 @@ class StructureAgent : public BaseAgent {
 private:
 
 protected:
-  bool repairing = false;
+  bool repairing_ = false;
 
-  bool canBuildUnit(BWAPI::UnitType type);
-  bool canEvolveUnit(BWAPI::UnitType type);
+  bool can_build_unit(BWAPI::UnitType type) const;
+  bool can_evolve_unit(BWAPI::UnitType type) const;
 
   //std::vector<BWAPI::TilePosition> hasScanned;
 
   // Checks if the specified unit/building can be constructed 
-  bool canBuild(BWAPI::UnitType type);
+  bool can_build(BWAPI::UnitType type) const;
 
 public:
   StructureAgent();
@@ -30,17 +30,17 @@ public:
   virtual ~StructureAgent();
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 
   // Used in debug modes to show a line to the agents' goal. 
-  void debug_showGoal() override;
+  void debug_show_goal() const override;
 
   // Checks if the agent can morph into the specified type. Zerg only. 
-  bool canMorphInto(BWAPI::UnitType type);
+  bool can_morph_into(BWAPI::UnitType type) const;
 
   // Sends a number of workers to a newly constructed base. 
-  void sendWorkers();
+  void send_workers();
 
   // Used to print info about this agent to the screen. 
-  void printInfo() override;
+  void debug_print_info() const override;
 };

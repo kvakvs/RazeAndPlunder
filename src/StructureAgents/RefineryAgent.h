@@ -12,11 +12,11 @@
 class RefineryAgent : public StructureAgent {
 
 private:
-  std::vector<BaseAgent*> assigned_workers_;
+  act::ActorId::Set assigned_workers_;
 
 public:
   explicit RefineryAgent(BWAPI::Unit mUnit);
 
   // Called each update to issue orders. 
-  void computeActions() override;
+  void tick() override;
 };

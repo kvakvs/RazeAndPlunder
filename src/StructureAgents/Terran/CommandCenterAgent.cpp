@@ -12,22 +12,22 @@ CommandCenterAgent::CommandCenterAgent(Unit mUnit) {
   unit_id_ = unit_->getID();
 
   has_sent_workers_ = false;
-  if (rnp::agent_manager()->countNoUnits(UnitTypes::Terran_Command_Center) == 0) {
+  if (rnp::agent_manager()->get_units_of_type_count(UnitTypes::Terran_Command_Center) == 0) {
     //We dont do this for the first Command Center.
     has_sent_workers_ = true;
   }
 
   agent_type_ = "CommandCenterAgent";
-  rnp::constructor()->commandCenterBuilt();
+  Constructor::modify([](Constructor* c) { c->command_center_built(); });
 }
 
-void CommandCenterAgent::computeActions() {
+void CommandCenterAgent::tick() {
   if (not has_sent_workers_) {
     if (not unit_->isBeingConstructed()) {
-      sendWorkers();
+      send_workers();
       has_sent_workers_ = true;
 
-      rnp::constructor()->addRefinery();
+      Constructor::modify([](Constructor* c) { c->add_refinery(); });
     }
   }
 
@@ -41,15 +41,15 @@ void CommandCenterAgent::computeActions() {
     }
   }
 
-  if (rnp::agent_manager()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->get_preferred_workers_count()) {
+  if (rnp::agent_manager()->get_units_of_type_count(Broodwar->self()->getRace().getWorker()) < rnp::commander()->get_preferred_workers_count()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
-    if (canBuild(worker)) {
+    if (can_build(worker)) {
       unit_->train(worker);
     }
   }
 
   if (rnp::commander()->is_unit_needed(UnitTypes::Terran_SCV)) {
-    if (canBuild(UnitTypes::Terran_SCV)) {
+    if (can_build(UnitTypes::Terran_SCV)) {
       unit_->train(UnitTypes::Terran_SCV);
     }
   }

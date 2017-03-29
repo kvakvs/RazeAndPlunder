@@ -16,5 +16,5 @@ public:
     agent_type_ = "CorsairAgent";
   }
 
-  bool useAbilities() override;
+  bool use_abilities() override;
 };

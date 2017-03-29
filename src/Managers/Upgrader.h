@@ -17,26 +17,26 @@ class Upgrader {
   std::vector<BWAPI::TechType> techs_;
 
 private:
-  bool canUpgrade(BWAPI::UpgradeType type, BWAPI::Unit unit);
-  bool canResearch(BWAPI::TechType type, BWAPI::Unit unit) const;
-  std::string format(std::string str) const;
+  bool can_upgrade(BWAPI::UpgradeType type, BWAPI::Unit unit);
+  bool can_research(BWAPI::TechType type, BWAPI::Unit unit) const;
+  std::string format(const std::string& str) const;
 
 public:
   Upgrader();
   ~Upgrader();
 
   // Checks if there is an upgrade the specified agent need to upgrade/research. 
-  bool checkUpgrade(BaseAgent* agent);
+  bool check_upgrade(BaseAgent* agent);
 
   // Switch on/off debug info printing to screen. 
-  void toggleDebug();
+  void toggle_debug();
 
   // Prints debug info to screen. 
-  void printInfo() const;
+  void debug_print_info() const;
 
   // Adds an upgrade to the upgrade queue. 
-  void addUpgrade(BWAPI::UpgradeType type);
+  void add_upgrade(BWAPI::UpgradeType type);
 
   // Adds a tech to the tech queue. 
-  void addTech(BWAPI::TechType tech);
+  void add_tech(BWAPI::TechType tech);
 };

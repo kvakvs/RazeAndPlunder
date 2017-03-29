@@ -10,17 +10,21 @@
 class HighTemplarAgent : public UnitAgent {
 
 private:
-  BWAPI::Unit findPsiStormTarget();
-  BaseAgent* findHallucinationTarget();
-  BaseAgent* findArchonTarget();
-  bool hasCastTransform = false;
+  bool has_cast_transform_ = false;
+
+  BWAPI::Unit find_psi_storm_target();
+
+  const BaseAgent* find_hallucination_target() const;
+
+  const BaseAgent* find_archon_target() const;
+
   // Returns the number of own units that are within maxRange of the specified tile. 
-  int friendlyUnitsWithinRange(BWAPI::TilePosition tilePos, int maxRange);
+  static int get_friendly_units_within_range(BWAPI::TilePosition tilePos, int maxRange);
 
 public:
   explicit HighTemplarAgent(BWAPI::Unit mUnit) : UnitAgent(mUnit) {
     agent_type_ = "HighTemplarAgent";
   }
 
-  bool useAbilities() override;
+  bool use_abilities() override;
 };

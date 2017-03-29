@@ -12,30 +12,31 @@ NexusAgent::NexusAgent(Unit mUnit) {
   unit_id_ = unit_->getID();
   agent_type_ = "NexusAgent";
 
-  hasSentWorkers = false;
-  if (rnp::agent_manager()->countNoUnits(UnitTypes::Protoss_Nexus) == 0) {
+  has_sent_workers_ = false;
+  if (rnp::agent_manager()->get_units_of_type_count(UnitTypes::Protoss_Nexus) == 0) {
     //We dont do this for the first Nexus.
-    hasSentWorkers = true;
+    has_sent_workers_ = true;
   }
 
-  rnp::constructor()->commandCenterBuilt();
+  Constructor::modify([](Constructor* c) { c->command_center_built(); });
 }
 
-void NexusAgent::computeActions() {
-  if (not hasSentWorkers) {
+void NexusAgent::tick() {
+  if (not has_sent_workers_) {
     if (not unit_->isBeingConstructed()) {
-      sendWorkers();
-      hasSentWorkers = true;
+      send_workers();
+      has_sent_workers_ = true;
 
-      rnp::constructor()->addRefinery();
+      Constructor::modify([](Constructor* c) { c->add_refinery(); });
     }
   }
 
   if (not unit_->isIdle()) return;
 
-  if (rnp::agent_manager()->countNoUnits(Broodwar->self()->getRace().getWorker()) < rnp::commander()->get_preferred_workers_count()) {
+  auto worker_count = rnp::agent_manager()->get_units_of_type_count(Broodwar->self()->getRace().getWorker());
+  if (worker_count < rnp::commander()->get_preferred_workers_count()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
-    if (canBuild(worker)) {
+    if (can_build(worker)) {
       unit_->train(worker);
     }
   }

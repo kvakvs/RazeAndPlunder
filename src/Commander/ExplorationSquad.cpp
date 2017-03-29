@@ -7,84 +7,81 @@
 
 using namespace BWAPI;
 
-ExplorationSquad::ExplorationSquad(int mId, std::string mName, int mPriority)
-: Squad(mId, SquadType::EXPLORER, mName, mPriority) {
+ExplorationSquad::ExplorationSquad(std::string mName, int mPriority)
+: Squad(SquadType::EXPLORER, mName, mPriority), delay_respawn_()
+{
   goal_ = Broodwar->self()->getStartLocation();
   current_state_ = State::NOT_SET;
+  delay_respawn_.start(0);
 }
 
-bool ExplorationSquad::isActive() {
-  return active_;
-}
+void ExplorationSquad::try_fill_the_squad() {
+  auto start_loc = Broodwar->self()->getStartLocation();
+  auto agent_manager = rnp::agent_manager();
 
-void ExplorationSquad::defend(TilePosition mGoal) {
-
-}
-
-void ExplorationSquad::attack(TilePosition mGoal) {
-
-}
-
-void ExplorationSquad::assist(TilePosition mGoal) {
-
-}
-
-void ExplorationSquad::computeActions() {
-  if (not active_) {
-    //Check if we need workers in the squad
-    for (int i = 0; i < (int)setup_.size(); i++) {
-      if (setup_.at(i).current < setup_.at(i).no && setup_.at(i).type.isWorker()) {
-        int no = setup_.at(i).no - setup_.at(i).current;
-        for (int j = 0; j < no; j++) {
-          BaseAgent* w = rnp::agent_manager()->findClosestFreeWorker(Broodwar->self()->getStartLocation());
-          if (w != nullptr) addMember(w);
+  //Check if we need workers in the squad
+  for (size_t i = 0; i < setup_.size(); i++) {
+    if (setup_[i].current_count_ < setup_[i].count_ 
+      && setup_[i].type_.isWorker()) {
+      int todo_count = setup_[i].count_ - setup_[i].current_count_;
+      for (int j = 0; j < todo_count; j++) {
+        auto w = agent_manager->find_closest_free_worker(start_loc);
+        if (w) {
+          add_member(w->self());
         }
       }
     }
+  }
+}
 
-    if (isFull()) {
-      active_ = true;
-    }
+void ExplorationSquad::tick_active_explo_squad() {
+  if (active_priority_ != priority_) {
+    priority_ = active_priority_;
   }
 
-  //First, remove dead agents
-  removeDestroyed();
+  if (m_next_explore_.value_up_to_date(rnp::seconds(10))) {
+    // do nothing if the value is too fresh
+    return;
+  }
 
-  if (agents_.size() > 0 && not active_) {
-    //Activate as soon as a unit has been built.
+  auto n_goal = rnp::exploration()->get_next_to_explore(this);
+  if (rnp::is_valid_position(n_goal)) {
+    this->goal_ = n_goal;
+    set_member_goals(goal_);
+  }
+
+  m_next_explore_.update(goal_);
+}
+
+void ExplorationSquad::tick() {
+  if (not active_) { // && delay_respawn_.is_ready()) {
+    try_fill_the_squad();
+    active_ |= is_full();
+  }
+
+  if (not members_.empty() && not active_) {
+    //Activate as soon as 1 unit has been built
     active_ = true;
   }
 
   //All units dead, go back to inactive
-  if ((int)agents_.size() == 0) {
+  if (members_.empty() && active_) {
     active_ = false;
+    //delay_respawn_.start(rnp::seconds(20)); // no instant borrow worker, wait
     return;
   }
 
   if (active_) {
-    if (active_priority_ != priority_) {
-      priority_ = active_priority_;
-    }
-
-    TilePosition nGoal = rnp::exploration()->get_next_to_explore(this);
-    if (nGoal.x >= 0) {
-      this->goal_ = nGoal;
-      setMemberGoals(goal_);
-    }
+    tick_active_explo_squad();
   }
+
+  Squad::tick();
 }
 
-void ExplorationSquad::clearGoal() {
+void ExplorationSquad::clear_goal() {
 
 }
 
-TilePosition ExplorationSquad::getGoal() {
-  return goal_;
-}
-
-bool ExplorationSquad::hasGoal() {
-  if (goal_.x < 0 || goal_.y < 0) {
-    return false;
-  }
-  return true;
+bool ExplorationSquad::has_goal() const {
+  return rnp::is_valid_position(goal_);
 }
