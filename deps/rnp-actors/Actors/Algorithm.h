@@ -78,6 +78,7 @@ void send_message(const Actor* dst, Args&& ...args) {
 
 // Sends a templated message to the actor, where the message contains 
 // a function to execute on a mutable actor pointer converted to T*
+// IMPORTANT: Don't let lambdas capture references, use [=] instead
 template <class T>
 void modify_actor(const ActorId& id, std::function<void(T*)> func) {
   send_message<ActiveMessage<T>>(id, func);

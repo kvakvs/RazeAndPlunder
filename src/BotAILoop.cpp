@@ -64,16 +64,16 @@ void BotAILoop::on_unit_added(Unit unit) {
 
   //Remove from buildorder if this is a building
   if (unit->getType().isBuilding()) {
-    Constructor::modify([unit](Constructor* c) {
-        c->unlock(unit->getType());
-      });
+    UnitType ut = unit->getType();
+    Constructor::modify([=](Constructor* c) { c->unlock(ut); });
   }
 }
 
 void BotAILoop::on_unit_morphed(Unit unit) {
   //rnp::agent_manager()->on_drone_morphed(unit);
   msg::agentmanager::unit_destroyed(unit);
-  Constructor::modify([unit](Constructor* c) { c->unlock(unit->getType()); });
+  UnitType ut = unit->getType();
+  Constructor::modify([=](Constructor* c) { c->unlock(ut); });
 }
 
 void BotAILoop::on_unit_destroyed(Unit unit) {

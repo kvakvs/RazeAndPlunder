@@ -181,6 +181,7 @@ public:
   // Called each update to issue orders. 
   void tick() override;
 
+  // Don't let lambdas capture references, use [=] instead
   static void modify(std::function<void(Constructor*)> f) {
     act::modify_actor<Constructor>(rnp::constructor_id(), f);
   }

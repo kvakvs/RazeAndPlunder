@@ -88,10 +88,11 @@ void AgentManager::add_agent(Unit unit) const {
 
     if (new_agent->is_building()) {
       rnp::building_placer()->add_constructed_building(unit);
-      Constructor::modify([unit](Constructor* c) {
-          c->unlock(unit->getType());
-        });
-      rnp::resources()->unlock_resources(unit->getType());
+      UnitType ut = unit->getType();
+      Constructor::modify([=](Constructor* c) {
+        c->unlock(ut);
+        rnp::resources()->unlock_resources(ut);
+      });
     }
     else {
       msg::commander::unit_created(new_agent_id);

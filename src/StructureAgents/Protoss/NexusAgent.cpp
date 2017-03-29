@@ -6,8 +6,8 @@
 
 using namespace BWAPI;
 
-NexusAgent::NexusAgent(Unit mUnit) {
-  unit_ = mUnit;
+NexusAgent::NexusAgent(Unit m_unit) {
+  unit_ = m_unit;
   type_ = unit_->getType();
   unit_id_ = unit_->getID();
   agent_type_ = "NexusAgent";
@@ -33,7 +33,8 @@ void NexusAgent::tick() {
 
   if (not unit_->isIdle()) return;
 
-  auto worker_count = rnp::agent_manager()->get_units_of_type_count(Broodwar->self()->getRace().getWorker());
+  auto worker_id = Broodwar->self()->getRace().getWorker();
+  auto worker_count = rnp::agent_manager()->get_units_of_type_count(worker_id);
   if (worker_count < rnp::commander()->get_preferred_workers_count()) {
     UnitType worker = Broodwar->self()->getRace().getWorker();
     if (can_build(worker)) {

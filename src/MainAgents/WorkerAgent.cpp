@@ -28,7 +28,7 @@ void WorkerAgent::destroyed() {
       || current_state_ == WorkerState::FIND_BUILDSPOT)
   {
     if (not Constructor::is_zerg()) {
-      Constructor::modify([this](Constructor* c) {
+      Constructor::modify([=](Constructor* c) {
           c->handle_worker_destroyed(to_build_, unit_id_);
         });
       rnp::building_placer()->clear_temp(to_build_, build_spot_);
@@ -438,12 +438,12 @@ void WorkerAgent::handle_message(act::Message* incoming) {
   }
   else if (auto wab = dynamic_cast<msg::worker::AssignBuild*>(incoming)) {
     if (assign_to_build(wab->type)) {
-      Constructor::modify([this](Constructor* c) {
-          c->lock(0, get_unit_id());
-        });
+      auto unit_id = get_unit_id();
+      Constructor::modify([=](Constructor* c) { c->lock(0, unit_id); });
     } else {
-      Constructor::modify([wab](Constructor* c) {
-          c->handle_no_buildspot_found(wab->type);
+      UnitType type = wab->type;
+      Constructor::modify([=](Constructor* c) {
+          c->handle_no_buildspot_found(type);
         });
     }
   } 

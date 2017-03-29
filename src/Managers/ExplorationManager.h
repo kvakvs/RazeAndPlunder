@@ -116,6 +116,8 @@ public:
   //
   // Actor things
   //
+
+  // Don't let lambdas capture references, use [=] instead
   static void modify(std::function<void(ExplorationManager*)> f) {
     act::modify_actor<ExplorationManager>(rnp::exploration_id(), f);
   }

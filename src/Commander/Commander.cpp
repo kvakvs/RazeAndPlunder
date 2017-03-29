@@ -35,9 +35,7 @@ void Commander::check_buildplan() {
     have_supply,
     [](const BuildplanEntry& b) -> bool { // For units/buildings
       UnitType to_build(b.unit_type());
-      Constructor::modify([=](Constructor* c) {
-          c->add_building(to_build);
-        });
+      Constructor::modify([=](Constructor* c) { c->add_building(to_build); });
       return true;
     },
     [](const BuildplanEntry& b) -> bool { // For upgrades
