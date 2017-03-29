@@ -13,7 +13,7 @@
 #if BWEM_USE_MAP_PRINTER
 
 #include "BWEM/map.h"
-#include "easybmp106/EasyBMP.h"
+#include "EasyBMP106/EasyBMP.h"
 
 
 using namespace BWAPI;

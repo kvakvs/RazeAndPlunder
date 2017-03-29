@@ -54,6 +54,7 @@ namespace BWEM {
     // Returns the unique instance (singleton).
     // It is equal to use Map::Instance() each time, or to store the returned reference and use it instead.
     static Map& Instance();
+    static void Destroy();
 
 
     // This has to be called before any other function is called.

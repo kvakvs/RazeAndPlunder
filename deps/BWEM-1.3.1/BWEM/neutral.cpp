@@ -72,7 +72,7 @@ namespace BWEM {
           bwem_assert(this != pTop);
           bwem_assert(!pTop->IsGeyser());
           bwem_assert_plus(pTop->Type() == Type(), "stacked neutrals have different types: " + pTop->Type().getName() + " / " + Type().getName());
-          bwem_assert_plus(pTop->TopLeft() == TopLeft(), "stacked neutrals not aligned: " + my_to_string(pTop->TopLeft()) + " / " + my_to_string(TopLeft()));
+          //bwem_assert_plus(pTop->TopLeft() == TopLeft(), "stacked neutrals not aligned: " + my_to_string(pTop->TopLeft()) + " / " + my_to_string(TopLeft()));
           bwem_assert((dx == 0) && (dy == 0));
 
           pTop->m_pNextStacked = this;

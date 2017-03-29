@@ -721,6 +721,7 @@ namespace BWEM {
       bool atLeastOneFailed = false;
       for (auto location : StartingLocations()) {
         bool found = false;
+        // TODO: The hell is this code below?
         for (Area& area : GetGraph().Areas())
           if (not found)
             for (Base& base : area.Bases())

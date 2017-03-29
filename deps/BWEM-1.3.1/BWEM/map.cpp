@@ -56,8 +56,12 @@ namespace BWEM {
     return *m_gInstance.get();
   }
 
+void Map::Destroy() {
+  m_gInstance.reset(nullptr);
+}
 
-  Position Map::RandomPosition() const {
+
+Position Map::RandomPosition() const {
     const auto PixelSize = Position(Size());
     return Position(rand() % PixelSize.x, rand() % PixelSize.y);
   }
