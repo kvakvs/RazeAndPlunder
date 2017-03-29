@@ -91,7 +91,7 @@ void AgentManager::add_agent(Unit unit) const {
       Constructor::modify([unit](Constructor* c) {
           c->unlock(unit->getType());
         });
-      rnp::resources()->unlockResources(unit->getType());
+      rnp::resources()->unlock_resources(unit->getType());
     }
     else {
       msg::commander::unit_created(new_agent_id);

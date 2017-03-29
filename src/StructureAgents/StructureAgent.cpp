@@ -151,8 +151,8 @@ void StructureAgent::tick() {
     //Check for Spire upgrade
     if (is_of_type(UnitTypes::Zerg_Spire)) {
       if (Broodwar->canMake(UnitTypes::Zerg_Greater_Spire, unit_) && rnp::agent_manager()->get_finished_units_count(UnitTypes::Zerg_Hive) > 0) {
-        if (rnp::resources()->hasResources(UnitTypes::Zerg_Greater_Spire)) {
-          rnp::resources()->lockResources(UnitTypes::Zerg_Greater_Spire);
+        if (rnp::resources()->has_resources(UnitTypes::Zerg_Greater_Spire)) {
+          rnp::resources()->lock_resources(UnitTypes::Zerg_Greater_Spire);
           unit_->morph(UnitTypes::Zerg_Greater_Spire);
           return;
         }
@@ -161,8 +161,8 @@ void StructureAgent::tick() {
 
     //Check for Creep Colony upgrade
     if (is_of_type(UnitTypes::Zerg_Creep_Colony)) {
-      if (rnp::resources()->hasResources(UnitTypes::Zerg_Sunken_Colony)) {
-        rnp::resources()->lockResources(UnitTypes::Zerg_Sunken_Colony);
+      if (rnp::resources()->has_resources(UnitTypes::Zerg_Sunken_Colony)) {
+        rnp::resources()->lock_resources(UnitTypes::Zerg_Sunken_Colony);
         unit_->morph(UnitTypes::Zerg_Sunken_Colony);
         return;
       }
@@ -183,7 +183,7 @@ bool StructureAgent::can_build(UnitType type) const {
   }
 
   //3. Check if we have enough resources
-  if (not rnp::resources()->hasResources(type)) {
+  if (not rnp::resources()->has_resources(type)) {
     return false;
   }
 
@@ -214,7 +214,7 @@ bool StructureAgent::can_build_unit(UnitType type) const {
   }
 
   //5. Check if we have enough resources
-  if (not rnp::resources()->hasResources(type)) {
+  if (not rnp::resources()->has_resources(type)) {
     return false;
   }
 
@@ -293,7 +293,7 @@ bool StructureAgent::can_morph_into(UnitType type) const {
   }
 
   //2. Check if we have enough resources
-  if (not rnp::resources()->hasResources(type)) {
+  if (not rnp::resources()->has_resources(type)) {
     return false;
   }
 
@@ -318,7 +318,7 @@ bool StructureAgent::can_evolve_unit(UnitType type) const {
   }
 
   //3. Check if we have enough resources
-  if (not rnp::resources()->hasResources(type)) {
+  if (not rnp::resources()->has_resources(type)) {
     return false;
   }
 

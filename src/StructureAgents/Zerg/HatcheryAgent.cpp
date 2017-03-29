@@ -42,8 +42,8 @@ void HatcheryAgent::tick() {
   if (is_of_type(UnitTypes::Zerg_Hatchery) 
       && rnp::agent_manager()->get_units_of_type_count(UnitTypes::Zerg_Lair) == 0) {
     if (Broodwar->canMake(UnitTypes::Zerg_Lair, unit_)) {
-      if (rnp::resources()->hasResources(UnitTypes::Zerg_Lair)) {
-        rnp::resources()->lockResources(UnitTypes::Zerg_Lair);
+      if (rnp::resources()->has_resources(UnitTypes::Zerg_Lair)) {
+        rnp::resources()->lock_resources(UnitTypes::Zerg_Lair);
         unit_->morph(UnitTypes::Zerg_Lair);
         return;
       }
@@ -53,8 +53,8 @@ void HatcheryAgent::tick() {
   if (is_of_type(UnitTypes::Zerg_Lair) 
       && rnp::agent_manager()->get_units_of_type_count(UnitTypes::Zerg_Hive) == 0) {
     if (Broodwar->canMake(UnitTypes::Zerg_Hive, unit_)) {
-      if (rnp::resources()->hasResources(UnitTypes::Zerg_Hive)) {
-        rnp::resources()->lockResources(UnitTypes::Zerg_Hive);
+      if (rnp::resources()->has_resources(UnitTypes::Zerg_Hive)) {
+        rnp::resources()->lock_resources(UnitTypes::Zerg_Hive);
         unit_->morph(UnitTypes::Zerg_Hive);
         return;
       }

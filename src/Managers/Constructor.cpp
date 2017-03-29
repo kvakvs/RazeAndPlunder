@@ -60,7 +60,7 @@ void Constructor::tick_manage_buildplan(int frame) {
           });
       }
       plan_.push_front(qitem.to_build_);
-      rnp::resources()->unlockResources(qitem.to_build_);
+      rnp::resources()->unlock_resources(qitem.to_build_);
       queue_.remove(i);
       return;
     }
@@ -261,7 +261,7 @@ void Constructor::handle_worker_destroyed(UnitType type, int workerID) {
     if (queue_.item(i).assigned_worker_id_ == workerID) {
       queue_.remove(i);
       plan_.push_front(type);
-      rnp::resources()->unlockResources(type);
+      rnp::resources()->unlock_resources(type);
     }
   }
 }
@@ -328,7 +328,7 @@ bool Constructor::execute_order(const UnitType& type) {
   }
 
   //Check if we have resources
-  if (not rnp::resources()->hasResources(type)) {
+  if (not rnp::resources()->has_resources(type)) {
     return false;
   }
 

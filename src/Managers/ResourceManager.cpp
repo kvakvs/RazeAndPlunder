@@ -9,30 +9,30 @@ ResourceManager::ResourceManager() {
 ResourceManager::~ResourceManager() {
 }
 
-bool ResourceManager::hasResources(UnitType type) {
-  int nMinerals = type.mineralPrice();
-  int nGas = type.gasPrice();
+bool ResourceManager::has_resources(UnitType type) const {
+  int n_minerals = type.mineralPrice();
+  int n_gas = type.gasPrice();
 
-  return hasResources(nMinerals, nGas);
+  return has_resources(n_minerals, n_gas);
 }
 
-bool ResourceManager::hasResources(UpgradeType type) {
-  int nMinerals = type.mineralPrice();
-  int nGas = type.gasPrice();
+bool ResourceManager::has_resources(UpgradeType type) const {
+  int n_minerals = type.mineralPrice();
+  int n_gas = type.gasPrice();
 
-  return hasResources(nMinerals, nGas);
+  return has_resources(n_minerals, n_gas);
 }
 
-bool ResourceManager::hasResources(TechType type) {
-  int nMinerals = type.mineralPrice();
-  int nGas = type.gasPrice();
+bool ResourceManager::has_resources(TechType type) const {
+  int n_minerals = type.mineralPrice();
+  int n_gas = type.gasPrice();
 
-  return hasResources(nMinerals, nGas);
+  return has_resources(n_minerals, n_gas);
 }
 
-bool ResourceManager::hasResources(int neededMinerals, int neededGas) {
-  if (Broodwar->self()->minerals() - calcLockedMinerals() >= neededMinerals) {
-    if (Broodwar->self()->gas() - calcLockedGas() >= neededGas) {
+bool ResourceManager::has_resources(int neededMinerals, int neededGas) const {
+  if (Broodwar->self()->minerals() - calc_locked_minerals() >= neededMinerals) {
+    if (Broodwar->self()->gas() - calc_locked_gas() >= neededGas) {
       return true;
     }
   }
@@ -40,11 +40,11 @@ bool ResourceManager::hasResources(int neededMinerals, int neededGas) {
   return false;
 }
 
-void ResourceManager::lockResources(UnitType type) {
+void ResourceManager::lock_resources(UnitType type) {
   locks_.push_back(ResourceLock(type));
 }
 
-void ResourceManager::unlockResources(UnitType type) {
+void ResourceManager::unlock_resources(UnitType type) {
   for (int i = 0; i < (int)locks_.size(); i++) {
     if (locks_[i].unit_.getID() == type.getID()) {
       locks_.erase(locks_.begin() + i);
@@ -53,27 +53,27 @@ void ResourceManager::unlockResources(UnitType type) {
   }
 }
 
-int ResourceManager::calcLockedMinerals() {
-  int nMinerals = 0;
+int ResourceManager::calc_locked_minerals() const {
+  int n_minerals = 0;
 
   for (int i = 0; i < (int)locks_.size(); i++) {
-    nMinerals += locks_[i].mineral_cost_;
+    n_minerals += locks_[i].mineral_cost_;
   }
 
-  return nMinerals;
+  return n_minerals;
 }
 
-int ResourceManager::calcLockedGas() {
-  int nGas = 0;
+int ResourceManager::calc_locked_gas() const {
+  int n_gas = 0;
 
   for (int i = 0; i < (int)locks_.size(); i++) {
-    nGas += locks_[i].gas_cost_;
+    n_gas += locks_[i].gas_cost_;
   }
 
-  return nGas;
+  return n_gas;
 }
 
-void ResourceManager::printInfo() {
-  Broodwar->drawTextScreen(5, 96, "Locked minerals: %d", calcLockedMinerals());
-  Broodwar->drawTextScreen(5, 112, "Locked gas: %d", calcLockedGas());
+void ResourceManager::debug_print_info() const {
+  Broodwar->drawTextScreen(5, 96, "Locked minerals: %d", calc_locked_minerals());
+  Broodwar->drawTextScreen(5, 112, "Locked gas: %d", calc_locked_gas());
 }

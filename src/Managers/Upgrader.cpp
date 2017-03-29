@@ -129,7 +129,7 @@ bool Upgrader::can_upgrade(UpgradeType type, Unit unit) {
   }
 
   //3. Check if we have enough resources
-  if (not rnp::resources()->hasResources(type)) {
+  if (not rnp::resources()->has_resources(type)) {
     return false;
   }
 
@@ -170,7 +170,7 @@ bool Upgrader::can_research(TechType type, Unit unit) const {
   }
 
   //2. Check if we have enough resources
-  if (not rnp::resources()->hasResources(type)) {
+  if (not rnp::resources()->has_resources(type)) {
     return false;
   }
 

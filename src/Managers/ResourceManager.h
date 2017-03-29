@@ -29,31 +29,31 @@ class ResourceManager {
   std::vector<ResourceLock> locks_;
   
 private:
-  int calcLockedMinerals();
-  int calcLockedGas();
+  int calc_locked_minerals() const;
+  int calc_locked_gas() const;
 
 public:
   ResourceManager();
   ~ResourceManager();
 
   // Checks if we have enough resources free to build the specified unit. 
-  bool hasResources(BWAPI::UnitType type);
+  bool has_resources(BWAPI::UnitType type) const;
 
   // Checks if we have enough the specified resources free. 
-  bool hasResources(int nMinerals, int nGas);
+  bool has_resources(int nMinerals, int nGas) const;
 
   // Checks if we have enough resources free for the specified upgrade. 
-  bool hasResources(BWAPI::UpgradeType type);
+  bool has_resources(BWAPI::UpgradeType type) const;
 
   // Checks if we have enough resources free for the specified research. 
-  bool hasResources(BWAPI::TechType type);
+  bool has_resources(BWAPI::TechType type) const;
 
   // Locks resources for use. 
-  void lockResources(BWAPI::UnitType type);
+  void lock_resources(BWAPI::UnitType type);
 
   // Unlocks resources for use. 
-  void unlockResources(BWAPI::UnitType type);
+  void unlock_resources(BWAPI::UnitType type);
 
   // Shows some debug info on screen. 
-  void printInfo();
+  void debug_print_info() const;
 };

@@ -345,7 +345,7 @@ bool WorkerAgent::assign_to_build(UnitType type) {
   to_build_ = type;
   build_spot_ = rnp::building_placer()->find_build_spot(to_build_);
   if (build_spot_.x >= 0) {
-    rnp::resources()->lockResources(to_build_);
+    rnp::resources()->lock_resources(to_build_);
     rnp::building_placer()->fill_temp(to_build_, build_spot_);
     set_state(WorkerState::FIND_BUILDSPOT);
     return true;
