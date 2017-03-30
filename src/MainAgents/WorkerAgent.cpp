@@ -45,6 +45,10 @@ void WorkerAgent::debug_print_info() const {
     sy_ = unit_->getPosition().y;
   }
 
+  // Far at the bottom popup can be clipped by the map edge
+  auto mapsize = Position(BWEM::Map::Instance().Size());
+  if (sy_ + 110 > mapsize.y) { sy_ = mapsize.y - 110; }
+
   Broodwar->drawBoxMap(sx_ - 2, sy_, sx_ + 152, sy_ + 90, Colors::Black, true);
   Broodwar->drawTextMap(sx_ + 4, sy_, "\x03%s", 
                         unit_->getType().getName().c_str());

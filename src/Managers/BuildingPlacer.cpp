@@ -10,6 +10,7 @@
 #include "Glob.h"
 
 using namespace BWAPI;
+#define MODULE_PREFIX "(buildingplacer) "
 
 CoverMap::CoverMap(size_t xsize, size_t ysize)
     : width_(xsize), height_(ysize), data_()
@@ -256,7 +257,7 @@ TilePosition BuildingPlacer::find_build_spot(UnitType to_build) {
       }
 
       TilePosition spot = find_build_spot(to_build, cp);
-      rnp::log()->debug("bp: spot for [def] {0} {1};{2}", 
+      rnp::log()->debug(MODULE_PREFIX "spot for [def] {0} {1};{2}",
                         to_build.getName(), spot.x, spot.y);
       return spot;
     }
@@ -268,7 +269,7 @@ TilePosition BuildingPlacer::find_build_spot(UnitType to_build) {
     if (rnp::is_valid_position(start)) {
       //Expansion site found. Build close to it.
       TilePosition spot = find_build_spot(to_build, start);
-      rnp::log()->debug("bp: spot for [res] {0} {1};{2}",
+      rnp::log()->debug(MODULE_PREFIX "spot for [res] {0} {1};{2}",
                         to_build.getName(), spot.x, spot.y);
       return spot;
     }
@@ -285,7 +286,7 @@ TilePosition BuildingPlacer::find_build_spot(UnitType to_build) {
             b_spot = find_build_spot(to_build, start);
             if (rnp::is_valid_position(b_spot)) {
               //Spot found, return it.
-              rnp::log()->debug("bp: spot for [other] {0} {1};{2}",
+              rnp::log()->debug(MODULE_PREFIX "spot for [other] {0} {1};{2}",
                                 to_build.getName(), b_spot.x, b_spot.y);
               return act::ForEach::Break;
             }
@@ -296,7 +297,7 @@ TilePosition BuildingPlacer::find_build_spot(UnitType to_build) {
     return b_spot;
   }
 
-  rnp::log()->debug("bp: no spot found for {0}", to_build.getName());
+  rnp::log()->debug(MODULE_PREFIX "no spot found for {0}", to_build.getName());
   return rnp::make_bad_position();
 }
 

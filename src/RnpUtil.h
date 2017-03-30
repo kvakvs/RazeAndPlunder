@@ -41,9 +41,7 @@ get_nearest_chokepoint(const BWEM::Map& bwem,
 bool is_inside(const BWEM::Area& area, const BWAPI::Position& pos);
 
 // TODO: this
-inline int choke_width(const BWEM::ChokePoint*) {
-  return 4 * 32;
-}
+int choke_width(const BWEM::ChokePoint* cp);
 
 // With calculated chokepoint path takes distance from start to the 
 // first node of the path, then chokepoint path length, and then adds

@@ -504,11 +504,11 @@ TilePosition Commander::find_defense_pos(const BWEM::ChokePoint* choke) {
     if (Constructor::is_terran()) defType = UnitTypes::Terran_Bunker;
 
     auto turret = rnp::agent_manager()->get_closest_agent(def_pos, defType);
-    if (turret != nullptr) {
-      TilePosition tPos = turret->get_unit()->getTilePosition();
-      double dist = tPos.getDistance(def_pos);
-      if (dist <= 22) {
-        def_pos = tPos;
+    if (turret) {
+      TilePosition t_pos = turret->get_unit()->getTilePosition();
+      float dist = rnp::distance(t_pos, def_pos);
+      if (dist <= 22.0f) {
+        def_pos = t_pos;
       }
     }
   }

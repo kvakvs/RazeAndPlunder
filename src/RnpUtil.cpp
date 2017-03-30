@@ -31,6 +31,23 @@ bool is_inside(const BWEM::Area& area, const BWAPI::Position& pos) {
   return bwem.GetNearestArea(TilePosition(pos))->Id() == area.Id();
 }
 
+int choke_width(const BWEM::ChokePoint* cp) {
+  if (cp->Data() > 0) {
+    return cp->Data(); // cached possibly
+  } 
+  WalkPosition tl(32000, 32000);
+  WalkPosition br(-32000, -32000);
+  for (auto& pt : cp->Geometry()) {
+    tl.x = std::min<int>(tl.x, pt.x);
+    tl.y = std::min<int>(tl.y, pt.y);
+    br.x = std::max<int>(br.x, pt.x);
+    br.y = std::max<int>(br.y, pt.y);
+  }
+  const int choke_w = static_cast<int>(rnp::distance(tl, br));
+  cp->SetData(choke_w);
+  return choke_w;
+}
+
 bool is_my_unit(BWAPI::Unit unit) {
   return unit->getPlayer()->getID() == Broodwar->self()->getID();
 }
