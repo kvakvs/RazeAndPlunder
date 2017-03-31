@@ -177,9 +177,11 @@ void BotAILoop::show_debug() {
     //If we have any unit selected, show unit info.
     if (not selected.empty()) {
       for (auto& u : selected) {
-        int unitID = u->getID();
-        auto agent = rnp::agent_manager()->get_agent(unitID);
+        int unit_id = u->getID();
+        auto agent = rnp::agent_manager()->get_agent(unit_id);
         if (agent) {
+          auto pos = agent->get_unit()->getPosition();
+          Broodwar->drawTextMap(pos.x, pos.y, "id:%d", unit_id);
           agent->debug_print_info();
           break;
         }

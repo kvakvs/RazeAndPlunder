@@ -19,9 +19,9 @@ private:
   static AgentFactory* instance_;
   static bool instance_flag_;
 
-  act::ActorId create_terran_agent(BWAPI::Unit unit);
-  act::ActorId create_protoss_agent(BWAPI::Unit unit);
-  act::ActorId create_zerg_agent(BWAPI::Unit unit);
+  act::ActorId create_terran_agent(BWAPI::Unit unit) const;
+  act::ActorId create_protoss_agent(BWAPI::Unit unit) const;
+  act::ActorId create_zerg_agent(BWAPI::Unit unit) const;
 
 public:
   ~AgentFactory();

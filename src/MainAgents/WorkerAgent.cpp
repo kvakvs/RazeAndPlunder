@@ -75,7 +75,9 @@ void WorkerAgent::debug_show_goal() const {
   if (not is_alive()) return;
   if (not unit_->isCompleted()) return;
 
-  if (current_state_ == WorkerState::GATHER_MINERALS || current_state_ == WorkerState::GATHER_GAS) {
+  if (current_state_ == WorkerState::GATHER_MINERALS 
+      || current_state_ == WorkerState::GATHER_GAS) 
+  {
     Unit target = unit_->getTarget();
     if (target != nullptr) {
       Position a = unit_->getPosition();
@@ -84,16 +86,22 @@ void WorkerAgent::debug_show_goal() const {
     }
   }
 
-  if (current_state_ == WorkerState::MOVE_TO_SPOT || current_state_ == WorkerState::CONSTRUCT) {
-    if (build_spot_.x > 0) {
-      int w = to_build_.tileWidth() * 32;
-      int h = to_build_.tileHeight() * 32;
+  if (current_state_ == WorkerState::MOVE_TO_SPOT
+      || current_state_ == WorkerState::CONSTRUCT) {
+    if (rnp::is_valid_position(build_spot_)) {
+      int w = to_build_.tileWidth() * TILEPOSITION_SCALE;
+      int h = to_build_.tileHeight() * TILEPOSITION_SCALE;
 
       Position a = unit_->getPosition();
-      Position b = Position(build_spot_.x * 32 + w / 2, build_spot_.y * 32 + h / 2);
+      Position b = Position(build_spot_.x * TILEPOSITION_SCALE + w / 2,
+                            build_spot_.y * TILEPOSITION_SCALE + h / 2);
       Broodwar->drawLineMap(a.x, a.y, b.x, b.y, Colors::Teal);
 
-      Broodwar->drawBoxMap(build_spot_.x * 32, build_spot_.y * 32, build_spot_.x * 32 + w, build_spot_.y * 32 + h, Colors::Blue, false);
+      Broodwar->drawBoxMap(build_spot_.x * TILEPOSITION_SCALE, 
+                           build_spot_.y * TILEPOSITION_SCALE, 
+                           build_spot_.x * TILEPOSITION_SCALE + w, 
+                           build_spot_.y * TILEPOSITION_SCALE + h,
+                           Colors::Blue, false);
     }
   }
 
@@ -104,7 +112,8 @@ void WorkerAgent::debug_show_goal() const {
       Position b = targ->getPosition();
       Broodwar->drawLineMap(a.x, a.y, b.x, b.y, Colors::Green);
 
-      Broodwar->drawTextMap(unit_->getPosition().x, unit_->getPosition().y, "Repairing %s", targ->getType().getName().c_str());
+      Broodwar->drawTextMap(unit_->getPosition().x, unit_->getPosition().y,
+                            "Repairing %s", targ->getType().getName().c_str());
     }
   }
 
@@ -115,7 +124,8 @@ void WorkerAgent::debug_show_goal() const {
       Position b = targ->getPosition();
       Broodwar->drawLineMap(a.x, a.y, b.x, b.y, Colors::Green);
 
-      Broodwar->drawTextMap(unit_->getPosition().x, unit_->getPosition().y, "Constructing %s", targ->getType().getName().c_str());
+      Broodwar->drawTextMap(unit_->getPosition().x, unit_->getPosition().y, 
+                            "Constructing %s", targ->getType().getName().c_str());
     }
   }
 }
@@ -181,6 +191,7 @@ bool WorkerAgent::is_available_worker() const {
   if (current_state_ != WorkerState::GATHER_MINERALS) return false;
   if (to_build_.getID() != UnitTypes::None.getID()) return false;
   if (unit_->isConstructing()) return false;
+
   Unit b = unit_->getTarget();
   if (b != nullptr) if (b->isBeingConstructed()) return false;
   if (unit_->isRepairing()) return false;
@@ -308,19 +319,19 @@ bool WorkerAgent::is_built() const {
   if (unit_->isConstructing()) return false;
 
   Unit b = unit_->getTarget();
-  if (b != nullptr) if (b->isBeingConstructed()) return false;
+  if (b && b->isBeingConstructed()) return false;
 
   return true;
 }
 
 bool WorkerAgent::is_build_spot_explored() const {
-  int sightDist = 64;
+  int sight_dist = 2 * TILEPOSITION_SCALE;
   if (to_build_.isRefinery()) {
-    sightDist = 160; //5 tiles
+    sight_dist = 5 * TILEPOSITION_SCALE; //5 tiles
   }
 
   double dist = rnp::distance(unit_->getPosition(), Position(build_spot_));
-  if (dist > sightDist) {
+  if (dist > sight_dist) {
     return false;
   }
   return true;
@@ -348,7 +359,7 @@ bool WorkerAgent::can_build(UnitType type) const {
 bool WorkerAgent::assign_to_build(UnitType type) {
   to_build_ = type;
   build_spot_ = rnp::building_placer()->find_build_spot(to_build_);
-  if (build_spot_.x >= 0) {
+  if (rnp::is_valid_position(build_spot_)) {
     rnp::resources()->lock_resources(to_build_);
     rnp::building_placer()->fill_temp(to_build_, build_spot_);
     set_state(WorkerState::FIND_BUILDSPOT);
@@ -387,7 +398,8 @@ void WorkerAgent::reset() {
 bool WorkerAgent::is_constructing(UnitType type) const {
   if (current_state_ == WorkerState::FIND_BUILDSPOT
       || current_state_ == WorkerState::MOVE_TO_SPOT
-      || current_state_ == WorkerState::CONSTRUCT) {
+      || current_state_ == WorkerState::CONSTRUCT)
+  {
     if (to_build_.getID() == type.getID()) {
       return true;
     }

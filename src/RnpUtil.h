@@ -5,6 +5,7 @@
 #include <functional>
 #include "Actors/Actor.h"
 #include "RnpConst.h"
+#include "Actors/Algorithm.h"
 
 #if RNP_DEBUG
 #include <assert.h>
@@ -126,6 +127,14 @@ void for_each_base(FUN fun) {
       fun(base);
     }
   }
+}
+
+
+template <class ActorClass>
+act::ActorId spawn_unit(BWAPI::Unit unit) {
+  act::ActorId actor_id(ActorFlavour::Unit, unit->getID());
+  act::spawn_with_id<ActorClass>(actor_id, unit);
+  return actor_id;
 }
 
 //

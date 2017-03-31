@@ -118,6 +118,15 @@ ActorId spawn(Flavour flavour, Args&& ...args) {
 }
 
 // Creates unique ptr of given object with ctor args, and places it into the
+// actor dictionary. ActorID is created by the caller.
+template <class ActorClass, typename... Args>
+void spawn_with_id(ActorId new_id, Args&& ...args) {
+  auto& scheduler = sched();
+  auto new_actor = std::make_unique<ActorClass>(std::forward<Args>(args)...);
+  scheduler.add(new_id, std::move(new_actor));
+}
+
+// Creates unique ptr of given object with ctor args, and places it into the
 // actor dictionary. Returns const pointer to the object
 template <class ActorClass, class Flavour, typename... Args>
 const ActorClass* spawn_get_ptr(Flavour flavour, Args&& ...args) {
