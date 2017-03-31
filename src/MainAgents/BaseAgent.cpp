@@ -10,7 +10,9 @@ int BaseAgent::sx_ = 0;
 int BaseAgent::sy_ = 0;
 
 BaseAgent::BaseAgent()
-    : unit_(), type_(UnitTypes::Unknown), goal_(-1, -1)
+    : unit_(), type_(UnitTypes::Unknown)
+    , movement_progress_()
+    , goal_(rnp::make_bad_position())
     , squad_id_()
     , alive_(true)
     , agent_type_("What?")
@@ -21,7 +23,8 @@ BaseAgent::BaseAgent()
 
 BaseAgent::BaseAgent(Unit mUnit)
     : unit_(mUnit), type_(mUnit->getType())
-    , goal_(-1, -1)
+    , movement_progress_()
+    , goal_(rnp::make_bad_position())
     , unit_id_(unit_->getID())
     , squad_id_()
     , alive_(true)
@@ -168,12 +171,14 @@ bool BaseAgent::any_enemy_units_visible() const {
 void BaseAgent::set_goal(TilePosition goal) {
   if (unit_->getType().isFlyer() || unit_->getType().isFlyingBuilding()) {
     //Flyers, can always move to goals.
-    this->goal_ = goal;
+    goal_ = goal;
+    movement_progress_.reset();
   }
   else {
     //Ground units, check if we can reach goal.
     if (rnp::exploration()->can_reach(this, goal)) {
-      this->goal_ = goal;
+      goal_ = goal;
+      movement_progress_.reset();
     }
   }
 }

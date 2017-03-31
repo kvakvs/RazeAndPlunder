@@ -136,7 +136,7 @@ bool WorkerAgent::check_repair() {
 
   //Find closest unit that needs repairing
   const BaseAgent* to_repair = nullptr;
-  float best_dist = 1e+12f;
+  float best_dist = LIKE_VERY_FAR;
 
   act::for_each_actor<BaseAgent>(
     [this,&best_dist,&to_repair](const BaseAgent* a) {
@@ -254,6 +254,11 @@ void WorkerAgent::tick_find_build_spot() {
 }
 
 void WorkerAgent::tick_move_to_spot() {
+  auto last_i = movement_progress_.get_frames_since_last_improvement();
+  if (last_i > rnp::seconds(10)) {
+    return on_worker_stuck();
+  }
+
   if (not is_build_spot_explored()) {
     Position to_move(build_spot_.x * TILEPOSITION_SCALE + TILEPOSITION_SCALE/2,
                      build_spot_.y * TILEPOSITION_SCALE + TILEPOSITION_SCALE/2);
@@ -293,6 +298,11 @@ void WorkerAgent::tick_gather_gas() {
     //Not gathering gas. Reset.
     set_state(WorkerState::GATHER_MINERALS);
   }
+}
+
+void WorkerAgent::on_worker_stuck() {
+  rnp::log()->info("Worker {} got stuck on the move", self().string());
+  set_goal(rnp::make_bad_position());
 }
 
 void WorkerAgent::tick() {

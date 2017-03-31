@@ -12,6 +12,8 @@
 #define SPONSORS "the Sponsors!"
 #define MINIMUM_COMMAND_OPTIMIZATION 1
 
+constexpr float LIKE_VERY_FAR = 1e+12f; // A trillion or something
+
 // These are used as flavour field in ActorId, extending the range of ids
 enum class ActorFlavour : uint32_t {
   BadId = act::ActorId::BAD_VALUE,

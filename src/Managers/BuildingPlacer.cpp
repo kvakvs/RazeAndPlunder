@@ -623,7 +623,7 @@ TilePosition BuildingPlacer::search_refinery_spot() const {
 
 TilePosition BuildingPlacer::find_expansion_site() const {
   //UnitType baseType = Broodwar->self()->getRace().getResourceDepot;
-  float best_dist = 1e+12f;
+  float best_dist = LIKE_VERY_FAR;
   TilePosition best_pos = rnp::make_bad_position();
   auto start_loc = Broodwar->self()->getStartLocation();
 
@@ -672,7 +672,7 @@ TilePosition BuildingPlacer::find_expansion_site() const {
 
 Unit BuildingPlacer::find_closest_mineral(TilePosition workerPos) const {
   Unit mineral = nullptr;
-  float best_dist = 1e+12f;
+  float best_dist = LIKE_VERY_FAR;
 
   for (auto& area : bwem_.Areas()) {
     for (auto& base : area.Bases()) {

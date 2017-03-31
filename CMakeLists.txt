@@ -110,6 +110,8 @@ SET(SRC_MAINAGENTS
         src/MainAgents/BaseAgentMsg.h
         src/MainAgents/TargetingAgent.cpp
         src/MainAgents/TargetingAgent.h
+        src/MainAgents/RnpMovementMonitor.cpp
+        src/MainAgents/RnpMovementMonitor.h
         src/MainAgents/WorkerAgent.cpp
         src/MainAgents/WorkerAgent.h
         src/MainAgents/WorkerAgentMsg.h

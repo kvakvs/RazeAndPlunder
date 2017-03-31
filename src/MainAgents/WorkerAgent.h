@@ -104,4 +104,8 @@ private:
   void tick_move_to_spot();
   void tick_construct();
   void tick_gather_gas();
+
+  // Called by movement handler when the worker does not go anywhere closer to
+  // the goal over X=10 sec
+  void on_worker_stuck();
 };

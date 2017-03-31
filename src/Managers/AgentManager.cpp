@@ -27,7 +27,7 @@ const BaseAgent* AgentManager::get_agent(int unit_id) const {
 
 const BaseAgent* AgentManager::get_closest_base(const TilePosition& pos) const {
   const BaseAgent* agent = nullptr;
-  float best_dist = 1e+12f;
+  float best_dist = LIKE_VERY_FAR;
 
   // TODO: this can maybe be optimized? cache depots?
   act::for_each_actor<BaseAgent>(
@@ -46,7 +46,7 @@ const BaseAgent* AgentManager::get_closest_base(const TilePosition& pos) const {
 
 const BaseAgent* AgentManager::get_closest_agent(TilePosition pos, UnitType type) const {
   const BaseAgent* agent = nullptr;
-  float best_dist = 1e+12f;
+  float best_dist = LIKE_VERY_FAR;
 
   // TODO: optimize? sensitivity radius and use grid?
   act::for_each_actor<BaseAgent>(
@@ -217,7 +217,7 @@ size_t AgentManager::get_mining_workers_count() const {
 const BaseAgent*
 AgentManager::find_closest_free_worker(const TilePosition& pos) const {
   const BaseAgent* base_agent = nullptr;
-  float best_dist = 1e+12f;
+  float best_dist = LIKE_VERY_FAR;
 
   act::for_each_actor<BaseAgent>(
     [&best_dist,&base_agent,&pos](const BaseAgent* a) {

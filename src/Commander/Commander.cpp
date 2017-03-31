@@ -473,7 +473,7 @@ TilePosition Commander::find_defense_pos(const BWEM::ChokePoint* choke) {
   double size = rnp::choke_width(choke);
   if (size <= 32 * 3) {
     //Very narrow chokepoint, dont crowd it
-    float best_dist = 1e+12f;
+    float best_dist = LIKE_VERY_FAR;
     int max_d = 3;
     int min_d = 2;
 

@@ -5,9 +5,10 @@
 #include <memory>
 
 #include <Actors/Actor.h>
-#include "Actors/Scheduler.h"
+#include <Actors/Scheduler.h>
 #include "MainAgents/BaseAgentMsg.h"
 #include "RnpConst.h"
+#include "MainAgents/RnpMovementMonitor.h"
 
 /** The BaseAgent is the base agent class all agent classes directly or indirectly must extend. It contains some
  * common logic that is needed for several other agent implementations.
@@ -18,7 +19,11 @@ class BaseAgent: public act::Actor {
 protected:
   BWAPI::Unit unit_;
   BWAPI::UnitType type_;
+
+  // A thingy which monitors whether we are getting any closer to the goal
+  rnp::MovementProgressMonitor movement_progress_;
   BWAPI::TilePosition goal_;
+
   int unit_id_ = 0;
   act::ActorId squad_id_;
   bool alive_ = false;

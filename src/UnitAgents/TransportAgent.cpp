@@ -51,7 +51,7 @@ bool TransportAgent::is_valid_load_unit(const BaseAgent* a) const {
 
 const BaseAgent* TransportAgent::find_unit_to_load(int spaceLimit) {
   const BaseAgent* agent = nullptr;
-  float best_dist = 1e+12f;
+  float best_dist = LIKE_VERY_FAR;
 
   auto sq = rnp::commander()->get_squad(squad_id_);
   if (sq) {
