@@ -626,6 +626,7 @@ void Commander::force_begin_attack() {
     [&attack_goal](const Squad* s) {
       if (s->is_offensive_squad() || s->is_support_squad()) {
         if (rnp::is_valid_position(attack_goal)) {
+
           act::modify_actor<Squad>(
             s->self(),
             [=](Squad* sq) {

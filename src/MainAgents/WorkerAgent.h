@@ -2,6 +2,7 @@
 
 #include "BaseAgent.h"
 #include "MainAgents/WorkerAgentMsg.h"
+#include "RnpStateMachine.h"
 
 enum class WorkerState {
   // Worker is gathering minerals. 
@@ -26,10 +27,10 @@ enum class WorkerState {
  *
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
-// TODO: Refactor names, constructor initialization, state enum
-class WorkerAgent : public BaseAgent {
+class WorkerAgent : public BaseAgent
+                  , public rnp::FiniteStateMachine<WorkerState> {
 private:
-  WorkerState current_state_;
+  using BaseFsmClass = rnp::FiniteStateMachine<WorkerState>;
 
   BWAPI::UnitType to_build_;
   BWAPI::TilePosition build_spot_;
@@ -38,8 +39,13 @@ private:
   int last_frame_;
 
   bool is_build_spot_explored() const;
+
+  void fsm_on_transition(WorkerState old_st, WorkerState new_st) override;
+
   bool is_built() const;
+
   bool check_repair();
+
   void compute_squad_worker_actions();
 
 public:
@@ -57,14 +63,6 @@ public:
 
   // Used in debug modes to show a line to the agents' goal. 
   void debug_show_goal() const override;
-
-  // Set the state of the worker. I.e. what does it do right now.// Should only be set if the worker is getting a task not through the functions in this class. Then it is automatic. 
-  void set_state(WorkerState state);
-
-  // Returns the current state of the worker. 
-  WorkerState get_state() const {
-    return current_state_;
-  }
 
   // Returns true if the Worker agent can create units of the specified type. 
   bool can_build(BWAPI::UnitType type) const;

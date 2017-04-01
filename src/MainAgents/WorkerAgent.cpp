@@ -10,29 +10,29 @@
 
 using namespace BWAPI;
 
-WorkerAgent::WorkerAgent(Unit mUnit) {
-  unit_ = mUnit;
+WorkerAgent::WorkerAgent(Unit unit)
+: BaseFsmClass(WorkerState::GATHER_MINERALS) 
+{
+  unit_ = unit;
   type_ = unit_->getType();
   unit_id_ = unit_->getID();
-  set_state(WorkerState::GATHER_MINERALS);
   start_build_frame_ = 0;
   start_spot_ = rnp::make_bad_position();
   agent_type_ = "WorkerAgent";
-
   to_build_ = UnitTypes::None;
 }
 
 void WorkerAgent::destroyed() {
-  if (current_state_ == WorkerState::MOVE_TO_SPOT
-      || current_state_ == WorkerState::CONSTRUCT
-      || current_state_ == WorkerState::FIND_BUILDSPOT)
+  if (fsm_state() == WorkerState::MOVE_TO_SPOT
+      || fsm_state() == WorkerState::CONSTRUCT
+      || fsm_state() == WorkerState::FIND_BUILDSPOT)
   {
     if (not Constructor::is_zerg()) {
       Constructor::modify([=](Constructor* c) {
           c->handle_worker_destroyed(to_build_, unit_id_);
         });
       rnp::building_placer()->clear_temp(to_build_, build_spot_);
-      set_state(WorkerState::GATHER_MINERALS);
+      fsm_set_state(WorkerState::GATHER_MINERALS);
     }
   }
 }
@@ -47,36 +47,50 @@ void WorkerAgent::debug_print_info() const {
 
   // Far at the bottom popup can be clipped by the map edge
   auto mapsize = Position(BWEM::Map::Instance().Size());
-  if (debug_tooltip_y_ + 110 > mapsize.y) { debug_tooltip_y_ = mapsize.y - 110; }
+  if (debug_tooltip_y_ + 110 > mapsize.y) {
+    debug_tooltip_y_ = mapsize.y - 110;
+  }
 
-  Broodwar->drawBoxMap(debug_tooltip_x_ - 2, debug_tooltip_y_, debug_tooltip_x_ + 152, debug_tooltip_y_ + 90, Colors::Black, true);
+  Broodwar->drawBoxMap(debug_tooltip_x_ - 2, debug_tooltip_y_, 
+                       debug_tooltip_x_ + 152, debug_tooltip_y_ + 90,
+                       Colors::Black, true);
   Broodwar->drawTextMap(debug_tooltip_x_ + 4, debug_tooltip_y_, "\x03%s", 
                         unit_->getType().getName().c_str());
-  Broodwar->drawLineMap(debug_tooltip_x_, debug_tooltip_y_ + 14, debug_tooltip_x_ + 150, debug_tooltip_y_ + 14, Colors::Blue);
+  Broodwar->drawLineMap(debug_tooltip_x_, debug_tooltip_y_ + 14, 
+                        debug_tooltip_x_ + 150, debug_tooltip_y_ + 14,
+                        Colors::Blue);
 
-  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 15, "Id: \x11%d", unit_id_);
-  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 30, "Position: \x11(%d,%d)", 
+  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 15,
+                        "Id: \x11%d", unit_id_);
+  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 30,
+                        "Position: \x11(%d,%d)", 
                         unit_->getTilePosition().x, unit_->getTilePosition().y);
-  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 45, "Goal: \x11(%d,%d)", goal_.x, goal_.y);
+  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 45, 
+                        "Goal: \x11(%d,%d)", goal_.x, goal_.y);
   if (squad_id_.is_valid() == false) {
-    Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 60, "Squad: \x15None");
+    Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 60,
+                          "Squad: \x15None");
   } 
   else {
     auto sq = act::whereis<Squad>(squad_id_);
-    Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 60, "\x11%s", sq->string().c_str());
+    Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 60, 
+                          "\x11%s", sq->string().c_str());
   }
-  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 75, "State: \x11%s",
+  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 75,
+                        "State: \x11%s",
                         get_state_as_text().c_str());
 
-  Broodwar->drawLineMap(debug_tooltip_x_, debug_tooltip_y_ + 89, debug_tooltip_x_ + 150, debug_tooltip_y_ + 89, Colors::Blue);
+  Broodwar->drawLineMap(debug_tooltip_x_, debug_tooltip_y_ + 89, 
+                        debug_tooltip_x_ + 150, debug_tooltip_y_ + 89,
+                        Colors::Blue);
 }
 
 void WorkerAgent::debug_show_goal() const {
   if (not is_alive()) return;
   if (not unit_->isCompleted()) return;
 
-  if (current_state_ == WorkerState::GATHER_MINERALS 
-      || current_state_ == WorkerState::GATHER_GAS) 
+  if (fsm_state() == WorkerState::GATHER_MINERALS
+      || fsm_state() == WorkerState::GATHER_GAS)
   {
     Unit target = unit_->getTarget();
     if (target != nullptr) {
@@ -86,8 +100,8 @@ void WorkerAgent::debug_show_goal() const {
     }
   }
 
-  if (current_state_ == WorkerState::MOVE_TO_SPOT
-      || current_state_ == WorkerState::CONSTRUCT) {
+  if (fsm_state() == WorkerState::MOVE_TO_SPOT
+      || fsm_state() == WorkerState::CONSTRUCT) {
     if (rnp::is_valid_position(build_spot_)) {
       int w = to_build_.tileWidth() * TILEPOSITION_SCALE;
       int h = to_build_.tileHeight() * TILEPOSITION_SCALE;
@@ -188,7 +202,7 @@ void WorkerAgent::compute_squad_worker_actions() {
 }
 
 bool WorkerAgent::is_available_worker() const {
-  if (current_state_ != WorkerState::GATHER_MINERALS) return false;
+  if (fsm_state() != WorkerState::GATHER_MINERALS) return false;
   if (to_build_.getID() != UnitTypes::None.getID()) return false;
   if (unit_->isConstructing()) return false;
 
@@ -211,13 +225,13 @@ void WorkerAgent::tick_attacking() {
         //Stop attacking. Return home
         unit_->stop();
         unit_->rightClick(base->get_unit());
-        set_state(WorkerState::GATHER_MINERALS);
+        fsm_set_state(WorkerState::GATHER_MINERALS);
       }
     }
   }
   else {
     //No target, return to gather minerals
-    set_state(WorkerState::GATHER_MINERALS);
+    fsm_set_state(WorkerState::GATHER_MINERALS);
   }
 }
 
@@ -244,7 +258,7 @@ void WorkerAgent::tick_find_build_spot() {
     build_spot_ = rnp::building_placer()->find_build_spot(to_build_);
   }
   if (build_spot_.x >= 0) {
-    set_state(WorkerState::MOVE_TO_SPOT);
+    fsm_set_state(WorkerState::MOVE_TO_SPOT);
     start_build_frame_ = Broodwar->getFrameCount();
     if (to_build_.isResourceDepot()) {
       //rnp::commander()->update_squad_goals();
@@ -273,12 +287,12 @@ void WorkerAgent::tick_move_to_spot() {
       rnp::building_placer()->mark_position_blocked(build_spot_);
       rnp::building_placer()->clear_temp(to_build_, build_spot_);
       //Cant build at selected spot, get a new one.
-      set_state(WorkerState::FIND_BUILDSPOT);
+      fsm_set_state(WorkerState::FIND_BUILDSPOT);
     }
   }
 
   if (unit_->isConstructing()) {
-    set_state(WorkerState::CONSTRUCT);
+    fsm_set_state(WorkerState::CONSTRUCT);
     start_spot_ = rnp::make_bad_position();
   }
 }
@@ -290,14 +304,14 @@ void WorkerAgent::tick_construct() {
     if (agent) {
       unit_->rightClick(agent->get_unit()->getPosition());
     }
-    set_state(WorkerState::GATHER_MINERALS);
+    fsm_set_state(WorkerState::GATHER_MINERALS);
   }
 }
 
 void WorkerAgent::tick_gather_gas() {
   if (unit_->isIdle()) {
     //Not gathering gas. Reset.
-    set_state(WorkerState::GATHER_MINERALS);
+    fsm_set_state(WorkerState::GATHER_MINERALS);
   }
 }
 
@@ -315,7 +329,7 @@ void WorkerAgent::tick() {
     return;
   }
   //Check if workers are too far away from a base when attacking
-  switch (current_state_) {
+  switch (fsm_state()) {
   case WorkerState::ATTACKING:        return tick_attacking();
   case WorkerState::GATHER_GAS:       return tick_gather_gas();
   case WorkerState::REPAIRING:        return tick_repairing();
@@ -348,10 +362,8 @@ bool WorkerAgent::is_build_spot_explored() const {
   return true;
 }
 
-void WorkerAgent::set_state(WorkerState state) {
-  current_state_ = state;
-
-  if (state == WorkerState::GATHER_MINERALS) {
+void WorkerAgent::fsm_on_transition(WorkerState old_st, WorkerState new_st) {
+  if (new_st == WorkerState::GATHER_MINERALS) {
     start_spot_ = build_spot_ = rnp::make_bad_position();
     to_build_ = UnitTypes::None;
   }
@@ -373,7 +385,7 @@ bool WorkerAgent::assign_to_build(UnitType type) {
   if (rnp::is_valid_position(build_spot_)) {
     rnp::resources()->lock_resources(to_build_);
     rnp::building_placer()->fill_temp(to_build_, build_spot_);
-    set_state(WorkerState::FIND_BUILDSPOT);
+    fsm_set_state(WorkerState::FIND_BUILDSPOT);
     return true;
   }
   else {
@@ -383,7 +395,7 @@ bool WorkerAgent::assign_to_build(UnitType type) {
 }
 
 void WorkerAgent::reset() {
-  if (current_state_ == WorkerState::MOVE_TO_SPOT) {
+  if (fsm_state() == WorkerState::MOVE_TO_SPOT) {
     //The buildSpot is probably not reachable. Block it.	
     rnp::building_placer()->mark_position_blocked(build_spot_);
     rnp::building_placer()->clear_temp(to_build_, build_spot_);
@@ -398,7 +410,7 @@ void WorkerAgent::reset() {
     unit_->cancelConstruction();
   }
 
-  set_state(WorkerState::GATHER_MINERALS);
+  fsm_set_state(WorkerState::GATHER_MINERALS);
   unit_->stop();
   auto base = rnp::agent_manager()->get_closest_base(unit_->getTilePosition());
   if (base) {
@@ -407,9 +419,9 @@ void WorkerAgent::reset() {
 }
 
 bool WorkerAgent::is_constructing(UnitType type) const {
-  if (current_state_ == WorkerState::FIND_BUILDSPOT
-      || current_state_ == WorkerState::MOVE_TO_SPOT
-      || current_state_ == WorkerState::CONSTRUCT)
+  if (fsm_state() == WorkerState::FIND_BUILDSPOT
+      || fsm_state() == WorkerState::MOVE_TO_SPOT
+      || fsm_state() == WorkerState::CONSTRUCT)
   {
     if (to_build_.getID() == type.getID()) {
       return true;
@@ -420,7 +432,7 @@ bool WorkerAgent::is_constructing(UnitType type) const {
 
 // Returns the state of the agent as text. Good for printouts. 
 std::string WorkerAgent::get_state_as_text() const {
-  switch (current_state_) {
+  switch (fsm_state()) {
   case WorkerState::GATHER_MINERALS:  return "mineral";
   case WorkerState::GATHER_GAS:       return "gas";
   case WorkerState::FIND_BUILDSPOT:   return "findspot";
@@ -434,7 +446,7 @@ std::string WorkerAgent::get_state_as_text() const {
 
 bool WorkerAgent::assign_to_finish_build(Unit building) {
   if (is_available_worker()) {
-    set_state(WorkerState::REPAIRING);
+    fsm_set_state(WorkerState::REPAIRING);
     unit_->rightClick(building);
     return true;
   }
@@ -443,7 +455,7 @@ bool WorkerAgent::assign_to_finish_build(Unit building) {
 
 bool WorkerAgent::assign_to_repair(Unit building) {
   if (is_available_worker()) {
-    set_state(WorkerState::REPAIRING);
+    fsm_set_state(WorkerState::REPAIRING);
     unit_->repair(building);
 //    unit_->rightClick(building);
     return true;
@@ -454,11 +466,11 @@ bool WorkerAgent::assign_to_repair(Unit building) {
 void WorkerAgent::handle_message(act::Message* incoming) {
   if (dynamic_cast<msg::unit::AttackBWUnit*>(incoming)) {
     // This event is also handled by parent baseunit which sets attack target
-    set_state(WorkerState::ATTACKING);
+    fsm_set_state(WorkerState::ATTACKING);
   }
   else if (auto refi = dynamic_cast<msg::worker::RightClickRefinery*>(incoming)) {
     get_unit()->rightClick(refi->refinery_);
-    set_state(WorkerState::GATHER_GAS);
+    fsm_set_state(WorkerState::GATHER_GAS);
   }
   else if (auto war = dynamic_cast<msg::worker::AssignRepair*>(incoming)) {
     assign_to_repair(war->unit_);

@@ -206,7 +206,7 @@ size_t AgentManager::get_mining_workers_count() const {
     [&cnt](const BaseAgent* a) {
       if (a->is_worker()) {
         auto w = static_cast<const WorkerAgent*>(a);
-        if (w->get_state() == WorkerState::GATHER_MINERALS) {
+        if (w->fsm_state() == WorkerState::GATHER_MINERALS) {
           cnt++;
         }
       }

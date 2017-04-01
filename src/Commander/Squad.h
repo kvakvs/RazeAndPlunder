@@ -102,14 +102,14 @@ public:
   }
 
   // Sets if this Squad is required or not. 
-  void set_required(bool mRequired) {
-    required_ = mRequired;
+  void set_required(bool required) {
+    required_ = required;
   }
 
   // Sets if the squad is during buildup. Buildup means it wont
   // be set to Active. 
-  void set_buildup(bool mBuildup) {
-    buildup_ = mBuildup;
+  void set_buildup(bool buildup) {
+    buildup_ = buildup;
   }
 
   // Returns the priority for this Squad. Prio 1 is the highest. 

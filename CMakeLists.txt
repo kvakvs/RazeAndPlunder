@@ -91,6 +91,7 @@ SET(SRC_SRC
         src/RnpRandom.h
         src/RnpUtil.cpp
         src/RnpUtil.h
+        src/RnpStateMachine.h
         )
 SET(SRC_PATHING
         src/Pathfinding/NavigationAgent.cpp
