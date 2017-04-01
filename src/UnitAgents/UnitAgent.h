@@ -39,4 +39,7 @@ public:
 
   // Used to print info about this agent to the screen. 
   void debug_print_info() const override;
+
+  // Unit has a goal but did not move in last 10 sec
+  void on_unit_stuck();
 };

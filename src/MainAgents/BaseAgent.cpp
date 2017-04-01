@@ -6,8 +6,8 @@
 using namespace BWAPI;
 
 int BaseAgent::info_update_frame_ = 0;
-int BaseAgent::sx_ = 0;
-int BaseAgent::sy_ = 0;
+int BaseAgent::debug_tooltip_x_ = 0;
+int BaseAgent::debug_tooltip_y_ = 0;
 
 BaseAgent::BaseAgent()
     : unit_(), type_(UnitTypes::Unknown)
@@ -47,20 +47,6 @@ const std::string& BaseAgent::get_type_name() const {
 
 int BaseAgent::get_unit_id() const {
   return unit_id_;
-}
-
-std::string BaseAgent::format(const std::string& str) {
-  auto res(str);
-
-  size_t i = str.find("_");
-  if (i >= 0) {
-    res = str.substr(i + 1, str.length());
-  }
-
-  if (res == "Siege Tank Tank Mode") res = "Siege Tank";
-  if (res == "Siege Tank Siege Mode") res = "Siege Tank (sieged)";
-
-  return res;
 }
 
 UnitType BaseAgent::unit_type() const {
@@ -231,9 +217,6 @@ void BaseAgent::handle_message(act::Message* incoming) {
   else if (auto atk_a = dynamic_cast<msg::unit::Attack*>(incoming)) {
     handle_message_attack_actor(atk_a);
   }
-  else if (auto setg = dynamic_cast<msg::unit::SetGoal*>(incoming)) {
-    set_goal(setg->goal_);
-  }
   else if (auto sq_join = dynamic_cast<msg::unit::JoinedSquad*>(incoming)) {
     handle_message_squad_join(sq_join);
   }
@@ -271,7 +254,7 @@ void BaseAgent::handle_message_attack_actor(msg::unit::Attack* atk) const {
 
 void BaseAgent::handle_message_squad_join(const msg::unit::JoinedSquad* sq_join) {
   set_squad_id(sq_join->squad_);
-  if (goal_.x >= 0) {
+  if (rnp::is_valid_position(goal_)) {
       set_goal(sq_join->goal_);
     }
 }

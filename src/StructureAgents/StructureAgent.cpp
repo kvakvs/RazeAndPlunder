@@ -231,7 +231,8 @@ void StructureAgent::debug_print_info() const {
   if (is_of_type(UnitTypes::Terran_Bunker)) h += 60;
 
   Broodwar->drawBoxMap(sx - 2, sy, sx + 102, h, Colors::Black, true);
-  Broodwar->drawTextMap(sx, sy, "\x03%s", format(unit_->getType().getName()).c_str());
+  Broodwar->drawTextMap(sx, sy, "\x03%s",
+                        rnp::remove_race(unit_->getType().getName()).c_str());
   Broodwar->drawLineMap(sx, sy + 14, sx + 100, sy + 14, Colors::Purple);
 
   Broodwar->drawTextMap(sx + 2, sy + 15, "Id: \x11%d", unit_id_);
@@ -251,7 +252,7 @@ void StructureAgent::debug_print_info() const {
         sq->get_members(),
         [sx,h,&no](const BaseAgent* a) {
         Broodwar->drawTextMap(sx + 2, h - 60 + 15 * no, "%s \x11(%d)",
-                              format(a->unit_type().getName()).c_str(), 
+                              rnp::remove_race(a->unit_type().getName()).c_str(), 
                               a->get_unit_id());
         no++;
       });

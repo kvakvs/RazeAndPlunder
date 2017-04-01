@@ -290,6 +290,10 @@ public:
     return "Sq" + self().string() + " " + name_;
   }
 
+  // Reported by agents when they believe they can't move, or they can move
+  // but don't get any closer to the goal in 10 sec.
+  void on_squad_member_stuck(const act::ActorId& who_id);
+
   //
   // Actor stuff
   //

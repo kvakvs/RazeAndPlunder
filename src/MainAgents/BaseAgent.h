@@ -32,13 +32,10 @@ protected:
 
   int info_update_time_ = 0;
   static int info_update_frame_;
-  static int sx_;
-  static int sy_;
+  static int debug_tooltip_x_;
+  static int debug_tooltip_y_;
   int last_order_frame_ = 0;
   std::vector<BWAPI::WalkPosition> trail_;
-
-  // Removes race name from a string (Terran Marine -> Marine) 
-  static std::string format(const std::string& str);
 
 public:
   uint32_t ac_flavour() const override {

@@ -5,12 +5,12 @@
 #include "Commander/Commander.h"
 #include "Managers/Constructor.h"
 #include "Pathfinding/Pathfinder.h"
-#include "Utils/Profiler.h"
 #include "Managers/AgentManager.h"
 #include "Glob.h"
 #include "Commander/SquadMsg.h"
 
 using namespace BWAPI;
+#define MODULE_PREFIX "(squad) "
 
 Squad::Squad(SquadType mType, std::string mName, int mPriority)
 : members_(), setup_(), goal_(), path_(), path_iter_(), name_("unnamed")
@@ -30,7 +30,8 @@ size_t Squad::get_max_size() {
 }
 
 void Squad::add_setup(UnitType type, int no) {
-  rnp::log()->debug("{}: add_setup {} x{}", string(), type.toString(), no);
+  rnp::log()->debug(MODULE_PREFIX "{}: add_setup {} x{}", 
+                    this->string(), type.toString(), no);
 
   //First, check if we have the setup already
   for (int i = 0; i < (int)setup_.size(); i++) {
@@ -521,8 +522,10 @@ void Squad::clear_goal() {
 void Squad::set_member_goals(TilePosition c_goal) {
   if (is_bunker_defend_squad()) return;
 
-  for (auto& m_id : members_) {
-    msg::unit::set_goal(m_id, c_goal);
+  for (act::ActorId m_id : members_) {
+    act::modify_actor<BaseAgent>(
+      m_id,
+      [=](BaseAgent* a) { a->set_goal(c_goal); });
   }
 }
 
@@ -679,6 +682,17 @@ bool Squad::has_units(UnitType type, int no) {
   return false;
 }
 
+void Squad::on_squad_member_stuck(const act::ActorId& who_id) {
+  auto who = act::whereis<BaseAgent>(who_id);
+  if (not who) {
+    return; // he's gone?
+  }
+  rnp::log()->info(MODULE_PREFIX "Unit {} {} reported as being stuck",
+                   who->self().string(),
+                   rnp::remove_race(who->get_unit()->getType().toString()));
+  set_goal(rnp::make_bad_position());
+}
+
 void Squad::handle_message(act::Message* incoming) {
   if (auto mdie = dynamic_cast<msg::squad::MemberDestroyed*>(incoming)) {
     members_.erase(mdie->dead_);
@@ -737,3 +751,5 @@ void Squad::handle_message(act::Message* incoming) {
     unhandled_message(incoming);
   }
 }
+
+#undef MODULE_PREFIX

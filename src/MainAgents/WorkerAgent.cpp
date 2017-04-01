@@ -39,36 +39,36 @@ void WorkerAgent::destroyed() {
 
 void WorkerAgent::debug_print_info() const {
   int e = Broodwar->getFrameCount() - info_update_frame_;
-  if (e >= info_update_time_ || (sx_ == 0 && sy_ == 0)) {
+  if (e >= info_update_time_ || (debug_tooltip_x_ == 0 && debug_tooltip_y_ == 0)) {
     info_update_frame_ = Broodwar->getFrameCount();
-    sx_ = unit_->getPosition().x;
-    sy_ = unit_->getPosition().y;
+    debug_tooltip_x_ = unit_->getPosition().x;
+    debug_tooltip_y_ = unit_->getPosition().y;
   }
 
   // Far at the bottom popup can be clipped by the map edge
   auto mapsize = Position(BWEM::Map::Instance().Size());
-  if (sy_ + 110 > mapsize.y) { sy_ = mapsize.y - 110; }
+  if (debug_tooltip_y_ + 110 > mapsize.y) { debug_tooltip_y_ = mapsize.y - 110; }
 
-  Broodwar->drawBoxMap(sx_ - 2, sy_, sx_ + 152, sy_ + 90, Colors::Black, true);
-  Broodwar->drawTextMap(sx_ + 4, sy_, "\x03%s", 
+  Broodwar->drawBoxMap(debug_tooltip_x_ - 2, debug_tooltip_y_, debug_tooltip_x_ + 152, debug_tooltip_y_ + 90, Colors::Black, true);
+  Broodwar->drawTextMap(debug_tooltip_x_ + 4, debug_tooltip_y_, "\x03%s", 
                         unit_->getType().getName().c_str());
-  Broodwar->drawLineMap(sx_, sy_ + 14, sx_ + 150, sy_ + 14, Colors::Blue);
+  Broodwar->drawLineMap(debug_tooltip_x_, debug_tooltip_y_ + 14, debug_tooltip_x_ + 150, debug_tooltip_y_ + 14, Colors::Blue);
 
-  Broodwar->drawTextMap(sx_ + 2, sy_ + 15, "Id: \x11%d", unit_id_);
-  Broodwar->drawTextMap(sx_ + 2, sy_ + 30, "Position: \x11(%d,%d)", 
+  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 15, "Id: \x11%d", unit_id_);
+  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 30, "Position: \x11(%d,%d)", 
                         unit_->getTilePosition().x, unit_->getTilePosition().y);
-  Broodwar->drawTextMap(sx_ + 2, sy_ + 45, "Goal: \x11(%d,%d)", goal_.x, goal_.y);
+  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 45, "Goal: \x11(%d,%d)", goal_.x, goal_.y);
   if (squad_id_.is_valid() == false) {
-    Broodwar->drawTextMap(sx_ + 2, sy_ + 60, "Squad: \x15None");
+    Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 60, "Squad: \x15None");
   } 
   else {
     auto sq = act::whereis<Squad>(squad_id_);
-    Broodwar->drawTextMap(sx_ + 2, sy_ + 60, "\x11%s", sq->string().c_str());
+    Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 60, "\x11%s", sq->string().c_str());
   }
-  Broodwar->drawTextMap(sx_ + 2, sy_ + 75, "State: \x11%s",
+  Broodwar->drawTextMap(debug_tooltip_x_ + 2, debug_tooltip_y_ + 75, "State: \x11%s",
                         get_state_as_text().c_str());
 
-  Broodwar->drawLineMap(sx_, sy_ + 89, sx_ + 150, sy_ + 89, Colors::Blue);
+  Broodwar->drawLineMap(debug_tooltip_x_, debug_tooltip_y_ + 89, debug_tooltip_x_ + 150, debug_tooltip_y_ + 89, Colors::Blue);
 }
 
 void WorkerAgent::debug_show_goal() const {
@@ -254,6 +254,7 @@ void WorkerAgent::tick_find_build_spot() {
 }
 
 void WorkerAgent::tick_move_to_spot() {
+  // Detect if the unit is stuck
   auto last_i = movement_progress_.get_frames_since_last_improvement();
   if (last_i > rnp::seconds(10)) {
     return on_worker_stuck();
@@ -301,7 +302,7 @@ void WorkerAgent::tick_gather_gas() {
 }
 
 void WorkerAgent::on_worker_stuck() {
-  rnp::log()->info("Worker {} got stuck on the move", self().string());
+  //rnp::log()->info("Worker {} got stuck on the move", self().string());
   set_goal(rnp::make_bad_position());
 }
 

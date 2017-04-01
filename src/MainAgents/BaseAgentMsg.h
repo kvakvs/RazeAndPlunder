@@ -72,17 +72,6 @@ inline void left_squad(const act::ActorId& dst, const act::ActorId& squad) {
 }
 
 //-----------------------------------------------------------------------------
-class SetGoal : public act::Message {
-public:
-  BWAPI::TilePosition goal_;
-  explicit SetGoal(const BWAPI::TilePosition& t) : goal_(t) {}
-};
-
-inline void set_goal(const act::ActorId& dst, const BWAPI::TilePosition& g) {
-  act::send_message<SetGoal>(dst, g);
-}
-
-//-----------------------------------------------------------------------------
 class AddTrailPos : public act::Message {
 public:
   BWAPI::WalkPosition pos_;

@@ -415,7 +415,9 @@ bool NavigationAgent::compute_pathfinding_move(const BaseAgent* agent,
       checkpoint = sq->next_move_position();
       if (agent->is_of_type(UnitTypes::Terran_SCV)) {
         checkpoint = sq->next_follow_move_position();
-        msg::unit::set_goal(agent->self(), checkpoint);
+        act::modify_actor<BaseAgent>(
+          agent->self(),
+          [=](BaseAgent* a) { a->set_goal(checkpoint); });
       }
     }
   }
