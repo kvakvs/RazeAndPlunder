@@ -14,6 +14,8 @@ SET(SOURCE_FILES
     Actors/Scheduler.h
     Actors/ActorId.h 
     Actors/Algorithm.h
+    Actors/Timer.h
+    Actors/Timer.cpp
     )
 
 IF(CMAKE_BUILD_TYPE STREQUAL "Debug")

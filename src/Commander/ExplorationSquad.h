@@ -15,7 +15,7 @@ private:
 
 public:
   // Constructor. See Squad.h for more details. 
-  ExplorationSquad(std::string mName, int mPriority);
+  ExplorationSquad(std::string name, int priority);
 
   /** Returns true if this Squad is active, or false if not.
    * A Squad is active when it first has been filled with agents.
@@ -25,18 +25,19 @@ public:
   };
 
   // Called each update to issue orders. 
-  void tick() override;
+  void tick_inactive() override;
+  void tick_active() override;
 
   // Orders this squad to defend a position. 
-  void defend(BWAPI::TilePosition mGoal) override {
+  void defend(BWAPI::TilePosition goal) override {
   }
 
   // Orders this squad to launch an attack at a position. 
-  void attack(BWAPI::TilePosition mGoal) override {
+  void attack(BWAPI::TilePosition goal) override {
   }
 
   // Orders this squad to assist units at a position. 
-  void assist(BWAPI::TilePosition mGoal) override {
+  void assist(BWAPI::TilePosition goal) override {
   }
 
   // Clears the goal for this Squad, i.e. sets the goal
@@ -59,8 +60,4 @@ public:
     return act::spawn<ExplorationSquad>(ActorFlavour::Squad, 
                                         std::forward<Args>(args)...);
   }
-
-private:
-  void try_fill_the_squad();
-  void tick_active_explo_squad();
 };

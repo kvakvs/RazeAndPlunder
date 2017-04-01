@@ -11,30 +11,28 @@ ExplorationSquad::ExplorationSquad(std::string mName, int mPriority)
 : Squad(SquadType::EXPLORER, mName, mPriority), delay_respawn_()
 {
   goal_ = Broodwar->self()->getStartLocation();
-  current_state_ = State::NOT_SET;
+  current_state_ = SquadState::NOT_SET;
   delay_respawn_.start(0);
 }
 
-void ExplorationSquad::try_fill_the_squad() {
-  auto start_loc = Broodwar->self()->getStartLocation();
-  auto agent_manager = rnp::agent_manager();
+void ExplorationSquad::tick_inactive() {
+  fill_with_free_workers();
+  active_ |= is_full();
 
-  //Check if we need workers in the squad
-  for (auto& setup : setup_) {
-    if (setup.current_count_ < setup.wanted_count_ 
-      && setup.type_.isWorker()) {
-      int todo_count = setup.wanted_count_ - setup.current_count_;
-      for (int j = 0; j < todo_count; j++) {
-        auto w = agent_manager->find_closest_free_worker(start_loc);
-        if (w) {
-          add_member(w->self());
-        }
-      }
-    }
+  if (not members_.empty() && not active_) {
+    //Activate as soon as 1 unit has been built
+    active_ = true;
   }
 }
 
-void ExplorationSquad::tick_active_explo_squad() {
+void ExplorationSquad::tick_active() {
+  //All units dead, go back to inactive
+  if (members_.empty()) {
+    active_ = false;
+    //delay_respawn_.start(rnp::seconds(20)); // no instant borrow worker, wait
+    return;
+  }
+
   if (active_priority_ != priority_) {
     priority_ = active_priority_;
   }
@@ -51,29 +49,6 @@ void ExplorationSquad::tick_active_explo_squad() {
   }
 
   m_next_explore_.update(goal_);
-}
-
-void ExplorationSquad::tick() {
-  if (not active_) { // && delay_respawn_.is_ready()) {
-    try_fill_the_squad();
-    active_ |= is_full();
-  }
-
-  if (not members_.empty() && not active_) {
-    //Activate as soon as 1 unit has been built
-    active_ = true;
-  }
-
-  //All units dead, go back to inactive
-  if (members_.empty() && active_) {
-    active_ = false;
-    //delay_respawn_.start(rnp::seconds(20)); // no instant borrow worker, wait
-    return;
-  }
-
-  if (active_) {
-    tick_active_explo_squad();
-  }
 
   Squad::tick();
 }

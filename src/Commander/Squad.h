@@ -5,6 +5,10 @@
 #include <memory>
 #include "RnpConst.h"
 
+enum class SquadState {
+  NOT_SET, ATTACK, DEFEND, ASSIST,
+};
+
 /** The Squad class represents a squad of units with a shared goal, for example
  * attacking the enemy or defending the base. The Squad can be built up from
  * different combinations and numbers of UnitTypes. 
@@ -25,10 +29,6 @@ public:
 
   enum class MoveType {
     GROUND, AIR
-  };
-
-  enum class State {
-    NOT_SET, ATTACK, DEFEND, ASSIST,
   };
 
 protected:
@@ -55,7 +55,7 @@ protected:
   bool required_ = false;
   std::string name_;
   int goal_set_frame_ = 0;
-  State current_state_ = State::DEFEND;
+  SquadState current_state_ = SquadState::DEFEND;
   bool buildup_ = false;
 
   // Make all squad members want to move
@@ -165,7 +165,9 @@ public:
   size_t get_max_size();
 
   // Called each update to issue orders. 
-  void tick() override;
+  void tick() override final;
+  virtual void tick_inactive();
+  virtual void tick_active();
 
   // Sets the goal for this Squad. 
   void set_goal(BWAPI::TilePosition m_goal);
@@ -307,5 +309,7 @@ public:
   }
 
   void handle_message(act::Message* incoming) override;
-private:
+
+protected:
+  void fill_with_free_workers();
 };

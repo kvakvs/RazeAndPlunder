@@ -159,20 +159,6 @@ inline void active_priority(const act::ActorId& dst, int v) {
 }
 
 //-----------------------------------------------------------------------------
-class Charge : public act::Message {
-public:
-  BWAPI::TilePosition spot_;
-
-  explicit Charge(const BWAPI::TilePosition& c) : spot_(c) {
-  }
-};
-
-inline void charge(const act::ActorId& dst,
-                   const BWAPI::TilePosition& spot) {
-  act::send_message<Charge>(dst, spot);
-}
-
-//-----------------------------------------------------------------------------
 class Defend : public act::Message {
 public:
   BWAPI::TilePosition spot_;
@@ -183,32 +169,6 @@ public:
 
 inline void defend(const act::ActorId& dst, const BWAPI::TilePosition& spot) {
   act::send_message<Defend>(dst, spot);
-}
-
-//-----------------------------------------------------------------------------
-class SetGoal : public act::Message {
-public:
-  BWAPI::TilePosition goal_;
-
-  explicit SetGoal(const BWAPI::TilePosition& g) : goal_(g) {
-  }
-};
-
-inline void set_goal(const act::ActorId& dst, const BWAPI::TilePosition& g) {
-  act::send_message<SetGoal>(dst, g);
-}
-
-//-----------------------------------------------------------------------------
-class Attack : public act::Message {
-public:
-  BWAPI::TilePosition goal_;
-
-  explicit Attack(const BWAPI::TilePosition& g) : goal_(g) {
-  }
-};
-
-inline void attack(const act::ActorId& dst, const BWAPI::TilePosition& g) {
-  act::send_message<Attack>(dst, g);
 }
 
 //-----------------------------------------------------------------------------

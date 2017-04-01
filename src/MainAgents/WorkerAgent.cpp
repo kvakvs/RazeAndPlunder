@@ -287,7 +287,7 @@ void WorkerAgent::tick_construct() {
   if (is_built()) {
     //Build finished.
     auto agent = rnp::agent_manager()->get_closest_base(unit_->getTilePosition());
-    if (agent != nullptr) {
+    if (agent) {
       unit_->rightClick(agent->get_unit()->getPosition());
     }
     set_state(WorkerState::GATHER_MINERALS);

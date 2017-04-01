@@ -21,7 +21,8 @@ public:
   bool is_active() const override;
 
   // Called each update to issue orders. 
-  void tick() override;
+  void tick_inactive() override;
+  void tick_active() override;
 
   // Orders this squad to defend a position. 
   void defend(BWAPI::TilePosition mGoal) override;
@@ -31,10 +32,6 @@ public:
 
   // Orders this squad to assist units at a position. 
   void assist(BWAPI::TilePosition mGoal) override;
-
-  // Clears the goal for this Squad, i.e. sets the goal
-  // to TilePosition(-1,-1). 
-  void clear_goal() override;
 
   // Returns the current goal of this Squad. 
   BWAPI::TilePosition get_goal() const override {
@@ -51,8 +48,5 @@ public:
   static act::ActorId spawn(Args&& ...args) {
     return act::spawn<RushSquad>(ActorFlavour::Squad, std::forward<Args>(args)...);
   }
-private:
-  void prepare_rush_squad();
-  void tick_active_rush_squad();
 };
 

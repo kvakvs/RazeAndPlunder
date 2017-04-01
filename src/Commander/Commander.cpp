@@ -131,7 +131,8 @@ void Commander::tick_base_commander_attack_maybe_defend() {
     current_state_ = State::DEFEND;
     TilePosition def_spot = find_chokepoint();
     for (auto& squad_id : squads_) {
-      msg::squad::set_goal(squad_id, def_spot);
+      act::modify_actor<Squad>(squad_id, 
+                               [=](Squad* s) { s->set_goal(def_spot); });
     }
   }
 }
@@ -161,7 +162,8 @@ void Commander::tick_base_commander_attack() {
         if (not s->has_goal() && s->is_active()) {
           auto to_attack = find_attack_position();
           if (rnp::is_valid_position(to_attack)) {
-            msg::squad::charge(s->self(), to_attack);
+            act::modify_actor<Squad>(s->self(),
+                                     [=](Squad* s) { s->attack(to_attack); });
           }
         }
       } else {
@@ -619,15 +621,20 @@ void Commander::force_begin_attack() {
   Broodwar << "Launch attack at " << attack_goal << std::endl;
   rnp::log()->debug("Launch attack at {0};{1}", attack_goal.x, attack_goal.y);
 
-  act::for_each_in<Squad>(squads_,
-                          [&attack_goal](const Squad* s) {
-                            if (s->is_offensive_squad() || s->is_support_squad()) {
-                              if (attack_goal.x >= 0) {
-                                msg::squad::force_active(s->self());
-                                msg::squad::attack(s->self(), attack_goal);
-                              }
-                            }
-                          });
+  act::for_each_in<Squad>(
+    squads_,
+    [&attack_goal](const Squad* s) {
+      if (s->is_offensive_squad() || s->is_support_squad()) {
+        if (rnp::is_valid_position(attack_goal)) {
+          act::modify_actor<Squad>(
+            s->self(),
+            [=](Squad* sq) {
+              sq->force_active();
+              sq->attack(attack_goal);
+            });
+        }
+      }
+    });
 
   current_state_ = State::ATTACK;
 }

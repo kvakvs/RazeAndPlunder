@@ -82,18 +82,29 @@ void Squad::debug_show_goal() const {
 }
 
 void Squad::tick() {
-  if (not active_) {
-    if (is_full() && not buildup_) {
-      active_ = true;
-    }
-  }
-
   if (active_) {
-    if (active_priority_ != priority_) {
-      priority_ = active_priority_;
-    }
+    tick_active();
+  }
+  else {
+    tick_inactive();
+  }
+}
+
+void Squad::tick_inactive() {
+  if (is_full() && not buildup_) {
+    active_ = true;
+  }
+}
+
+void Squad::tick_active() {
+  if (active_priority_ != priority_) {
+    priority_ = active_priority_;
   }
 
+  fill_with_free_workers();
+}
+
+void Squad::fill_with_free_workers() {
   //Check if we need workers in the squad
   auto start_loc = Broodwar->self()->getStartLocation();
   auto agent_mgr = rnp::agent_manager();
@@ -394,9 +405,9 @@ act::ActorId Squad::remove_member(UnitType type) {
 void Squad::defend(TilePosition m_goal) {
   if (not rnp::is_valid_position(m_goal)) return;
 
-  if (current_state_ != State::DEFEND) {
-    if (current_state_ == State::ASSIST && not is_under_attack()) {
-      current_state_ = State::DEFEND;
+  if (current_state_ != SquadState::DEFEND) {
+    if (current_state_ == SquadState::ASSIST && not is_under_attack()) {
+      current_state_ = SquadState::DEFEND;
     }
   }
   set_goal(m_goal);
@@ -405,10 +416,10 @@ void Squad::defend(TilePosition m_goal) {
 void Squad::attack(TilePosition m_goal) {
   if (not rnp::is_valid_position(m_goal)) return;
 
-  if (current_state_ != State::ATTACK) {
+  if (current_state_ != SquadState::ATTACK) {
     if (not is_under_attack()) {
       if (is_active()) {
-        current_state_ = State::ATTACK;
+        current_state_ = SquadState::ATTACK;
       }
     }
   }
@@ -421,10 +432,10 @@ void Squad::attack(TilePosition m_goal) {
 void Squad::assist(TilePosition m_goal) {
   if (not rnp::is_valid_position(m_goal)) return;
 
-  if (current_state_ != State::ASSIST) {
+  if (current_state_ != SquadState::ASSIST) {
     if (not is_under_attack()) {
       Broodwar << "SQ " << name_ << " assist at " << m_goal << std::endl;
-      current_state_ = State::ASSIST;
+      current_state_ = SquadState::ASSIST;
       set_goal(m_goal);
     }
   }
@@ -509,7 +520,7 @@ TilePosition Squad::next_move_position() const {
 //  }
 
   auto member_goal = path_iter_->next();
-  msg::squad::set_goal(self(), member_goal);
+  act::modify_actor<Squad>(self(), [=](Squad* s) { s->set_goal(member_goal); });
 
   return member_goal;
 }
@@ -531,10 +542,10 @@ void Squad::set_member_goals(TilePosition c_goal) {
 
 bool Squad::has_goal() const {
   int elapsed = Broodwar->getFrameCount() - goal_set_frame_;
-  if (elapsed >= 600) {
+  if (elapsed >= rnp::seconds(30)) {
     if (not is_attacking()) {
       // tell self, that it is time to forget the goal
-      msg::squad::set_goal(self(), rnp::make_bad_position());
+      act::modify_actor<Squad>(self(), [](Squad* s) { s->clear_goal(); });
     }
   }
 
@@ -708,15 +719,6 @@ void Squad::handle_message(act::Message* incoming) {
   }
   else if (auto sdef = dynamic_cast<msg::squad::Defend*>(incoming)) {
     defend(sdef->spot_);
-  }
-  else if (auto satt = dynamic_cast<msg::squad::Charge*>(incoming)) {
-    attack(satt->spot_);
-  }
-  else if (auto setg = dynamic_cast<msg::squad::SetGoal*>(incoming)) {
-    set_goal(setg->goal_);
-  }
-  else if (auto attg = dynamic_cast<msg::squad::Attack*>(incoming)) {
-    attack(attg->goal_);
   }
   else if (auto adds = dynamic_cast<msg::squad::AddSetup*>(incoming)) {
     add_setup(adds->type_, adds->count_);

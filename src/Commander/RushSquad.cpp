@@ -10,7 +10,7 @@ using namespace BWAPI;
 RushSquad::RushSquad(std::string m_name, int m_priority)
 : Squad(SquadType::RUSH, m_name, m_priority) {
   goal_ = Broodwar->self()->getStartLocation();
-  current_state_ = State::NOT_SET;
+  current_state_ = SquadState::NOT_SET;
 }
 
 bool RushSquad::is_active() const {
@@ -29,30 +29,17 @@ void RushSquad::attack(TilePosition mGoal) {
 
 void RushSquad::assist(TilePosition m_goal) {
   if (not is_under_attack()) {
-    current_state_ = State::ASSIST;
+    current_state_ = SquadState::ASSIST;
     set_goal(m_goal);
   }
 }
 
-void RushSquad::prepare_rush_squad() {
-  //Check if we need workers in the squad
-  auto start_loc = Broodwar->self()->getStartLocation();
-  for (auto& setup: setup_) {
-    if (setup.current_count_ < setup.wanted_count_ 
-      && setup.type_.isWorker()) 
-    {
-      int todo_count = setup.wanted_count_ - setup.current_count_;
-      for (int j = 0; j < todo_count; j++) {
-        auto w = rnp::agent_manager()->find_closest_free_worker(start_loc);
-        if (w) {
-          add_member(w->self());
-        }
-      } // for to do
-    } // if worker and want more
-  } // for setup
+void RushSquad::tick_inactive() {
+  fill_with_free_workers();
 
   if (is_full()) {
     active_ = true;
+    return;
   }
 
   auto def_spot = rnp::commander()->find_chokepoint();
@@ -61,7 +48,7 @@ void RushSquad::prepare_rush_squad() {
   }
 }
 
-void RushSquad::tick_active_rush_squad() {
+void RushSquad::tick_active() {
   if (active_priority_ != priority_) {
     priority_ = active_priority_;
   }
@@ -70,25 +57,16 @@ void RushSquad::tick_active_rush_squad() {
   act::for_each_in<BaseAgent>(
     members_,
     [target_id](const BaseAgent* a) {
-      msg::unit::attack(a->self(), target_id);
-    });
+    msg::unit::attack(a->self(), target_id);
+  });
 
-  auto start_loc = Broodwar->self()->getStartLocation();
+  // auto start_loc = Broodwar->self()->getStartLocation();
   TilePosition e_pos = rnp::exploration()->get_random_spotted_building();
   if (rnp::is_valid_position(e_pos)) {
     goal_ = e_pos;
     set_member_goals(goal_);
   }
-}
-
-void RushSquad::tick() {
-  if (not active_) {
-    prepare_rush_squad();
-    return;
-  }
-  if (active_) {
-    tick_active_rush_squad();
-  }
+  
   Squad::tick();
 }
 
@@ -118,10 +96,6 @@ act::ActorId RushSquad::find_worker_target() const {
   }
 
   return act::ActorId();
-}
-
-void RushSquad::clear_goal() {
-  goal_ = rnp::make_bad_position();
 }
 
 bool RushSquad::has_goal() const {
