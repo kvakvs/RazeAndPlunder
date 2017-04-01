@@ -24,7 +24,7 @@ Squad::Squad(SquadType mType, std::string mName, int mPriority)
 size_t Squad::get_max_size() {
   size_t count = 0;
   for (size_t i = 0; i < setup_.size(); i++) {
-    count += setup_[i].count_;
+    count += setup_[i].wanted_count_;
   }
   return count;
 }
@@ -37,7 +37,7 @@ void Squad::add_setup(UnitType type, int no) {
   for (int i = 0; i < (int)setup_.size(); i++) {
     if (setup_[i].type_.getID() == type.getID()) {
       //Found, increase the amount
-      setup_[i].count_ += no;
+      setup_[i].wanted_count_ += no;
       return;
     }
   }
@@ -45,7 +45,7 @@ void Squad::add_setup(UnitType type, int no) {
   //Not found, add as new
   UnitSetup us;
   us.type_ = type;
-  us.count_ = no;
+  us.wanted_count_ = no;
   us.current_count_ = 0;
   setup_.push_back(us);
 
@@ -58,10 +58,10 @@ void Squad::remove_setup(UnitType type, int no) {
   for (size_t i = 0; i < setup_.size(); i++) {
     if (setup_[i].type_.getID() == type.getID()) {
       //Found, reduce the amount
-      setup_[i].count_ -= no;
-      if (setup_[i].count_ < 0) setup_[i].count_ = 0;
+      setup_[i].wanted_count_ -= no;
+      if (setup_[i].wanted_count_ < 0) setup_[i].wanted_count_ = 0;
       
-      int to_remove = setup_[i].current_count_ - setup_[i].count_;
+      int to_remove = setup_[i].current_count_ - setup_[i].wanted_count_;
       for (int j = 0; j < to_remove; j++) {
         remove_member(setup_[i].type_);
       }
@@ -98,11 +98,11 @@ void Squad::tick() {
   auto start_loc = Broodwar->self()->getStartLocation();
   auto agent_mgr = rnp::agent_manager();
   for (size_t i = 0; i < setup_.size(); i++) {
-    if (setup_[i].current_count_ < setup_[i].count_ 
+    if (setup_[i].current_count_ < setup_[i].wanted_count_ 
       && setup_[i].type_.isWorker()) 
     {
-      int no = setup_[i].count_ - setup_[i].current_count_;
-      for (int j = 0; j < no; j++) {
+      int missing_count = setup_[i].wanted_count_ - setup_[i].current_count_;
+      for (int j = 0; j < missing_count; j++) {
         auto w = agent_mgr->find_closest_free_worker(start_loc);
         if (w) {
           add_member(w->self());
@@ -154,7 +154,7 @@ bool Squad::need_unit(UnitType type) const {
       //Found a matching setup, see if there is room
       if (setup_[i].current_count_
         + rnp::constructor()->get_in_production_count(type) 
-        + no_created <= setup_[i].count_) 
+        + no_created <= setup_[i].wanted_count_) 
       {
         return true;
       }
@@ -190,7 +190,7 @@ bool Squad::add_member(const act::ActorId& agent_ac_id) {
   for (size_t i = 0; i < setup_.size(); i++) {
     if (setup_[i].equals(agent->unit_type())) {
       //Found a matching setup, see if there is room
-      if (setup_[i].current_count_ < setup_[i].count_) {
+      if (setup_[i].current_count_ < setup_[i].wanted_count_) {
         //Yes we have, add it to the squad
         members_.insert(agent_ac_id);
         ac_monitor(agent_ac_id);
@@ -249,7 +249,7 @@ void Squad::debug_print_info() const {
   for (size_t i = 0; i < setup_.size(); i++) {
     std::string name = rnp::remove_race(setup_[i].type_.getName());
     Broodwar->drawTextScreen(sx + 2, sy + 120 + 15 * no, 
-      "%s \x11(%d/%d)", name.c_str(), setup_[i].current_count_, setup_[i].count_);
+      "%s \x11(%d/%d)", name.c_str(), setup_[i].current_count_, setup_[i].wanted_count_);
     no++;
   }
   Broodwar->drawLineScreen(sx, sy + 119 + 15 * no, sx + w, sy + 119 + 15 * no, Colors::Orange);
@@ -261,7 +261,7 @@ bool Squad::is_full() const {
   //1. Check setup
   auto all_full = std::all_of(setup_.begin(), setup_.end(),
                               [](const UnitSetup& s) {
-                                return s.current_count_ >= int(s.count_ * 0.85f);
+                                return s.current_count_ >= int(s.wanted_count_ * 0.85f);
                               });
   if (not all_full) { return false; }
 
@@ -358,7 +358,7 @@ void Squad::remove_member(const BaseAgent* agent) {
 void Squad::disband() {
   //Remove setup
   for (int i = 0; i < (int)setup_.size(); i++) {
-    setup_[i].count_ = 0;
+    setup_[i].wanted_count_ = 0;
     setup_[i].current_count_ = 0;
   }
 
@@ -437,7 +437,7 @@ void Squad::set_goal(TilePosition m_goal) {
     }
   }
 
-  if (m_goal.x != goal_.x || m_goal.y != goal_.y) {
+  if (m_goal != goal_) {
     goal_set_frame_ = Broodwar->getFrameCount();
     if (is_ground()) {
       if (not members_.empty()) {
@@ -610,7 +610,7 @@ int Squad::get_total_units() const {
   int tot = 0;
 
   for (int i = 0; i < (int)setup_.size(); i++) {
-    tot += setup_[i].count_;
+    tot += setup_[i].wanted_count_;
   }
 
   return tot;

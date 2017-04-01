@@ -37,10 +37,11 @@ void RushSquad::assist(TilePosition m_goal) {
 void RushSquad::prepare_rush_squad() {
   //Check if we need workers in the squad
   auto start_loc = Broodwar->self()->getStartLocation();
-  for (size_t i = 0; i < setup_.size(); i++) {
-    if (setup_[i].current_count_ < setup_[i].count_ 
-      && setup_[i].type_.isWorker()) {
-      int todo_count = setup_[i].count_ - setup_[i].current_count_;
+  for (auto& setup: setup_) {
+    if (setup.current_count_ < setup.wanted_count_ 
+      && setup.type_.isWorker()) 
+    {
+      int todo_count = setup.wanted_count_ - setup.current_count_;
       for (int j = 0; j < todo_count; j++) {
         auto w = rnp::agent_manager()->find_closest_free_worker(start_loc);
         if (w) {
@@ -95,7 +96,6 @@ act::ActorId RushSquad::find_worker_target() const {
   try {
     act::ActorId::Set worker_ids;
 
-    // TODO: Maybe let actor cache its type? Then need to track morph events or something
     auto is_worker_predicate = [](const act::ActorId& id) -> bool {
           auto ba = act::whereis<BaseAgent>(id);
           return ba ? ba->get_unit()->getType().isWorker() : false;
@@ -104,7 +104,7 @@ act::ActorId RushSquad::find_worker_target() const {
     act::for_each_in<BaseAgent>(
       members_,
       [&worker_ids,is_worker_predicate](const BaseAgent* a) {
-        constexpr int MAX_RANGE = 12 * 32;
+        constexpr int MAX_RANGE = 12 * TILEPOSITION_SCALE;
         auto a_pos = a->get_unit()->getTilePosition();
         auto in_r = rnp::actors_in_range(a_pos, MAX_RANGE);
         std::copy_if(in_r.begin(), in_r.end(),

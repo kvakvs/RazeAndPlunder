@@ -18,7 +18,7 @@ public:
   // Type of unit. 
   BWAPI::UnitType type_;
   // Wanted number of the unit. 
-  int count_ = 0;
+  int wanted_count_ = 0;
   // Current number of the unit. 
   int current_count_ = 0;
 

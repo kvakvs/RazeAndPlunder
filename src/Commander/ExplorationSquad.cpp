@@ -20,10 +20,10 @@ void ExplorationSquad::try_fill_the_squad() {
   auto agent_manager = rnp::agent_manager();
 
   //Check if we need workers in the squad
-  for (size_t i = 0; i < setup_.size(); i++) {
-    if (setup_[i].current_count_ < setup_[i].count_ 
-      && setup_[i].type_.isWorker()) {
-      int todo_count = setup_[i].count_ - setup_[i].current_count_;
+  for (auto& setup : setup_) {
+    if (setup.current_count_ < setup.wanted_count_ 
+      && setup.type_.isWorker()) {
+      int todo_count = setup.wanted_count_ - setup.current_count_;
       for (int j = 0; j < todo_count; j++) {
         auto w = agent_manager->find_closest_free_worker(start_loc);
         if (w) {

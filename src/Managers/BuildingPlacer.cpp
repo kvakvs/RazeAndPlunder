@@ -140,7 +140,7 @@ void BuildingPlacer::mark_position_blocked(TilePosition buildSpot) {
 
 bool BuildingPlacer::can_build(UnitType to_build, TilePosition build_spot) const {
   BuildingBox bbox(get_building_box(to_build, build_spot));
-  RNP_ASSERT(bbox.x2 >= bbox.x1 && bbox.y2 >= bbox.y1);
+  //RNP_ASSERT(bbox.x2 >= bbox.x1 && bbox.y2 >= bbox.y1);
 
   //Step 1: Check BuildingPlacer.
   if (not cover_map_.is_buildable(bbox)) {

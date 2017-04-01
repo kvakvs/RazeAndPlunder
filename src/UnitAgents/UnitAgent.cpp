@@ -161,6 +161,7 @@ void UnitAgent::debug_print_info() const {
 }
 
 void UnitAgent::on_unit_stuck() {
+  set_goal(rnp::make_bad_position());
   // Let the superiors know
   if (squad_id_.is_valid()) {
     act::ActorId this_id = self();
@@ -172,6 +173,5 @@ void UnitAgent::on_unit_stuck() {
     rnp::log()->info("Unit {} {} got stuck on the move",
                      self().string(),
                      rnp::remove_race(unit_->getType().toString()));
-    set_goal(rnp::make_bad_position());
   }
 }
