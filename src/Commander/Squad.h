@@ -4,6 +4,7 @@
 #include "Pathfinding/Pathfinder.h"
 #include <memory>
 #include "RnpConst.h"
+#include "RnpStateMachine.h"
 
 enum class SquadState {
   NOT_SET, ATTACK, DEFEND, ASSIST,
@@ -15,8 +16,11 @@ enum class SquadState {
  *
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
-class Squad : public act::Actor {
+class Squad : public act::Actor
+            , public rnp::FiniteStateMachine<SquadState> {
 public:
+  using FsmBaseClass = rnp::FiniteStateMachine<SquadState>;
+
   uint32_t ac_flavour() const override {
     return static_cast<uint32_t>(ActorFlavour::Squad);
   }
@@ -55,7 +59,6 @@ protected:
   bool required_ = false;
   std::string name_;
   int goal_set_frame_ = 0;
-  SquadState current_state_ = SquadState::DEFEND;
   bool buildup_ = false;
 
   // Make all squad members want to move
@@ -295,6 +298,8 @@ public:
   // Reported by agents when they believe they can't move, or they can move
   // but don't get any closer to the goal in 10 sec.
   void on_squad_member_stuck(const act::ActorId& who_id);
+
+  void fsm_on_transition(SquadState old_st, SquadState new_st) override;
 
   //
   // Actor stuff

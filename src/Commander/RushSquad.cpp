@@ -10,7 +10,6 @@ using namespace BWAPI;
 RushSquad::RushSquad(std::string m_name, int m_priority)
 : Squad(SquadType::RUSH, m_name, m_priority) {
   goal_ = Broodwar->self()->getStartLocation();
-  current_state_ = SquadState::NOT_SET;
 }
 
 bool RushSquad::is_active() const {
@@ -29,7 +28,7 @@ void RushSquad::attack(TilePosition mGoal) {
 
 void RushSquad::assist(TilePosition m_goal) {
   if (not is_under_attack()) {
-    current_state_ = SquadState::ASSIST;
+    fsm_set_state(SquadState::ASSIST);
     set_goal(m_goal);
   }
 }

@@ -12,12 +12,14 @@
 using namespace BWAPI;
 #define MODULE_PREFIX "(squad) "
 
-Squad::Squad(SquadType mType, std::string mName, int mPriority)
-: members_(), setup_(), goal_(), path_(), path_iter_(), name_("unnamed")
+Squad::Squad(SquadType m_type, std::string m_name, int m_priority)
+: FsmBaseClass(SquadState::NOT_SET)
+, members_(), setup_(), goal_(), path_(), path_iter_()
+, name_("unnamed")
 {
-  type_ = mType;
-  name_ = mName;
-  active_priority_ = priority_ = mPriority;
+  type_ = m_type;
+  name_ = m_name;
+  active_priority_ = priority_ = m_priority;
   goal_ = rnp::make_bad_position();
 }
 
@@ -34,10 +36,10 @@ void Squad::add_setup(UnitType type, int no) {
                     this->string(), type.toString(), no);
 
   //First, check if we have the setup already
-  for (int i = 0; i < (int)setup_.size(); i++) {
-    if (setup_[i].type_.getID() == type.getID()) {
+  for (auto& setup: setup_) {
+    if (setup.type_.getID() == type.getID()) {
       //Found, increase the amount
-      setup_[i].wanted_count_ += no;
+      setup.wanted_count_ += no;
       return;
     }
   }
@@ -55,15 +57,17 @@ void Squad::add_setup(UnitType type, int no) {
 }
 
 void Squad::remove_setup(UnitType type, int no) {
-  for (size_t i = 0; i < setup_.size(); i++) {
-    if (setup_[i].type_.getID() == type.getID()) {
+  for (auto& setup: setup_) {
+    if (setup.type_.getID() == type.getID()) {
       //Found, reduce the amount
-      setup_[i].wanted_count_ -= no;
-      if (setup_[i].wanted_count_ < 0) setup_[i].wanted_count_ = 0;
+      setup.wanted_count_ -= no;
+      if (setup.wanted_count_ < 0) {
+        setup.wanted_count_ = 0;
+      }
       
-      int to_remove = setup_[i].current_count_ - setup_[i].wanted_count_;
+      int to_remove = setup.current_count_ - setup.wanted_count_;
       for (int j = 0; j < to_remove; j++) {
-        remove_member(setup_[i].type_);
+        remove_member(setup.type_);
       }
       return;
     }
@@ -73,8 +77,9 @@ void Squad::remove_setup(UnitType type, int no) {
 void Squad::debug_show_goal() const {
   if (is_bunker_defend_squad()) return;
 
-  if (not empty() && goal_.x >= 0) {
-    Position a = Position(goal_.x * 32 + 16, goal_.y * 32 + 16);
+  if (not empty() && rnp::is_valid_position(goal_)) {
+    Position a = Position(goal_.x * TILEPOSITION_SCALE + TILEPOSITION_SCALE/2,
+                          goal_.y * TILEPOSITION_SCALE + TILEPOSITION_SCALE/2);
 
     Broodwar->drawCircleMap(a.x - 3, a.y - 3, 6, Colors::Grey, true);
     Broodwar->drawTextMap(a.x - 20, a.y - 5, "\x03Goal %s", name_.c_str());
@@ -135,13 +140,14 @@ bool Squad::is_attacking() const {
             else if (a->get_unit()->isStartingAttack()) { result = true; }
         });
   }
-  catch (std::exception) {
+  catch (std::exception ex) {
+    rnp::log()->error(MODULE_PREFIX "exception {}", ex.what());
   }
 
   return result;
 }
 
-bool Squad::is_under_attack() {
+bool Squad::is_under_attack() const {
   // TODO: catch under attack event?
   return is_attacking();
 }
@@ -178,14 +184,14 @@ bool Squad::need_unit(UnitType type) const {
 bool Squad::add_member(const act::ActorId& agent_ac_id) {
   auto agent = act::whereis<BaseAgent>(agent_ac_id);
   if (not agent) {
-    rnp::log()->error("{0} addm: not exists {1}", 
+    rnp::log()->error(MODULE_PREFIX "{0} addm: not exists {1}", 
                       string(), agent_ac_id.string());
     return false;
   }
 
   if (priority_ >= 1000) {
     //Check if prio is above Inactive squad.
-    rnp::log()->error("{0} addm: prio greater than inactive {1}",
+    rnp::log()->error(MODULE_PREFIX "{0} addm: prio greater than inactive {1}",
                       string(), agent_ac_id.string());
     return false;
   }
@@ -243,27 +249,43 @@ void Squad::debug_print_info() const {
   if (is_explorer_squad()) str2 = "Explorer";
   if (is_rush_squad()) str2 = "Rush";
 
-  Broodwar->drawTextScreen(sx + 2, sy + 45, "Type: \x11%s%s", str1.c_str(), str2.c_str());
-  Broodwar->drawTextScreen(sx + 2, sy + 60, "Priority: \x11%d", active_priority_);
+  Broodwar->drawTextScreen(sx + 2, sy + 45, 
+                           "Type: \x11%s%s", str1.c_str(), str2.c_str());
+  Broodwar->drawTextScreen(sx + 2, sy + 60, 
+                           "Priority: \x11%d", active_priority_);
 
-  if (required_) Broodwar->drawTextScreen(sx + 2, sy + 75, "Required: \x07Yes");
-  else Broodwar->drawTextScreen(sx + 2, sy + 75, "Required: \x18No");
+  if (required_) {
+    Broodwar->drawTextScreen(sx + 2, sy + 75, "Required: \x07Yes");
+  }
+  else {
+    Broodwar->drawTextScreen(sx + 2, sy + 75, "Required: \x18No");
+  }
 
-  if (is_full()) Broodwar->drawTextScreen(sx + 2, sy + 90, "Full: \x07Yes");
-  else Broodwar->drawTextScreen(sx + 2, sy + 90, "Full: \x18No");
+  if (is_full()) {
+    Broodwar->drawTextScreen(sx + 2, sy + 90, "Full: \x07Yes");
+  }
+  else {
+    Broodwar->drawTextScreen(sx + 2, sy + 90, "Full: \x18No");
+  }
 
-  if (is_active()) Broodwar->drawTextScreen(sx + 2, sy + 105, "Active: \x07Yes");
-  else Broodwar->drawTextScreen(sx + 2, sy + 105, "Active: \x18No");
+  if (is_active()) {
+    Broodwar->drawTextScreen(sx + 2, sy + 105, "Active: \x07Yes");
+  } 
+  else {
+    Broodwar->drawTextScreen(sx + 2, sy + 105, "Active: \x18No");
+  }
 
   Broodwar->drawLineScreen(sx, sy + 119, sx + w, sy + 119, Colors::Orange);
   int no = 0;
-  for (size_t i = 0; i < setup_.size(); i++) {
-    std::string name = rnp::remove_race(setup_[i].type_.getName());
+  for (auto& setup : setup_) {
+    std::string name = rnp::remove_race(setup.type_.getName());
     Broodwar->drawTextScreen(sx + 2, sy + 120 + 15 * no, 
-      "%s \x11(%d/%d)", name.c_str(), setup_[i].current_count_, setup_[i].wanted_count_);
+                             "%s \x11(%d/%d)", name.c_str(),
+                             setup.current_count_, setup.wanted_count_);
     no++;
   }
-  Broodwar->drawLineScreen(sx, sy + 119 + 15 * no, sx + w, sy + 119 + 15 * no, Colors::Orange);
+  Broodwar->drawLineScreen(sx, sy + 119 + 15 * no, 
+                           sx + w, sy + 119 + 15 * no, Colors::Orange);
 }
 
 bool Squad::is_full() const {
@@ -278,16 +300,17 @@ bool Squad::is_full() const {
 
   //2. Check that all units are alive and ready
   try {
-    auto all_alive = std::all_of(members_.begin(), members_.end(),
-                                 [](const act::ActorId& a_id) {
-                                   auto a = act::whereis<BaseAgent>(a_id);
-                                   return a->is_alive()
-                                       && a->get_unit()
-                                       && not a->get_unit()->isBeingConstructed();
-                                 });
+    auto all_alive = std::all_of(
+      members_.begin(), members_.end(),
+      [](const act::ActorId& a_id) {
+        auto a = act::whereis<BaseAgent>(a_id);
+        return a->is_alive() && a->get_unit()
+            && not a->get_unit()->isBeingConstructed();
+      });
     if (not all_alive) { return false; }
   }
-  catch (std::exception) {
+  catch (std::exception ex) {
+    rnp::log()->error(MODULE_PREFIX "exception {}", ex.what());
     return false;
   }
 
@@ -317,16 +340,6 @@ bool Squad::is_full() const {
 
 void Squad::remove_member(const BaseAgent* agent) {
   //Step 1. Remove the agent instance
-
-//  auto start_loc = Broodwar->self()->getStartLocation();
-//  for (auto& actor_id : members_) {
-//    if (actor->get_unit_id() == agent->get_unit_id()) {
-//      actor->set_squad_id(-1);
-//      actor->set_goal(start_loc);
-//      members_.erase(actor_id);
-//      break;
-//    }
-//  }
   auto& agent_id = agent->self();
   msg::unit::left_squad(agent_id, self());
   members_.erase(agent_id);
@@ -339,8 +352,8 @@ void Squad::remove_member(const BaseAgent* agent) {
     }
   }
 
-  //Step 3. If Explorer, set destination as explored (to avoid being killed at the same
-  //place over and over again).
+  // Step 3. If Explorer, set destination as explored (to avoid being killed 
+  // at the same place over and over again).
   if (is_explorer_squad()) {
     TilePosition goal = agent->get_goal();
     if (rnp::is_valid_position(goal)) {
@@ -405,9 +418,11 @@ act::ActorId Squad::remove_member(UnitType type) {
 void Squad::defend(TilePosition m_goal) {
   if (not rnp::is_valid_position(m_goal)) return;
 
-  if (current_state_ != SquadState::DEFEND) {
-    if (current_state_ == SquadState::ASSIST && not is_under_attack()) {
-      current_state_ = SquadState::DEFEND;
+  if (fsm_state() != SquadState::DEFEND) {
+    if (fsm_state() == SquadState::ASSIST 
+        && not is_under_attack()) 
+    {
+      fsm_set_state(SquadState::DEFEND);
     }
   }
   set_goal(m_goal);
@@ -416,10 +431,10 @@ void Squad::defend(TilePosition m_goal) {
 void Squad::attack(TilePosition m_goal) {
   if (not rnp::is_valid_position(m_goal)) return;
 
-  if (current_state_ != SquadState::ATTACK) {
+  if (fsm_state() != SquadState::ATTACK) {
     if (not is_under_attack()) {
       if (is_active()) {
-        current_state_ = SquadState::ATTACK;
+        fsm_set_state(SquadState::ATTACK);
       }
     }
   }
@@ -432,10 +447,10 @@ void Squad::attack(TilePosition m_goal) {
 void Squad::assist(TilePosition m_goal) {
   if (not rnp::is_valid_position(m_goal)) return;
 
-  if (current_state_ != SquadState::ASSIST) {
+  if (fsm_state() != SquadState::ASSIST) {
     if (not is_under_attack()) {
       Broodwar << "SQ " << name_ << " assist at " << m_goal << std::endl;
-      current_state_ = SquadState::ASSIST;
+      fsm_set_state(SquadState::ASSIST);
       set_goal(m_goal);
     }
   }
@@ -702,6 +717,9 @@ void Squad::on_squad_member_stuck(const act::ActorId& who_id) {
                    who->self().string(),
                    rnp::remove_race(who->get_unit()->getType().toString()));
   set_goal(rnp::make_bad_position());
+}
+
+void Squad::fsm_on_transition(SquadState old_st, SquadState new_st) {
 }
 
 void Squad::handle_message(act::Message* incoming) {

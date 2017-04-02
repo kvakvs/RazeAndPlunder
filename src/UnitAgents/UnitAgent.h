@@ -24,12 +24,6 @@ public:
   // Called each update to issue orders. 
   void tick() override;
 
-  // Issues an attack order. True if an order is requested, false otherwise. 
-  //bool attack();
-
-  // Issues a move order. True if an order is requested, false otherwise. 
-  //bool move();
-
   /** Issues an order to use special abilities. True if an order is requested, false otherwise. 
    * Must be implemented in specific subclasses for each unit type.
    */

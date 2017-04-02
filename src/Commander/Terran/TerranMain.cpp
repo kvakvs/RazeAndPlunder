@@ -67,7 +67,7 @@ TerranMain::~TerranMain() {
 }
 
 void TerranMain::tick() {
-  rnp::profiler()->start("OnFrame_TerranMain");
+  ProfilerAuto pa(*rnp::profiler(), "OnFrame_TerranMain");
   tick_base_commander();
 
   auto agent_manager = rnp::agent_manager();
@@ -167,5 +167,4 @@ void TerranMain::tick() {
 
     stage_++;
   }
-  rnp::profiler()->end("OnFrame_TerranMain");
 }

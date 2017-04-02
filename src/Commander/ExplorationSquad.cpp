@@ -7,11 +7,10 @@
 
 using namespace BWAPI;
 
-ExplorationSquad::ExplorationSquad(std::string mName, int mPriority)
-: Squad(SquadType::EXPLORER, mName, mPriority), delay_respawn_()
+ExplorationSquad::ExplorationSquad(std::string m_name, int m_priority)
+: Squad(SquadType::EXPLORER, m_name, m_priority), delay_respawn_()
 {
   goal_ = Broodwar->self()->getStartLocation();
-  current_state_ = SquadState::NOT_SET;
   delay_respawn_.start(0);
 }
 
