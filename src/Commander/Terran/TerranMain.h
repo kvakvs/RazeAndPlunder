@@ -7,8 +7,9 @@
 //
 
 enum class TerranStrategyState {
-  Stage1,    // first manual build orders
-  Stage2,    // Get some defense teams
+  NoStage,    // does nothing, switches to stage1
+  Stage1,     // first manual build orders
+  Stage2,     // Get some defense teams
   Stage3,
   Stage4,
   Stage5,

@@ -263,7 +263,7 @@ TilePosition ExplorationManager::get_closest_spotted_building(TilePosition start
 
 TilePosition ExplorationManager::get_random_spotted_building() const {
   if (enemy_buildings_.empty()) {
-    rnp::log()->debug("No enemy buildings in cache");
+//    rnp::log()->debug("No enemy buildings in cache");
     return rnp::make_bad_position();
   }
 

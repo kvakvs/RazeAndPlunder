@@ -292,10 +292,11 @@ bool Squad::is_full() const {
   if (setup_.empty()) return false;
 
   //1. Check setup
-  auto all_full = std::all_of(setup_.begin(), setup_.end(),
-                              [](const UnitSetup& s) {
-                                return s.current_count_ >= int(s.wanted_count_ * 0.85f);
-                              });
+  auto all_full = std::all_of(
+    setup_.begin(), setup_.end(),
+    [](const UnitSetup& s) {
+      return s.current_count_ >= size_t(s.wanted_count_ * 0.85f);
+    });
   if (not all_full) { return false; }
 
   //2. Check that all units are alive and ready
@@ -696,8 +697,8 @@ bool Squad::is_air() const {
   return move_type_ == MoveType::AIR;
 }
 
-bool Squad::has_units(UnitType type, int no) {
-  for (int i = 0; i < (int)setup_.size(); i++) {
+bool Squad::has_units(UnitType type, size_t no) {
+  for (size_t i = 0; i < setup_.size(); i++) {
     if (setup_[i].equals(type)) {
       if (setup_[i].current_count_ >= no) {
         //I have these units

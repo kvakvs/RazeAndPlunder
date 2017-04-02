@@ -7,7 +7,8 @@ class FiniteStateMachine {
 private:
   StateType fsm_state_;
 public:
-  FiniteStateMachine(StateType start_st): fsm_state_(start_st) {}
+  FiniteStateMachine(StateType start_st): fsm_state_(start_st) {
+  }
   virtual ~FiniteStateMachine() {}
 
   void fsm_set_state(StateType st) {

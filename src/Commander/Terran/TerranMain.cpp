@@ -10,7 +10,7 @@
 using namespace BWAPI;
 
 TerranMain::TerranMain()
-: FsmBaseClass(TerranStrategyState::Stage1)
+: FsmBaseClass(TerranStrategyState::NoStage)
 , main_sq_(), secondary_sq_(), backup1_sq_(), backup2_sq_()
 , rush_sq_(), scout2_sq_()
 {
@@ -37,6 +37,8 @@ void TerranMain::tick() {
 //  int gas = Broodwar->self()->gas();
 
   switch (fsm_state()) {
+  case TerranStrategyState::NoStage:
+    return fsm_set_state(TerranStrategyState::Stage1);
   case TerranStrategyState::Stage1:
     if (c_supply >= 20) {
       fsm_set_state(TerranStrategyState::Stage2);
@@ -97,7 +99,7 @@ void TerranMain::tick() {
 void TerranMain::fsm_on_transition(TerranStrategyState old_st, 
                                    TerranStrategyState new_st) {
   rnp::log()->debug(MODULE_PREFIX "strategy stage #{}", 
-                    static_cast<int>(new_st) + 1);
+                    static_cast<int>(new_st));
 
   switch (new_st) {
   case TerranStrategyState::Stage1: {

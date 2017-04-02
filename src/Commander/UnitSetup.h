@@ -18,9 +18,9 @@ public:
   // Type of unit. 
   BWAPI::UnitType type_;
   // Wanted number of the unit. 
-  int wanted_count_ = 0;
+  size_t wanted_count_ = 0;
   // Current number of the unit. 
-  int current_count_ = 0;
+  size_t current_count_ = 0;
 
   // Checks if this setup equals to the specified type. 
   bool equals(BWAPI::UnitType mType) const;

@@ -289,7 +289,7 @@ public:
 
   // Returns true if this Squad has the number of the specified
   // unit types in it. 
-  bool has_units(BWAPI::UnitType type, int no);
+  bool has_units(BWAPI::UnitType type, size_t no);
 
   std::string string() const {
     return "Sq" + self().string() + " " + name_;
