@@ -316,7 +316,7 @@ void WorkerAgent::tick_gather_gas() {
 }
 
 void WorkerAgent::on_worker_stuck() {
-  //rnp::log()->info("Worker {} got stuck on the move", self().string());
+  //rnp::log()->trace("Worker {} got stuck on the move", self().string());
   set_goal(rnp::make_bad_position());
 }
 

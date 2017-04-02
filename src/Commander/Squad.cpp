@@ -713,9 +713,9 @@ void Squad::on_squad_member_stuck(const act::ActorId& who_id) {
   if (not who) {
     return; // he's gone?
   }
-  rnp::log()->info(MODULE_PREFIX "Unit {} {} reported as being stuck",
-                   who->self().string(),
-                   rnp::remove_race(who->get_unit()->getType().toString()));
+  rnp::log()->trace(MODULE_PREFIX "Unit {} {} reported as being stuck",
+                    who->self().string(),
+                    rnp::remove_race(who->get_unit()->getType().toString()));
   set_goal(rnp::make_bad_position());
 }
 

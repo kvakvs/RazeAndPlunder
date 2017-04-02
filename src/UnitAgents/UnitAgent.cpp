@@ -170,8 +170,8 @@ void UnitAgent::on_unit_stuck() {
                                s->on_squad_member_stuck(this_id);
                              });
   } else {
-    rnp::log()->info("Unit {} {} got stuck on the move",
-                     self().string(),
-                     rnp::remove_race(unit_->getType().toString()));
+    rnp::log()->trace("Unit {} {} got stuck on the move",
+                      self().string(),
+                      rnp::remove_race(unit_->getType().toString()));
   }
 }

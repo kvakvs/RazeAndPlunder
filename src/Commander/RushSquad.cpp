@@ -65,8 +65,6 @@ void RushSquad::tick_active() {
     goal_ = e_pos;
     set_member_goals(goal_);
   }
-  
-  Squad::tick();
 }
 
 act::ActorId RushSquad::find_worker_target() const {

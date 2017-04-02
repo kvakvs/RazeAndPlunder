@@ -48,8 +48,6 @@ void ExplorationSquad::tick_active() {
   }
 
   m_next_explore_.update(goal_);
-
-  Squad::tick();
 }
 
 void ExplorationSquad::clear_goal() {

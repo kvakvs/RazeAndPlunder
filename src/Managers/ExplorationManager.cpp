@@ -40,7 +40,7 @@ ExplorationManager::~ExplorationManager() {
 }
 
 void ExplorationManager::tick() {
-  rnp::profiler()->start("OnFrame_ExplorationManager");
+  ProfilerAuto p_auto(*rnp::profiler(), "OnFrame_ExplorationManager");
   cleanup();
 
   // This updates like once/500 frames
@@ -49,7 +49,7 @@ void ExplorationManager::tick() {
   //Dont call too often
   int c_frame = Broodwar->getFrameCount();
   if (c_frame - last_call_frame_ < 9) {
-    goto _return;
+    return;
   }
   last_call_frame_ = c_frame;
 
@@ -58,8 +58,6 @@ void ExplorationManager::tick() {
       region_item->visited();
     }
   }
-_return:
-  rnp::profiler()->end("OnFrame_ExplorationManager");
 }
 
 void ExplorationManager::handle_message(act::Message* incoming) {
