@@ -51,7 +51,7 @@ private:
 
 protected:
   Buildplan build_plan_;
-  int stage_ = 0;
+  //int stage_ = 0;
 
   CommanderAttackState current_state_ = CommanderAttackState::DEFEND;
   bool debug_bp_ = false;
