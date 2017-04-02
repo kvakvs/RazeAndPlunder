@@ -73,7 +73,7 @@ public:
    * higher priority. A squad with priority of 1000 or more will not be built. This can be used
    * to create one-time squads that are only filled once.
    */
-  Squad(SquadType mType, std::string mName, int mPriority);
+  Squad(SquadType type, std::string name, int priority);
 
   // Used from next_move_position to update the arrived frame
   void set_arrived_frame(int af) { arrived_frame_ = af;  }
@@ -182,7 +182,7 @@ public:
   bool is_attacking() const;
 
   // Returns true if this Squad is under attack. 
-  bool is_under_attack();
+  bool is_under_attack() const;
 
   // Check if this Squad need units of the specified type. 
   bool need_unit(BWAPI::UnitType type) const;

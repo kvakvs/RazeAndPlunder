@@ -9,6 +9,11 @@
 #include "BWAPI/Position.h"
 #include "Commander/CommanderMsg.h"
 
+enum class CommanderAttackState {
+  DEFEND,
+  ATTACK
+};
+
 /** The Commander class is the base class for commanders. The Commander classes are responsible for
  * which and when buildings to construct, when to do upgrades/techs, and which squads to build.
  * It is also responsible for finding defensive positions, launch attacks and where to launch an
@@ -26,11 +31,6 @@ public:
   }
 
   //using Ptr = std::shared_ptr < Commander > ;
-
-  enum class State {
-    DEFEND,
-    ATTACK
-  };
 
 private:
   int last_call_frame_ = 0;
@@ -53,7 +53,7 @@ protected:
   Buildplan build_plan_;
   int stage_ = 0;
 
-  State current_state_ = State::DEFEND;
+  CommanderAttackState current_state_ = CommanderAttackState::DEFEND;
   bool debug_bp_ = false;
   bool debug_sq_ = false;
 

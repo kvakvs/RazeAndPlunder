@@ -644,7 +644,7 @@ TilePosition BuildingPlacer::find_expansion_site() const {
         //Not taken, calculate ground distance
         if (not taken) {
           if (rnp::exploration()->can_reach(start_loc, pos)) {
-            float dist = rnp::pathfinder()->get_dist(start_loc, pos);
+            float dist = (float)rnp::pathfinder()->get_dist(start_loc, pos);
             if (dist <= best_dist && dist > 0) {
               best_dist = dist;
               best_pos = pos;

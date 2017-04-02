@@ -128,7 +128,7 @@ void Commander::tick_base_commander_attack_maybe_defend() {
   //No active required squads found.
   //Go back to defend.
   if (not active_found) {
-    current_state_ = State::DEFEND;
+    current_state_ = CommanderAttackState::DEFEND;
     TilePosition def_spot = find_chokepoint();
     for (auto& squad_id : squads_) {
       act::modify_actor<Squad>(squad_id, 
@@ -190,27 +190,27 @@ void Commander::tick_base_commander() {
   if (assist_worker()) return;
 
   //Check if we shall launch an attack
-  if (current_state_ == State::DEFEND) {
+  if (current_state_ == CommanderAttackState::DEFEND) {
     if (is_time_to_engage()) {
       force_begin_attack();
     }
   }
 
   //Check if we shall go back to defend
-  if (current_state_ == State::ATTACK) {
+  if (current_state_ == CommanderAttackState::ATTACK) {
     tick_base_commander_attack_maybe_defend();
   }
 
-  if (current_state_ == State::DEFEND) {
+  if (current_state_ == CommanderAttackState::DEFEND) {
     tick_base_commander_defend();
   }
 
-  if (current_state_ == State::ATTACK) {
+  if (current_state_ == CommanderAttackState::ATTACK) {
     tick_base_commander_attack();
   } // if state ATTACK
 
   //Attack if we have filled all supply spots
-  if (current_state_ == State::DEFEND) {
+  if (current_state_ == CommanderAttackState::DEFEND) {
     int supply_used = Broodwar->self()->supplyUsed() / 2;
     if (supply_used >= 198) {
       force_begin_attack();
@@ -637,7 +637,7 @@ void Commander::force_begin_attack() {
       }
     });
 
-  current_state_ = State::ATTACK;
+  current_state_ = CommanderAttackState::ATTACK;
 }
 
 void Commander::assist_unfinished_construction(const BaseAgent* base_agent) {
@@ -690,10 +690,10 @@ void Commander::debug_print_info() const {
     if (tot_lines == 0) tot_lines++;
 
     Broodwar->drawBoxScreen(168, 25, 292, 41 + tot_lines * 16, Colors::Black, true);
-    if (current_state_ == State::DEFEND) {
+    if (current_state_ == CommanderAttackState::DEFEND) {
       Broodwar->drawTextScreen(170, 25, "\x03Squads \x07(Defending)");
     }
-    if (current_state_ == State::ATTACK) {
+    if (current_state_ == CommanderAttackState::ATTACK) {
       Broodwar->drawTextScreen(170, 25, "\x03Squads \x08(Attacking)");
     }
     Broodwar->drawLineScreen(170, 39, 290, 39, Colors::Orange);

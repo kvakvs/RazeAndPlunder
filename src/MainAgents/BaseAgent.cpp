@@ -99,7 +99,7 @@ bool BaseAgent::is_under_attack() const {
   auto ut = unit_->getType();
   float r = static_cast<float>(ut.seekRange());
   if (ut.sightRange() > r) {
-    r = ut.sightRange();
+    r = static_cast<float>(ut.sightRange());
   }
 
   // TODO: Rewrite this with actors in range (grid)
