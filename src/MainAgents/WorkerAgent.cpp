@@ -242,7 +242,7 @@ void WorkerAgent::tick_repairing() {
   {
     reset();
   } else {
-    act::suspend(self(), 8);
+    act::suspend(self(), 8); // do not revisit this logic too often
   }
 }
 
@@ -253,6 +253,7 @@ void WorkerAgent::tick_gather() {
       unit_->rightClick(mineral);
     }
   }
+  act::suspend(self(), 8); // do not revisit this logic too often
 }
 
 void WorkerAgent::tick_find_build_spot() {
@@ -265,6 +266,8 @@ void WorkerAgent::tick_find_build_spot() {
     if (to_build_.isResourceDepot()) {
       msg::commander::update_goals();
     }
+  } else {
+    act::suspend(self(), 8); // do not revisit this logic too often
   }
 }
 
@@ -296,6 +299,8 @@ void WorkerAgent::tick_move_to_spot() {
     fsm_set_state(WorkerState::CONSTRUCT);
     start_spot_ = rnp::make_bad_position();
   }
+
+  act::suspend(self(), 8); // do not revisit this logic too often
 }
 
 void WorkerAgent::tick_construct() {
@@ -306,6 +311,8 @@ void WorkerAgent::tick_construct() {
       unit_->rightClick(agent->get_unit()->getPosition());
     }
     fsm_set_state(WorkerState::GATHER_MINERALS);
+  } else {
+    act::suspend(self(), 8); // do not revisit this logic too often
   }
 }
 
@@ -313,6 +320,8 @@ void WorkerAgent::tick_gather_gas() {
   if (unit_->isIdle()) {
     //Not gathering gas. Reset.
     fsm_set_state(WorkerState::GATHER_MINERALS);
+  } else {
+    act::suspend(self(), 8); // do not revisit this logic too often
   }
 }
 

@@ -4,8 +4,8 @@ namespace act {
 
 template <class Cls>
 void for_each_actor(std::function<void(const Cls*)> fun) {
-  for (const auto& actor : sched().all_actors()) {
-    auto cls = dynamic_cast<const Cls*>(actor.second.get());
+  for (const auto actor : sched().all_actors()) {
+    auto cls = dynamic_cast<const Cls*>(actor);
     if (cls) {
       fun(cls);
     }
@@ -19,8 +19,8 @@ enum class ForEachResult { Interrupted, Finished };
 // false to end the loop immediately
 template <class Cls> ForEachResult
 interruptible_for_each_actor(std::function<ForEach(const Cls*)> fun) {
-  for (const auto& actor : sched().all_actors()) {
-    auto cls = dynamic_cast<const Cls*>(actor.second.get());
+  for (const auto actor : sched().all_actors()) {
+    auto cls = dynamic_cast<const Cls*>(actor);
     if (cls) {
       if (fun(cls) == ForEach::Break) {
         return ForEachResult::Interrupted;

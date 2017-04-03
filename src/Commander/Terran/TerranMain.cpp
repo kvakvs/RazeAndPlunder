@@ -94,6 +94,8 @@ void TerranMain::tick() {
   case TerranStrategyState::EndGame: break;
   default: ;
   }
+
+  act::suspend(self(), 8); // do not revisit this logic too often
 }
 
 void TerranMain::fsm_on_transition(TerranStrategyState old_st, 

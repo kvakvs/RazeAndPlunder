@@ -75,6 +75,10 @@ private:
   std::list<Message::Ptr> ac_msgs_;
   ActorId::Set ac_monitors_;
 
+  // Stores ordered collection of moments of time, when the given process is 
+  // scheduled to wake up
+  std::set<TimeType> wakeup_;
+
   class Signals {
   public:
     bool    sig_kill : 1; // having this true will remove the actor
@@ -130,7 +134,19 @@ public:
 
   // Marks this actor as inactive until 'ticks' have passed or some other
   // external event
-  void ac_skip_ticks(size_t ticks);
+  void ac_wakeup_at(TimeType t) {
+    wakeup_.insert(t);
+  }
+
+  // Return true if any of triggered timers exists, and drop all expired timers
+  bool ac_is_scheduled_wakeup(TimeType now) {
+    bool result = false;
+    while (not wakeup_.empty() && *(wakeup_.begin()) <= now) {
+      result = true;
+      wakeup_.erase(wakeup_.begin());
+    }
+    return result;
+  }
 
 protected:
   // Called by handle_message only, if the message is not picked up
