@@ -69,6 +69,7 @@ public:
 // Receives CPU time via the method call
 //------------------------------------------------------------
 class Actor {
+private:
   ActorId ac_id_;
   // TODO: Message matching one by one and waking up by scheduler
   std::list<Message::Ptr> ac_msgs_;
@@ -126,6 +127,10 @@ public:
       assert(not "signal supported");
     }
   }
+
+  // Marks this actor as inactive until 'ticks' have passed or some other
+  // external event
+  void ac_skip_ticks(size_t ticks);
 
 protected:
   // Called by handle_message only, if the message is not picked up

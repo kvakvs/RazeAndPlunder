@@ -507,7 +507,7 @@ void Constructor::expand(UnitType command_center_unit) {
   TilePosition pos = rnp::building_placer()->find_expansion_site();
   if (not rnp::is_valid_position(pos)) {
     //No expansion site found.
-    rnp::log()->trace(MODULE_PREFIX "no expansion site");
+    //rnp::log()->trace(MODULE_PREFIX "no expansion site");
     return;
   }
 

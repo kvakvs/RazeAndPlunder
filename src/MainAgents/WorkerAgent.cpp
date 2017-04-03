@@ -216,7 +216,7 @@ bool WorkerAgent::is_available_worker() const {
 
 
 void WorkerAgent::tick_attacking() {
-  if (unit_->getTarget() != nullptr) {
+  if (unit_->getTarget()) {
     auto base = rnp::agent_manager()->get_closest_base(unit_->getTilePosition());
     if (base != nullptr) {
       auto base_pos = base->get_unit()->getTilePosition();
@@ -241,13 +241,15 @@ void WorkerAgent::tick_repairing() {
       || target->getHitPoints() >= target->getInitialHitPoints())
   {
     reset();
+  } else {
+    act::suspend(self(), 8);
   }
 }
 
 void WorkerAgent::tick_gather() {
   if (unit_->isIdle()) {
     Unit mineral = rnp::building_placer()->find_closest_mineral(unit_->getTilePosition());
-    if (mineral != nullptr) {
+    if (mineral) {
       unit_->rightClick(mineral);
     }
   }
@@ -257,11 +259,10 @@ void WorkerAgent::tick_find_build_spot() {
   if (not rnp::is_valid_position(build_spot_)) {
     build_spot_ = rnp::building_placer()->find_build_spot(to_build_);
   }
-  if (build_spot_.x >= 0) {
+  if (rnp::is_valid_position(build_spot_)) {
     fsm_set_state(WorkerState::MOVE_TO_SPOT);
     start_build_frame_ = Broodwar->getFrameCount();
     if (to_build_.isResourceDepot()) {
-      //rnp::commander()->update_squad_goals();
       msg::commander::update_goals();
     }
   }
@@ -328,6 +329,7 @@ void WorkerAgent::tick() {
     compute_squad_worker_actions();
     return;
   }
+
   //Check if workers are too far away from a base when attacking
   switch (fsm_state()) {
   case WorkerState::ATTACKING:        return tick_attacking();
@@ -412,6 +414,7 @@ void WorkerAgent::reset() {
 
   fsm_set_state(WorkerState::GATHER_MINERALS);
   unit_->stop();
+
   auto base = rnp::agent_manager()->get_closest_base(unit_->getTilePosition());
   if (base) {
     unit_->rightClick(base->get_unit()->getPosition());

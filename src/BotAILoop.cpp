@@ -56,7 +56,9 @@ void BotAILoop::on_frame() {
   rnp::map_manager()->update_influences();
   rnp::profiler()->end("OnFrame_MapManager");
 
-  act::sched().tick();
+  auto& sched = act::sched();
+  sched.hard_sync_now(static_cast<size_t>(Broodwar->getFrameCount()));
+  sched.tick();
 }
 
 void BotAILoop::on_unit_added(Unit unit) {

@@ -14,14 +14,27 @@ class Actor;
 class Scheduler {
   // TODO: optimize, split this into multiple maps per actor flavour
   using ActorPtr = std::unique_ptr<Actor>;
-  std::map<ActorId, ActorPtr> actors_;
+  using ActorMap = std::map<ActorId, ActorPtr>;
+  ActorMap actors_; // running
+  ActorMap actors_suspended_; // sleeping
+#error TODO: wakeup timer or wakeup message?
 
   static std::unique_ptr<Scheduler> singleton_;
   uint32_t next_actor_id_ = 0;
+  
+  // global time for everything, is externally controlled and synced with
+  // broodwar current frame
+  size_t now_; 
 
 public:
-  Scheduler(): actors_() {
+  Scheduler(): actors_(), now_(0) {
   }
+
+  size_t now() const {
+    return now_;
+  }
+
+  void hard_sync_now(size_t new_now);
 
   void wakeup(const ActorId& id) {
     // TODO: wake up when run queues are added
@@ -54,6 +67,15 @@ public:
     }
     return itr->second.get();
   }
+
+  // Removes actor from the run queue
+  void suspend(const ActorId& id, size_t tick_count) {
+    suspend(id);
+#error TODO: Setup wake up timer or something
+  }
+
+  void suspend(const ActorId& id);
+  void schedule(const ActorId& id);
 };
 
 inline Scheduler& sched() {
