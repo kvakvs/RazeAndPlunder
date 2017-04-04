@@ -91,7 +91,7 @@ void Scheduler::schedule(const ActorId& id) {
 }
 
 void Scheduler::hard_sync_now(size_t new_now) {
-  assert(new_now > now_ || (not now_));
+  assert(new_now >= now_ || (not now_));
   now_ = new_now;
 }
 

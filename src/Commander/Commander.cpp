@@ -21,7 +21,6 @@ using namespace BWAPI;
 Commander::Commander()
 : m_find_attack_pos_(), m_time_to_engage_(), squads_(), build_plan_()
 {
-  last_call_frame_ = Broodwar->getFrameCount();
   workers_per_refinery_ = 2;
   workers_num_ = 5;
 }
@@ -177,13 +176,6 @@ void Commander::tick_base_commander_attack() {
 
 void Commander::tick_base_commander() {
   check_buildplan();
-
-  //Dont call too often
-  int c_frame = Broodwar->getFrameCount();
-  if (c_frame - last_call_frame_ < 5) {
-    return;
-  }
-  last_call_frame_ = c_frame;
 
   //See if we need to assist a base or worker that is under attack
   if (assist_building()) return;

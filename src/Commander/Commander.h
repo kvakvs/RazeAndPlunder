@@ -33,7 +33,6 @@ public:
   //using Ptr = std::shared_ptr < Commander > ;
 
 private:
-  int last_call_frame_ = 0;
   bool removal_done_ = false;
 
   rnp::Memoize<BWAPI::TilePosition> m_find_attack_pos_;
