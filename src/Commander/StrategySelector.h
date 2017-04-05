@@ -22,7 +22,7 @@ struct StrategyStats {
   {
   }
 
-  int getTotal() {
+  int get_total() const {
     if (total_ == 0) return 1; //To avoid division by zero.
     return total_;
   }
@@ -34,8 +34,8 @@ struct Strategy {
   BWAPI::Race race_ = BWAPI::Races::Unknown;
   std::string strat_id_;
 
-  Strategy(BWAPI::Race mRace, std::string mId): strat_id_() {
-    race_ = mRace;
+  Strategy(BWAPI::Race race, std::string mId): strat_id_() {
+    race_ = race;
     strat_id_ = mId;
   }
 };
@@ -72,7 +72,7 @@ public:
   ~StrategySelector();
 
   // Returns the selected strategy for this game. 
-  const Commander* get_strategy();
+  const CommanderStrategy* spawn_strategy_actor();
 
   // Loads the stats file. 
   void load_stats();

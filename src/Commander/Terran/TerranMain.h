@@ -24,9 +24,13 @@ enum class TerranStrategyState {
  *
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
-class TerranMain : public Commander
+class TerranMain : public CommanderStrategy
                  , public rnp::FiniteStateMachine<TerranStrategyState>
 {
+public:
+  size_t workers_per_refinery() override;
+  size_t adjust_workers_count(size_t workers_now) override;
+
 private:
   using FsmBaseClass = rnp::FiniteStateMachine<TerranStrategyState>;
 
@@ -51,4 +55,14 @@ public:
 
   void fsm_on_transition(TerranStrategyState old_st, 
                          TerranStrategyState new_st) override;
+private:
+  void on_enter_stage1();
+  void on_enter_stage3();
+  void on_enter_stage4();
+  void on_enter_stage5();
+  void on_enter_stage6();
+  void on_enter_stage7();
+  void on_enter_stage8();
+  void on_enter_endgame();
+  void on_enter_stage2() const;
 };

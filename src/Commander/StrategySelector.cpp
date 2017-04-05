@@ -72,7 +72,7 @@ void StrategySelector::select_strategy() {
     //Entry matches
     if (stats_[i].matches()) {
       //Calculate probability for this entry.
-      int chance = stats_[i].won_ * 100 / stats_[i].getTotal();
+      int chance = stats_[i].won_ * 100 / stats_[i].get_total();
       chance = chance * tot_won / tot_play;
 
       //Have 75% chance to try a strategy that
@@ -98,7 +98,7 @@ void StrategySelector::select_strategy() {
   }
 }
 
-const Commander* StrategySelector::get_strategy() {
+const CommanderStrategy* StrategySelector::spawn_strategy_actor() {
   int tot = 0;
   for (int i = 0; i < (int)stats_.size(); i++) {
     if (stats_[i].matches()) tot++;
@@ -126,9 +126,6 @@ const Commander* StrategySelector::get_strategy() {
 //  if (current_strategy_id_ == "LurkerRush") return std::make_shared<LurkerRush>();
 //  if (current_strategy_id_ == "ZergMain") return std::make_shared<ZergMain>();
   return act::spawn_get_ptr<TerranMain>(ActorFlavour::Singleton);
-
-  bwem_assert(false);
-  return nullptr;
 }
 
 void StrategySelector::print_info() const {

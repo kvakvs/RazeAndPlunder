@@ -18,6 +18,7 @@ class BotTournamentModule : public BWAPI::TournamentModule {
 class AgentManager;
 class BuildingPlacer;
 class Commander;
+class CommanderStrategy;
 class Constructor;
 class ExplorationManager;
 class MapManager;
@@ -54,6 +55,9 @@ public:
 
   const Commander* commander_ptr_ = nullptr;
   act::ActorId commander_id_;
+
+  const CommanderStrategy* strategy_ptr_ = nullptr;
+  act::ActorId strategy_id_;
 
   const AgentManager* agent_manager_ptr_ = nullptr;
   act::ActorId agent_manager_id_;

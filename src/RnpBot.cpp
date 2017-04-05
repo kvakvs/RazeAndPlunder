@@ -8,6 +8,7 @@
 #include "Utils/Profiler.h"
 #include "Pathfinding/NavigationAgent.h"
 #include "Utils/Config.h"
+#include "Commander/Commander.h"
 #include "Commander/StrategySelector.h"
 
 #include "Managers/AgentManager.h"
@@ -42,8 +43,11 @@ void RnpBot::init_singletons() {
   agent_manager_ptr_ = act::spawn_get_ptr<AgentManager>(ActorFlavour::Singleton);
   agent_manager_id_ = agent_manager_ptr_->self();
 
-  commander_ptr_ = strategy_selector_->get_strategy();
+  commander_ptr_ = act::spawn_get_ptr<Commander>(ActorFlavour::Singleton);
   commander_id_ = commander_ptr_->self();
+
+  strategy_ptr_ = strategy_selector_->spawn_strategy_actor();
+  strategy_id_ = strategy_ptr_->self();
 
   exploration_ptr_ = act::spawn_get_ptr<ExplorationManager>(ActorFlavour::Singleton);
   exploration_id_ = exploration_ptr_->self();

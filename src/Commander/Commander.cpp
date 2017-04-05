@@ -19,7 +19,9 @@
 using namespace BWAPI;
 
 Commander::Commander()
-: m_find_attack_pos_(), m_time_to_engage_(), squads_(), build_plan_()
+  : AttackDefendFsm(CommanderAttackState::DEFEND)
+  , m_find_attack_pos_(), m_time_to_engage_(), build_plan_()
+  , squads_()
 {
   workers_per_refinery_ = 2;
   workers_num_ = 5;
@@ -30,22 +32,28 @@ Commander::~Commander() {
 
 void Commander::check_buildplan() {
   int have_supply = Broodwar->self()->supplyUsed() / 2;
-  build_plan_.for_each(
-    have_supply,
-    [](const BuildplanEntry& b) -> bool { // For units/buildings
-      UnitType to_build(b.unit_type());
-      Constructor::modify([=](Constructor* c) { c->add_building(to_build); });
-      return true;
-    },
-    [](const BuildplanEntry& b) -> bool { // For upgrades
-      rnp::upgrader()->add_upgrade(b.upgrade_type());
-      return true;
-    },
-    [](const BuildplanEntry& b) -> bool { // and for the tech
-      rnp::upgrader()->add_tech(b.tech_type());
-      return true;
-    }
-  );
+  auto for_buildings_and_units =
+      [](const BuildplanEntry& b) -> bool { // For units/buildings
+        UnitType to_build(b.unit_type());
+        Constructor::modify([=](Constructor* c) {
+            c->add_building(to_build);
+          });
+        return true;
+      };
+  auto for_upgrades =
+      [](const BuildplanEntry& b) -> bool { // For upgrades
+        rnp::upgrader()->add_upgrade(b.upgrade_type());
+        return true;
+      };
+  auto for_tech =
+      [](const BuildplanEntry& b) -> bool { // and for the tech
+        rnp::upgrader()->add_tech(b.tech_type());
+        return true;
+      };
+  build_plan_.for_each(have_supply,
+                       for_buildings_and_units,
+                       for_upgrades,
+                       for_tech);
 }
 
 void Commander::cut_workers_production() {
@@ -127,7 +135,7 @@ void Commander::tick_base_commander_attack_maybe_defend() {
   //No active required squads found.
   //Go back to defend.
   if (not active_found) {
-    current_state_ = CommanderAttackState::DEFEND;
+    fsm_set_state(CommanderAttackState::DEFEND);
     TilePosition def_spot = find_chokepoint();
     for (auto& squad_id : squads_) {
       act::modify_actor<Squad>(squad_id, 
@@ -182,31 +190,26 @@ void Commander::tick_base_commander() {
   if (assist_worker()) return;
 
   //Check if we shall launch an attack
-  if (current_state_ == CommanderAttackState::DEFEND) {
-    if (is_time_to_engage()) {
-      force_begin_attack();
-    }
-  }
+  switch (fsm_state()) {
+  case CommanderAttackState::DEFEND: {
+      if (is_time_to_engage()) {
+        force_begin_attack();
+      }
 
-  //Check if we shall go back to defend
-  if (current_state_ == CommanderAttackState::ATTACK) {
-    tick_base_commander_attack_maybe_defend();
-  }
+      tick_base_commander_defend();
 
-  if (current_state_ == CommanderAttackState::DEFEND) {
-    tick_base_commander_defend();
-  }
-
-  if (current_state_ == CommanderAttackState::ATTACK) {
-    tick_base_commander_attack();
-  } // if state ATTACK
-
-  //Attack if we have filled all supply spots
-  if (current_state_ == CommanderAttackState::DEFEND) {
-    int supply_used = Broodwar->self()->supplyUsed() / 2;
-    if (supply_used >= 198) {
-      force_begin_attack();
-    }
+      // Attack if we have filled all supply spots
+      int supply_used = Broodwar->self()->supplyUsed() / 2;
+      if (supply_used >= 198) {
+        force_begin_attack();
+      }
+    } break;
+  case CommanderAttackState::ATTACK: {
+      // Check if we shall go back to defend
+      tick_base_commander_attack_maybe_defend();
+      tick_base_commander_attack();
+  } break;
+  default: ;
   }
 
   //Check if there are obstacles we can remove. Needed for some maps.
@@ -629,7 +632,7 @@ void Commander::force_begin_attack() {
       }
     });
 
-  current_state_ = CommanderAttackState::ATTACK;
+  fsm_set_state(CommanderAttackState::ATTACK);
 }
 
 void Commander::assist_unfinished_construction(const BaseAgent* base_agent) {
@@ -667,26 +670,34 @@ void Commander::toggle_squads_debug() {
   debug_sq_ = !debug_sq_;
 }
 
+void Commander::tick() {
+  ProfilerAuto pa(*rnp::profiler(), "OnFrame_Commander");
+  tick_base_commander();
+}
+
 void Commander::debug_print_info() const {
   if (debug_sq_) {
     int tot_lines = 0;
-    act::for_each_in<Squad>(squads_,
-                            [&tot_lines](const Squad* s) {
-                              if (s->get_total_units() == 0) return;
-                              if (s->is_bunker_defend_squad()) return;
-                              if (s->get_priority() == 1000
-                                  && not s->is_active()) return;
+    auto fn_count_lines = [&tot_lines](const Squad* s) {
+          if (s->get_total_units() == 0) return;
+          if (s->is_bunker_defend_squad()) return;
+          if (s->get_priority() == 1000
+            && not s->is_active())
+            return;
 
-                              tot_lines++;
-                            });
+          tot_lines++;
+        };
+    act::for_each_in<Squad>(squads_, fn_count_lines);
     if (tot_lines == 0) tot_lines++;
 
     Broodwar->drawBoxScreen(168, 25, 292, 41 + tot_lines * 16, Colors::Black, true);
-    if (current_state_ == CommanderAttackState::DEFEND) {
+    switch (fsm_state()) {
+    case CommanderAttackState::DEFEND:
       Broodwar->drawTextScreen(170, 25, "\x03Squads \x07(Defending)");
-    }
-    if (current_state_ == CommanderAttackState::ATTACK) {
+      break;
+    case CommanderAttackState::ATTACK:
       Broodwar->drawTextScreen(170, 25, "\x03Squads \x08(Attacking)");
+      break;
     }
     Broodwar->drawLineScreen(170, 39, 290, 39, Colors::Orange);
     int no = 0;

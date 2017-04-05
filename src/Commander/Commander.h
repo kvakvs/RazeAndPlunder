@@ -9,6 +9,20 @@
 #include "BWAPI/Position.h"
 #include "Commander/CommanderMsg.h"
 
+class CommanderStrategy: public act::Actor {
+public:
+  virtual ~CommanderStrategy() {}
+  virtual size_t workers_per_refinery() = 0;
+  virtual size_t adjust_workers_count(size_t workers_now) = 0;
+
+  uint32_t ac_flavour() const override {
+    return static_cast<uint32_t>(ActorFlavour::Singleton);
+  }
+
+  // Strategy takes no messages, but if it really wants, can override this
+  void handle_message(act::Message* m) override {}
+};
+
 enum class CommanderAttackState {
   DEFEND,
   ATTACK
@@ -24,8 +38,10 @@ enum class CommanderAttackState {
  *
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
-class Commander: public act::Actor {
+class Commander: public act::Actor
+               , public rnp::FiniteStateMachine<CommanderAttackState> {
 public:
+  using AttackDefendFsm = rnp::FiniteStateMachine<CommanderAttackState>;
   uint32_t ac_flavour() const override {
     return static_cast<uint32_t>(ActorFlavour::Singleton);
   }
@@ -48,20 +64,16 @@ private:
 
   void assign_unit(const BaseAgent* agent);
 
-protected:
+public:
   Buildplan build_plan_;
-  //int stage_ = 0;
+  act::ActorId::Set squads_;
 
-  CommanderAttackState current_state_ = CommanderAttackState::DEFEND;
+protected:
   bool debug_bp_ = false;
   bool debug_sq_ = false;
 
-  act::ActorId::Set squads_;
-
   size_t workers_num_ = 0;
   size_t workers_per_refinery_ = 0;
-
-  Commander();
 
   // Checks the Commander buildplan, and add buildings,
   // techs and upgrades to the planners. 
@@ -71,10 +83,11 @@ protected:
   void cut_workers_production();
 
 public:
+  Commander();
+  virtual ~Commander();
+
   // Executes basic code for a commander. 
   void tick_base_commander();
-
-  virtual ~Commander();
 
   // Returns the instance of the class. 
 //  static Commander* getInstance();
@@ -86,7 +99,7 @@ public:
   void toggle_squads_debug();
 
   // Called each update to issue orders. 
-  void tick() override {}
+  void tick() override;
 
   // Returns the number of preferred workers, i.e. the
   // number of workers should be built. 
@@ -158,6 +171,10 @@ public:
   bool remove_bunker_squad(int unitID);
 
   void handle_message(act::Message* incoming) override;
+
+  // Commander does not react on defend/attack switch, but it potentially can
+  void fsm_on_transition(CommanderAttackState old_st, 
+                         CommanderAttackState new_st) override {}
 private:
   // Called each time a unit is created. The unit is then
   // placed in a Squad. 
