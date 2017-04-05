@@ -273,8 +273,7 @@ void WorkerAgent::tick_find_build_spot() {
 
 void WorkerAgent::tick_move_to_spot() {
   // Detect if the unit is stuck
-  auto last_i = movement_progress_.get_frames_since_last_improvement();
-  if (last_i > rnp::seconds(10)) {
+  if (movement_progress_.is_possibly_stuck(rnp::seconds(10), 2.0f)) {
     return on_worker_stuck();
   }
 

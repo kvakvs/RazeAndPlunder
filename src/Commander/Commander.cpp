@@ -186,8 +186,8 @@ void Commander::tick_base_commander() {
   check_buildplan();
 
   //See if we need to assist a base or worker that is under attack
-  if (assist_building()) return;
-  if (assist_worker()) return;
+  //if (assist_building()) return;
+  //if (assist_worker()) return;
 
   //Check if we shall launch an attack
   switch (fsm_state()) {
@@ -672,6 +672,13 @@ void Commander::toggle_squads_debug() {
 
 void Commander::tick() {
   ProfilerAuto pa(*rnp::profiler(), "OnFrame_Commander");
+
+  if (fsm_state() == CommanderAttackState::INITIALIZE) {
+    workers_per_refinery_ = rnp::strategy()->workers_per_refinery();
+    fsm_set_state(CommanderAttackState::DEFEND);
+  }
+  workers_num_ = rnp::strategy()->adjust_workers_count(workers_num_);
+
   tick_base_commander();
 }
 

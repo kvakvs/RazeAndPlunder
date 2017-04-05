@@ -26,6 +26,15 @@ public:
   int get_frames_since_last_improvement() const {
     return BWAPI::Broodwar->getFrameCount() - last_improvement_frame_;
   }
+
+  float best_dist() const { return best_distance_; }
+
+  bool is_possibly_stuck(size_t frames, float dist) const {
+    size_t last_i = get_frames_since_last_improvement();
+    // True if improvement in distance was too long ago
+    // AND distance is still too far (longer than 2.0 tiles)
+    return last_i > frames && best_distance_ > dist;
+  }
 };
 
 } // ns rnp

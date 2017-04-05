@@ -9,11 +9,11 @@
 #define MODULE_PREFIX "(terran-main) "
 using namespace BWAPI;
 
-size_t TerranMain::workers_per_refinery() {
+size_t TerranMain::workers_per_refinery() const {
   return 2;
 }
 
-size_t TerranMain::adjust_workers_count(size_t workers_now) {
+size_t TerranMain::adjust_workers_count(size_t workers_now) const {
   auto am = rnp::agent_manager();
   size_t have_cmd_centers = am->get_finished_units_count(UnitTypes::Terran_Command_Center);
   size_t have_refineries = am->get_finished_units_count(UnitTypes::Terran_Refinery);

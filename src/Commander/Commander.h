@@ -12,8 +12,8 @@
 class CommanderStrategy: public act::Actor {
 public:
   virtual ~CommanderStrategy() {}
-  virtual size_t workers_per_refinery() = 0;
-  virtual size_t adjust_workers_count(size_t workers_now) = 0;
+  virtual size_t workers_per_refinery() const = 0;
+  virtual size_t adjust_workers_count(size_t workers_now) const = 0;
 
   uint32_t ac_flavour() const override {
     return static_cast<uint32_t>(ActorFlavour::Singleton);
@@ -24,6 +24,7 @@ public:
 };
 
 enum class CommanderAttackState {
+  INITIALIZE,
   DEFEND,
   ATTACK
 };

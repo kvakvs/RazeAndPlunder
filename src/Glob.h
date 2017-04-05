@@ -6,6 +6,7 @@
 class AgentManager;
 class BuildingPlacer;
 class Commander;
+class CommanderStrategy;
 class Constructor;
 class ExplorationManager;
 class MapManager;
@@ -27,6 +28,9 @@ const act::ActorId& agent_manager_id();
 
 const Commander* commander();
 const act::ActorId& commander_id();
+
+const CommanderStrategy* strategy();
+const act::ActorId& strategy_id();
 
 const ExplorationManager* exploration();
 const act::ActorId& exploration_id();

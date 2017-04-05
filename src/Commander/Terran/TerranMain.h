@@ -28,8 +28,8 @@ class TerranMain : public CommanderStrategy
                  , public rnp::FiniteStateMachine<TerranStrategyState>
 {
 public:
-  size_t workers_per_refinery() override;
-  size_t adjust_workers_count(size_t workers_now) override;
+  size_t workers_per_refinery() const override;
+  size_t adjust_workers_count(size_t workers_now) const override;
 
 private:
   using FsmBaseClass = rnp::FiniteStateMachine<TerranStrategyState>;

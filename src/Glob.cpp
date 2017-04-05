@@ -8,9 +8,13 @@ std::shared_ptr<spdlog::logger> rnp_global_logger;
 
 const Commander* 
 commander() { return RnpBot::singleton()->commander_ptr_; }
-
 const act::ActorId&
 commander_id() { return RnpBot::singleton()->commander_id_; }
+
+const CommanderStrategy*
+strategy() { return RnpBot::singleton()->strategy_ptr_; }
+const act::ActorId&
+strategy_id() { return RnpBot::singleton()->strategy_id_; }
 
 Profiler* profiler() {
   return RnpBot::singleton()->profiler_.get();
@@ -26,7 +30,6 @@ StrategySelector* strategy_selector() {
 
 const AgentManager* 
 agent_manager() { return RnpBot::singleton()->agent_manager_ptr_; }
-
 const act::ActorId& 
 agent_manager_id() { return RnpBot::singleton()->agent_manager_id_; }
 
@@ -36,13 +39,11 @@ BuildingPlacer* building_placer() {
 
 const ExplorationManager* 
 exploration() { return RnpBot::singleton()->exploration_ptr_; }
-
 const act::ActorId&
 exploration_id() { return RnpBot::singleton()->exploration_id_; }
 
 const Constructor* 
 constructor() { return RnpBot::singleton()->constructor_ptr_; }
-
 const act::ActorId&
 constructor_id() { return RnpBot::singleton()->constructor_id_; }
 
