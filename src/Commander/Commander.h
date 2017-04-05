@@ -29,14 +29,11 @@ enum class CommanderAttackState {
   ATTACK
 };
 
-/** The Commander class is the base class for commanders. The Commander classes are responsible for
- * which and when buildings to construct, when to do upgrades/techs, and which squads to build.
- * It is also responsible for finding defensive positions, launch attacks and where to launch an
+/** The Commander class is the base class for commanders. The Commander 
+ * classes are responsible for which and when buildings to construct, when to 
+ * do upgrades/techs, and which squads to build. It is also responsible for 
+ * finding defensive positions, launch attacks and where to launch an 
  * attack.
- *
- * The Commander is implemented as a singleton class. Each class that needs to access Commander can
- * request an instance, and the correct commander (Terran/Protoss/Zerg) will be returned.
- *
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class Commander: public act::Actor
@@ -47,12 +44,9 @@ public:
     return static_cast<uint32_t>(ActorFlavour::Singleton);
   }
 
-  //using Ptr = std::shared_ptr < Commander > ;
-
 private:
   bool removal_done_ = false;
 
-  rnp::Memoize<BWAPI::TilePosition> m_find_attack_pos_;
   rnp::Memoize<bool> m_time_to_engage_;
 
 private:

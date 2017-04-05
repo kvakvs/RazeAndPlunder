@@ -20,7 +20,7 @@ using namespace BWAPI;
 
 Commander::Commander()
   : AttackDefendFsm(CommanderAttackState::DEFEND)
-  , m_find_attack_pos_(), m_time_to_engage_(), build_plan_()
+  , m_time_to_engage_(), build_plan_()
   , squads_()
 {
   workers_per_refinery_ = 2;
@@ -82,15 +82,15 @@ bool Commander::is_time_to_engage() {
   }
 
   // Check if required squads are ready
-  auto loop_result = act::interruptible_for_each_in<Squad>(
-      squads_,
+  auto fn_check =
       [](const Squad* s) {
-          if (s->is_required_for_attack() && not s->is_active()) {
-            return act::ForEach::Break;
-          }
-          return act::ForEach::Continue;
-      });
-  if (loop_result == act::ForEachResult::Interrupted) {
+        if (s->is_required_for_attack() && not s->is_active()) {
+          return act::ForEach::Break;
+        }
+        return act::ForEach::Continue;
+      };
+  if (act::interruptible_for_each_in<Squad>(squads_, fn_check) 
+      == act::ForEachResult::Interrupted) { 
     return m_time_to_engage_.update(false);
   }
 
@@ -117,20 +117,16 @@ void Commander::update_squad_goals() {
 }
 
 void Commander::debug_show_goal() const {
-  act::for_each_in<Squad>(
-      squads_,
-      [](const Squad* s) {
-          s->debug_show_goal();
-      });
+  act::for_each_in<Squad>(squads_,
+                          [](const Squad* s) { s->debug_show_goal(); });
 }
 
 void Commander::tick_base_commander_attack_maybe_defend() {
-  bool active_found = std::any_of(
-    squads_.begin(), squads_.end(),
-    [](auto& s_id) {
-      auto s = act::whereis<Squad>(s_id);
-      return (s->is_required_for_attack() && s->is_active());
-    });
+  auto fn_check = [](auto& s_id) {
+        auto s = act::whereis<Squad>(s_id);
+        return (s->is_required_for_attack() && s->is_active());
+      };
+  bool active_found = std::any_of(squads_.begin(), squads_.end(), fn_check);
 
   //No active required squads found.
   //Go back to defend.
@@ -162,24 +158,25 @@ void Commander::tick_base_commander_defend() {
 }
 
 void Commander::tick_base_commander_attack() {
-  act::for_each_in<Squad>(
-    squads_,
-    [this](const Squad* s) {
-      if (s->is_offensive_squad()) {
-        if (not s->has_goal() && s->is_active()) {
-          auto to_attack = find_attack_position();
-          if (rnp::is_valid_position(to_attack)) {
-            act::modify_actor<Squad>(s->self(),
-                                     [=](Squad* s) { s->attack(to_attack); });
+  auto fn_attack =
+      [this](const Squad* s) {
+        if (s->is_offensive_squad()) {
+          if (not s->has_goal() && s->is_active()) {
+            auto to_attack = find_attack_position();
+            if (rnp::is_valid_position(to_attack)) {
+              act::modify_actor<Squad>(
+                s->self(), [=](Squad* s) { s->attack(to_attack); });
+            }
           }
         }
-      } else {
-        auto def_spot = find_chokepoint();
-        if (rnp::is_valid_position(def_spot)) {
-          msg::squad::defend(s->self(), def_spot);
+        else {
+          auto def_spot = find_chokepoint();
+          if (rnp::is_valid_position(def_spot)) {
+            msg::squad::defend(s->self(), def_spot);
+          }
         }
-      }
-    });
+      };
+  act::for_each_in<Squad>(squads_, fn_attack);
 }
 
 void Commander::tick_base_commander() {
@@ -267,11 +264,7 @@ void Commander::assign_unit(const BaseAgent* agent) {
 
 TilePosition Commander::find_attack_position() {
   // Optimize: this is called too often
-  if (m_find_attack_pos_.value_up_to_date(rnp::seconds(5))) {
-    return m_find_attack_pos_.value();
-  }
-
-  return m_find_attack_pos_.update(rnp::exploration()->get_random_spotted_building());
+  return rnp::exploration()->get_random_spotted_building();
 
 //  auto suitable_pos = rnp::map_manager()->find_suitable_attack_position();
 //
