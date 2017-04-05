@@ -10,6 +10,11 @@ enum class SquadState {
   NOT_SET, ATTACK, DEFEND, ASSIST,
 };
 
+enum class SquadType {
+  UNDEFINED, OFFENSIVE, DEFENSIVE, EXPLORER, SUPPORT, BUNKER, SHUTTLE, KITE,
+  RUSH, CHOKEHARASS
+};
+
 /** The Squad class represents a squad of units with a shared goal, for example
  * attacking the enemy or defending the base. The Squad can be built up from
  * different combinations and numbers of UnitTypes. 
@@ -26,10 +31,6 @@ public:
   }
 
   using Ptr = std::shared_ptr < Squad > ;
-  enum class SquadType {
-    UNDEFINED, OFFENSIVE, DEFENSIVE, EXPLORER, SUPPORT, BUNKER, SHUTTLE, KITE,
-    RUSH, CHOKEHARASS
-  };
 
   enum class MoveType {
     GROUND, AIR

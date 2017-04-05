@@ -16,7 +16,7 @@ ZergMain::ZergMain() {
   plan(UnitTypes::Zerg_Hydralisk_Den, 8);
   plan(UnitTypes::Zerg_Hatchery, 14);
 
-  mainSquad = std::make_shared<Squad>(1, Squad::SquadType::OFFENSIVE, "MainSquad", 10);
+  mainSquad = std::make_shared<Squad>(1, SquadType::OFFENSIVE, "MainSquad", 10);
   mainSquad->add_setup(UnitTypes::Zerg_Zergling, 16);
   mainSquad->add_setup(UnitTypes::Zerg_Hydralisk, 10);
   mainSquad->set_required(true);

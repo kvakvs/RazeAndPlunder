@@ -23,13 +23,13 @@ ProtossMain::ProtossMain()
   plan(UnitTypes::Protoss_Pylon, 22);
   plan(UnitTypes::Protoss_Templar_Archives, 24);
 
-  main_sq_ = std::make_shared<Squad>(1, Squad::SquadType::OFFENSIVE, "MainSquad", 10);
+  main_sq_ = std::make_shared<Squad>(1, SquadType::OFFENSIVE, "MainSquad", 10);
   main_sq_->add_setup(UnitTypes::Protoss_Dragoon, 10);
   main_sq_->set_buildup(true);
   main_sq_->set_required(true);
   squads_.push_back(main_sq_);
 
-  stealth_sq_ = std::make_shared<Squad>(2, Squad::SquadType::OFFENSIVE, "StealthSquad", 11);
+  stealth_sq_ = std::make_shared<Squad>(2, SquadType::OFFENSIVE, "StealthSquad", 11);
   stealth_sq_->set_required(false);
   stealth_sq_->set_buildup(true);
   squads_.push_back(stealth_sq_);

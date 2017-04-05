@@ -18,7 +18,7 @@ LurkerRush::LurkerRush()
   plan(UnitTypes::Zerg_Hydralisk_Den, 8);
   plan(TechTypes::Lurker_Aspect, 13);
 
-  main_sq_ = std::make_shared<Squad>(1, Squad::SquadType::OFFENSIVE, "MainSquad", 10);
+  main_sq_ = std::make_shared<Squad>(1, SquadType::OFFENSIVE, "MainSquad", 10);
   main_sq_->set_required(true);
   main_sq_->set_buildup(true);
   squads_.push_back(main_sq_);

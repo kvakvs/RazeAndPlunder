@@ -758,7 +758,7 @@ void Commander::debug_print_info() const {
 // static
 act::ActorId Commander::add_bunker_squad() {
   auto b_squad = act::spawn<Squad>(ActorFlavour::Squad,
-                                   Squad::SquadType::BUNKER, "Bunker", 5);
+                                   SquadType::BUNKER, "Bunker", 5);
   msg::squad::add_setup(b_squad, UnitTypes::Terran_Marine, 4);
   msg::commander::squad_created(b_squad);
 

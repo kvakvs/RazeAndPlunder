@@ -121,13 +121,13 @@ void TerranMain::on_enter_stage1() {
         c->build_plan_.add(UpgradeTypes::U_238_Shells, 30);
         c->build_plan_.add(UnitTypes::Terran_Supply_Depot, 31);
 
-        main_sq_ = Squad::spawn(Squad::SquadType::OFFENSIVE, "main1", 10);
+        main_sq_ = Squad::spawn(SquadType::OFFENSIVE, "main1", 10);
         msg::squad::add_setup(main_sq_, UnitTypes::Terran_Marine, 10);
         msg::squad::required(main_sq_, true);
         msg::squad::buildup(main_sq_, true);
         c->squads_.insert(main_sq_);
 
-        secondary_sq_ = Squad::spawn(Squad::SquadType::OFFENSIVE, "main2", 10);
+        secondary_sq_ = Squad::spawn(SquadType::OFFENSIVE, "main2", 10);
         msg::squad::required(secondary_sq_, false);
         msg::squad::buildup(secondary_sq_, true);
         c->squads_.insert(secondary_sq_);
@@ -141,12 +141,12 @@ void TerranMain::on_enter_stage1() {
         msg::squad::required(scout2_sq_, false);
         c->squads_.insert(scout2_sq_);
 
-        backup1_sq_ = Squad::spawn(Squad::SquadType::OFFENSIVE, "bckup1", 11);
+        backup1_sq_ = Squad::spawn(SquadType::OFFENSIVE, "bckup1", 11);
         msg::squad::required(backup1_sq_, false);
         msg::squad::buildup(backup1_sq_, true);
         c->squads_.insert(backup1_sq_);
 
-        backup2_sq_ = Squad::spawn(Squad::SquadType::OFFENSIVE, "bckup2", 12);
+        backup2_sq_ = Squad::spawn(SquadType::OFFENSIVE, "bckup2", 12);
         msg::squad::required(backup2_sq_, false);
         msg::squad::buildup(backup2_sq_, true);
         c->squads_.insert(backup2_sq_);
