@@ -5,6 +5,11 @@ cmake_minimum_required(VERSION 3.6)
 ##
 ##--- end config ---
 
+IF(CMAKE_CROSSCOMPILING)
+    INCLUDE(${CMAKE_TOOLCHAIN_FILE})
+ENDIF()
+
+
 SET(CMAKE_CXX_STANDARD 14)
 
 SET(RNP_VERSION 0.1)
@@ -47,13 +52,10 @@ ELSE ()
     SET(BWAPI_CUSTOM_COMPILE_FLAGS ${RNP_COMPILE_FLAGS} -fpermissive)
 ENDIF ()
 
-if (RNP_MSVC)
-    ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/deps/bwapi/CMake/BWAPI)
-    ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/deps/bwapi/CMake/Client)
-endif(RNP_MSVC)
+ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/deps/bwapi/CMake/BWAPI)
+ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/deps/bwapi/CMake/Client)
 
 ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/deps/rnp-actors)
-#ADD_SUBDIRECTORY(${CMAKE_SOURCE_DIR}/deps/spdlog)
 
 ##
 ## Bot Main Project
@@ -254,12 +256,6 @@ SET(SRC_SPDLOG
         ${SPDLOG_DIR}/details/spdlog_impl.h
         ${SPDLOG_DIR}/fmt/fmt.h
         ${SPDLOG_DIR}/fmt/ostr.h
-        #${SPDLOG_DIR}/fmt/bundled/format.cc
-        #${SPDLOG_DIR}/fmt/bundled/format.h
-        #${SPDLOG_DIR}/fmt/bundled/ostream.cc
-        #${SPDLOG_DIR}/fmt/bundled/ostream.h
-        #${SPDLOG_DIR}/fmt/bundled/posix.cc
-        #${SPDLOG_DIR}/fmt/bundled/posix.h
         ${SPDLOG_DIR}/fmt/bundled/time.h
         ${SPDLOG_DIR}/sinks/android_sink.h
         ${SPDLOG_DIR}/sinks/ansicolor_sink.h

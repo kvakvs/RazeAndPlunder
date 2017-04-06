@@ -5,6 +5,7 @@
 #include <memory>
 #include <functional>
 #include <set>
+#include <list>
 
 namespace act {
 
