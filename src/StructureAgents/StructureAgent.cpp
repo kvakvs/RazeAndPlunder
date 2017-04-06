@@ -7,6 +7,7 @@
 #include "Managers/ResourceManager.h"
 #include <iso646.h>
 #include "Glob.h"
+#include "Commander/RnpArmy.h"
 
 using namespace BWAPI;
 
@@ -116,7 +117,7 @@ void StructureAgent::tick() {
 
     if (rnp::upgrader()->check_upgrade(this)) return;
 
-    if (Constructor::is_terran()) {
+    if (rnp::is_terran()) {
       //Check addons here
       if (is_of_type(UnitTypes::Terran_Science_Facility)) {
         if (unit_->getAddon() == nullptr) {
@@ -204,7 +205,7 @@ bool StructureAgent::can_build_unit(UnitType type) const {
   }
 
   //3. Check if we need the unit in a squad
-  if (not rnp::commander()->is_unit_needed(type)) {
+  if (not rnp::army()->need_unit(type)) {
     return false;
   }
 
@@ -309,7 +310,7 @@ bool StructureAgent::can_morph_into(UnitType type) const {
 
 bool StructureAgent::can_evolve_unit(UnitType type) const {
   //1. Check if we need the unit in a squad
-  if (not rnp::commander()->is_unit_needed(type)) {
+  if (not rnp::army()->need_unit(type)) {
     return false;
   }
 

@@ -157,36 +157,36 @@ void AgentManager::on_drone_morphed(Unit unit) {
 //}
 
 void AgentManager::tick() {
-  rnp::profiler()->start("OnFrame_AgentManager");
-
-  //Start time
-  LARGE_INTEGER li;
-  QueryPerformanceFrequency(&li);
-  auto pc_freq = double(li.QuadPart) / 1000.0;
-  QueryPerformanceCounter(&li);
-  auto counter_start = li.QuadPart;
-  auto now = Broodwar->getFrameCount();
-
-  act::for_each_actor<BaseAgent>(
-    [this,now,counter_start,pc_freq](const BaseAgent* a) {
-      const auto FRAME_LIMIT = 83.0;
-      if (now - a->get_last_order_frame() > 30) {
-        //a->on_frame();
-        // Thinking is done with signal, to avoid growing message queue by
-        // sending repeated think commands, we set a flag to true instead
-        //act::signal(a->get_ac_id(), act::Signal::PeriodicThink);
-        const_cast<BaseAgent*>(a)->ac_tick();
-      }
-
-//      LARGE_INTEGER le;
-//      QueryPerformanceCounter(&le);
-//      auto elapsed = (le.QuadPart - counter_start) / pc_freq;
-//      if (elapsed >= FRAME_LIMIT) {
-//        std::cout << BOT_PREFIX_DEBUG "Frame limit exceeded " << FRAME_LIMIT << " ms\n";
-//        return; // note this return must break on_frame, not the inner lambda!
+//  rnp::profiler()->start("OnFrame_AgentManager");
+//
+//  //Start time
+//  LARGE_INTEGER li;
+//  QueryPerformanceFrequency(&li);
+//  auto pc_freq = double(li.QuadPart) / 1000.0;
+//  QueryPerformanceCounter(&li);
+//  auto counter_start = li.QuadPart;
+//  auto now = Broodwar->getFrameCount();
+//
+//  act::for_each_actor<BaseAgent>(
+//    [this,now,counter_start,pc_freq](const BaseAgent* a) {
+//      const auto FRAME_LIMIT = 83.0;
+//      if (now - a->get_last_order_frame() > 30) {
+//        //a->on_frame();
+//        // Thinking is done with signal, to avoid growing message queue by
+//        // sending repeated think commands, we set a flag to true instead
+//        //act::signal(a->get_ac_id(), act::Signal::PeriodicThink);
+//        const_cast<BaseAgent*>(a)->ac_tick();
 //      }
-    });
-  rnp::profiler()->end("OnFrame_AgentManager");
+//
+////      LARGE_INTEGER le;
+////      QueryPerformanceCounter(&le);
+////      auto elapsed = (le.QuadPart - counter_start) / pc_freq;
+////      if (elapsed >= FRAME_LIMIT) {
+////        std::cout << BOT_PREFIX_DEBUG "Frame limit exceeded " << FRAME_LIMIT << " ms\n";
+////        return; // note this return must break on_frame, not the inner lambda!
+////      }
+//    });
+//  rnp::profiler()->end("OnFrame_AgentManager");
 }
 
 size_t AgentManager::get_workers_count() const {

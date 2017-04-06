@@ -94,10 +94,15 @@ public:
   Actor(): ac_id_(), ac_msgs_(), ac_monitors_(), ac_sig_() {}
   virtual ~Actor();
 
+  //
+  // Stuff inherited by all actors and visible from them
+  //
+
   const ActorId& self() const {
     assert(ac_id_.is_valid());
     return ac_id_;
   }
+
   void set_ac_id(const ActorId& id) { ac_id_ = id; }
 
   // Return integer flavour of this actor, used for incoming message filtering
@@ -105,16 +110,30 @@ public:
 
   virtual void handle_message(Message *m) = 0;
 
-  // Internal tick for actors, calls virtual tick
-  void ac_tick() {
-    ac_handle_mailbox();
-    tick();
+  // Handler called when the actor exits/killed/done
+  virtual void ac_terminate() {}
+
+  void ac_accept_message(Message::Ptr&& m) {
+    ac_msgs_.push_back(std::move(m));
   }
 
   virtual void tick() = 0;
 
-  void ac_accept_message(Message::Ptr&& m) {
-    ac_msgs_.push_back(std::move(m));
+protected:
+  friend class Scheduler;
+  friend void signal(const ActorId& id, Signal sig);
+
+  //
+  // Stuff hidden from actors who inherit this class
+  //
+
+  void ac_handle_signals();
+
+  // Internal tick for actors, calls virtual tick
+  void ac_tick() {
+    ac_handle_mailbox();
+    ac_handle_signals();
+    tick();
   }
 
   void ac_monitor(const ActorId& id);
@@ -148,7 +167,6 @@ public:
     return result;
   }
 
-protected:
   // Called by handle_message only, if the message is not picked up
   void unhandled_message(Message *m) {
     assert(not "handled message");

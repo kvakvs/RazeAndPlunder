@@ -76,37 +76,6 @@ void add_member(const BaseAgent* unit, const Container& squads) {
 }
 
 //-----------------------------------------------------------------------------
-// Reply failed to add squad member, try again to another squad or later
-//class AddMember_Failed : public act::Message {
-//public:
-//  act::ActorId member_id_;
-//
-//  explicit AddMember_Failed(const act::ActorId& a): member_id_(a) {
-//  }
-//};
-//
-//inline void add_member_failed(const act::ActorId& dst,
-//                              const act::ActorId& member_id) {
-//  act::send_message<AddMember_Failed>(dst, member_id);
-//}
-
-//-----------------------------------------------------------------------------
-class AddSetup : public act::Message {
-public:
-  BWAPI::UnitType type_;
-  int count_;
-
-  AddSetup(const BWAPI::UnitType& type, int count)
-    : type_(type),
-      count_(count) {
-  }
-};
-
-inline void add_setup(const act::ActorId& dst, BWAPI::UnitType t, int c) {
-  act::send_message<AddSetup>(dst, t, c);
-}
-
-//-----------------------------------------------------------------------------
 class Required : public act::Message {
 public:
   bool value_;
@@ -117,45 +86,6 @@ public:
 
 static void required(const act::ActorId& dst, bool v) {
   act::send_message<Required>(dst, v);
-}
-
-//-----------------------------------------------------------------------------
-class Buildup : public act::Message {
-public:
-  bool value_;
-
-  explicit Buildup(int p) : value_(p) {
-  }
-};
-
-inline void buildup(const act::ActorId& dst, bool v) {
-  act::send_message<Buildup>(dst, v);
-}
-
-//-----------------------------------------------------------------------------
-class Priority : public act::Message {
-public:
-  int value_;
-
-  explicit Priority(int p) : value_(p) {
-  }
-};
-
-inline void priority(const act::ActorId& dst, int v) {
-  act::send_message<Priority>(dst, v);
-}
-
-//-----------------------------------------------------------------------------
-class ActivePriority : public act::Message {
-public:
-  int value_;
-
-  explicit ActivePriority(int p) : value_(p) {
-  }
-};
-
-inline void active_priority(const act::ActorId& dst, int v) {
-  act::send_message<ActivePriority>(dst, v);
 }
 
 //-----------------------------------------------------------------------------
@@ -191,26 +121,5 @@ class Disband : public act::Message {
 inline void disband(const act::ActorId& dst) {
   act::send_message<Disband>(dst);
 }
-
-//-----------------------------------------------------------------------------
-class ForceActive : public act::Message {
-};
-
-static void force_active(const act::ActorId& dst) {
-  act::send_message<ForceActive>(dst);
-}
-
-//-----------------------------------------------------------------------------
-//class UpdateArrivedFrame : public act::Message {
-//public:
-//  int frame_;
-//
-//  explicit UpdateArrivedFrame(int t) : frame_(t) {
-//  }
-//};
-//
-//inline void update_arrived_frame(const act::ActorId& dst, int c) {
-//  act::send_message<UpdateArrivedFrame>(dst, c);
-//}
 
 } // ns msg::squad

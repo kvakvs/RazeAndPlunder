@@ -51,7 +51,7 @@ private:
 
 private:
   // NYI bool chokePointFortified(BWAPI::TilePosition center);
-  act::ActorId::Vector sort_squad_list();
+//  act::ActorId::Vector sort_squad_list();
 
   static BWAPI::TilePosition find_defense_pos(const BWEM::ChokePoint* choke);
 
@@ -112,9 +112,6 @@ public:
 
   // Updates the goals for all squads. 
   void update_squad_goals();
-
-  // Checks if the specified unittype needs to be built.
-  bool is_unit_needed(BWAPI::UnitType type) const;
 
   // Removes a squad. 
   void remove_squad(const act::ActorId& id);

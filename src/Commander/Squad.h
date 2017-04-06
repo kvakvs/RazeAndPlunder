@@ -1,6 +1,5 @@
 #pragma once
 
-#include "UnitSetup.h"
 #include "Pathfinding/Pathfinder.h"
 #include <memory>
 #include "RnpConst.h"
@@ -39,7 +38,6 @@ public:
 protected:
   act::ActorId::Set members_;
 
-  std::vector<UnitSetup> setup_;
   BWAPI::UnitType morphs_ = BWAPI::UnitTypes::Unknown;
 
   //
@@ -52,12 +50,8 @@ protected:
   int arrived_frame_ = -1;
   int bunker_id_ = -1;
 
-  bool active_ = false;
   SquadType type_ = SquadType::UNDEFINED;
-  int priority_ = 0;
-  int active_priority_ = 0;
   MoveType move_type_ = MoveType::AIR;
-  bool required_ = false;
   std::string name_;
   int goal_set_frame_ = 0;
   bool buildup_ = false;
@@ -100,61 +94,6 @@ public:
     morphs_ = type;
   }
 
-  // Checks if this Squad is required to be active before an attack is launched. 
-  bool is_required_for_attack() const {
-    return required_;
-  }
-
-  // Sets if this Squad is required or not. 
-  void set_required(bool required) {
-    required_ = required;
-  }
-
-  // Sets if the squad is during buildup. Buildup means it wont
-  // be set to Active. 
-  void set_buildup(bool buildup) {
-    buildup_ = buildup;
-  }
-
-  // Returns the priority for this Squad. Prio 1 is the highest. 
-  int get_priority() const {
-    return priority_;
-  }
-
-  // Sets the priority for this Squad. Prio 1 is the highest. 
-  void set_priority(int mPriority) {
-    priority_ = mPriority;
-  }
-
-  // Sets the priority this Squad has once it has been active. Prio 1 is the highest. 
-  void set_active_priority(int mPriority) {
-    active_priority_ = mPriority;
-  }
-
-  // Adds a setup for this Squad. Setup is a type and amount of units
-  // that shall be in this Squad. 
-  void add_setup(BWAPI::UnitType type, int no);
-
-  // Removes a setup for this squad. 
-  void remove_setup(BWAPI::UnitType type, int no);
-
-  /** Returns true if this Squad is active, or false if not.
-   * A Squad is active when it first has been filled with agents.
-   * A Squad with destroyed units are still considered Active. */
-  virtual bool is_active() const {
-    return active_;
-  }
-
-  // Forces the squad to be active. 
-  void force_active() {
-    active_priority_ = priority_;
-    active_ = true;
-  }
-
-  // Returns true if this Squad is full, i.e. it has all the units
-  // it shall have. 
-  bool is_full() const;
-
   // Returns the current size (i.e. number of alive agents in the squad).
   size_t size() const {
     // Assumed that all listed squad members are alive, if they die we delete them
@@ -165,13 +104,10 @@ public:
     return members_.empty();
   }
 
-  // Returns the maximum size of this squad (i.e. size of a full squad).
-  size_t get_max_size();
-
   // Called each update to issue orders. 
   void tick() override final;
-  virtual void tick_inactive();
-  virtual void tick_active();
+  virtual void tick_inactive() {}
+  virtual void tick_active() {}
 
   // Sets the goal for this Squad. 
   void set_goal(BWAPI::TilePosition m_goal);
@@ -184,9 +120,6 @@ public:
 
   // Returns true if this Squad is under attack. 
   bool is_under_attack() const;
-
-  // Check if this Squad need units of the specified type. 
-  bool need_unit(BWAPI::UnitType type) const;
 
   // Adds an agent to this Squad. 
   bool add_member(const act::ActorId& agent);
@@ -278,9 +211,6 @@ public:
   // if agents currently in it. 
   int get_squad_size() const;
 
-  // Returns the total number of units in the squad when it is full. 
-  int get_total_units() const;
-
   // Returns the current strength of the Squad, i.e.
   // the sum of the destroyScore() for all Squad members. 
   int get_strength() const;
@@ -290,7 +220,7 @@ public:
 
   // Returns true if this Squad has the number of the specified
   // unit types in it. 
-  bool has_units(BWAPI::UnitType type, size_t no);
+//  bool has_units(BWAPI::UnitType type, size_t no);
 
   std::string string() const {
     return "Sq" + self().string() + " " + name_;
@@ -317,5 +247,5 @@ public:
   void handle_message(act::Message* incoming) override;
 
 protected:
-  void fill_with_free_workers();
+//  void fill_with_free_workers();
 };

@@ -76,7 +76,7 @@ void Constructor::tick() {
   ProfilerAuto pa(*rnp::profiler(), "OnFrame_Constructor");
 
   //Check if we need more supply buildings
-  if (is_terran() || is_protoss()) {
+  if (rnp::is_terran() || rnp::is_protoss()) {
     if (shall_build_supply()) {
       auto supply_provider(Broodwar->self()->getRace().getSupplyProvider());
       plan_.push_front(supply_provider);
@@ -174,7 +174,7 @@ bool Constructor::shall_build_supply() {
 
 bool Constructor::supply_being_built() {
   //Zerg
-  if (is_zerg()) {
+  if (rnp::is_zerg()) {
     if (get_in_production_count(UnitTypes::Zerg_Overlord) > 0) {
       return true;
     }
@@ -314,7 +314,7 @@ bool Constructor::execute_order(const UnitType& type) {
       return true;
     }
   }
-  if (is_zerg()) {
+  if (rnp::is_zerg()) {
     std::pair<UnitType, int> builder = type.whatBuilds();
     if (builder.first.getID() != UnitTypes::Zerg_Drone.getID()) {
       //Needs to be morphed
@@ -342,18 +342,6 @@ bool Constructor::execute_order(const UnitType& type) {
   }
 
   return false;
-}
-
-bool Constructor::is_terran() {
-  return Broodwar->self()->getRace().getID() == Races::Terran.getID();
-}
-
-bool Constructor::is_protoss() {
-  return Broodwar->self()->getRace().getID() == Races::Protoss.getID();
-}
-
-bool Constructor::is_zerg() {
-  return Broodwar->self()->getRace().getID() == Races::Zerg.getID();
 }
 
 void Constructor::handle_message(act::Message* incoming) {
@@ -434,7 +422,7 @@ void Constructor::handle_no_buildspot_found(UnitType to_build) {
   }
 
   if (not remove_order) {
-    if (is_protoss() && not supply_being_built()) {
+    if (rnp::is_protoss() && not supply_being_built()) {
       //Insert a pylon to increase PSI coverage
       if (not is_next_of_type(UnitTypes::Protoss_Pylon)) {
         rnp::log()->trace(MODULE_PREFIX "pylon inserted");
@@ -548,7 +536,7 @@ size_t Constructor::get_in_production_count(UnitType type) const {
           }
       });
 
-  if (is_zerg()) {
+  if (rnp::is_zerg()) {
     for (auto& u : Broodwar->self()->getUnits()) {
       if (u->exists()) {
         if (u->getType().getID() == UnitTypes::Zerg_Egg.getID()) {

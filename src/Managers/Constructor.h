@@ -165,15 +165,6 @@ public:
   // Morphs a Zerg drone to a building. 
   bool zerg_drone_morph(BWAPI::UnitType target, BWAPI::UnitType evolved);
 
-  // Returns true if the player is Terran. 
-  static bool is_terran();
-
-  // Returns true if the player is Protoss. 
-  static bool is_protoss();
-
-  // Returns true if the player is Zerg. 
-  static bool is_zerg();
-
   //
   // Actor things
   //

@@ -52,6 +52,11 @@ void Scheduler::tick() {
       actor->ac_tick();
     }
   }
+
+  for (auto& r : actors_removed_) {
+    actors_.erase(r);
+    actors_suspended_.erase(r);
+  }
 }
 
 Actor* Scheduler::find_actor(const ActorId& id) {

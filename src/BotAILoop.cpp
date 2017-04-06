@@ -261,7 +261,7 @@ void BotAILoop::draw_terrain_data() {
   }
 
   //locate zerg eggs and draw progress bars
-  if (Constructor::is_zerg()) {
+  if (rnp::is_zerg()) {
     for (auto& u : Broodwar->getAllUnits()) {
       if (u->getType().getID() == UnitTypes::Zerg_Egg.getID() 
           || u->getType().getID() == UnitTypes::Zerg_Lurker_Egg.getID()

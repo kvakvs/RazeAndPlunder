@@ -1,20 +1,19 @@
 #include "RnpBot.h"
+#include "Commander/Commander.h"
+#include "Commander/RnpArmy.h"
+#include "Commander/StrategySelector.h"
+#include "Glob.h"
+#include "Influencemap/MapManager.h"
+#include "Managers/AgentManager.h"
+#include "Managers/BuildingPlacer.h"
 #include "Managers/Constructor.h"
 #include "Managers/ExplorationManager.h"
-#include "Influencemap/MapManager.h"
-#include "Managers/BuildingPlacer.h"
 #include "Managers/Upgrader.h"
 #include "Managers/ResourceManager.h"
-#include "Utils/Profiler.h"
 #include "Pathfinding/NavigationAgent.h"
-#include "Utils/Config.h"
-#include "Commander/Commander.h"
-#include "Commander/StrategySelector.h"
-
-#include "Managers/AgentManager.h"
-
-#include "Glob.h"
 #include "RnpConst.h"
+#include "Utils/Profiler.h"
+#include "Utils/Config.h"
 
 using namespace BWAPI;
 
@@ -22,7 +21,8 @@ RnpBot* RnpBot::singleton_ = nullptr;
 
 RnpBot::RnpBot()
     : BWAPI::AIModule(), bwem_(&BWEM::Map::Instance())
-    , commander_id_(), agent_manager_id_(), exploration_id_(), constructor_id_()
+    , commander_id_(), army_id_(), agent_manager_id_()
+    , exploration_id_(), constructor_id_()
     , building_placer_(), map_manager_(), navigation_(), pathfinder_()
     , profiler_(), resource_manager_(), statistics_(), strategy_selector_()
     , upgrader_()
@@ -45,6 +45,9 @@ void RnpBot::init_singletons() {
 
   commander_ptr_ = act::spawn_get_ptr<Commander>(ActorFlavour::Singleton);
   commander_id_ = commander_ptr_->self();
+
+  army_ptr_ = act::spawn_get_ptr<rnp::Army>(ActorFlavour::Singleton);
+  army_id_ = army_ptr_->self();
 
   strategy_ptr_ = strategy_selector_->spawn_strategy_actor();
   strategy_id_ = strategy_ptr_->self();
@@ -361,7 +364,7 @@ void RnpBot::onUnitMorph(BWAPI::Unit unit) {
   if (Broodwar->isReplay() || Broodwar->getFrameCount() <= 1) return;
 
   if (rnp::is_my_unit(unit)) {
-    if (Constructor::is_zerg()) {
+    if (rnp::is_zerg()) {
       ai_loop_.on_unit_morphed(unit);
     }
     else {

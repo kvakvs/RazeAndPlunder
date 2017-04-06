@@ -167,7 +167,7 @@ bool BuildingPlacer::can_build(UnitType to_build, TilePosition build_spot) const
   }*/
 
   //Step 5: If Protoss, check PSI coverage
-  if (Constructor::is_protoss()) {
+  if (rnp::is_protoss()) {
     if (to_build.requiresPsi()) {
       if (not Broodwar->hasPower(build_spot, to_build)) {
         return false;
@@ -188,7 +188,7 @@ bool BuildingPlacer::can_build(UnitType to_build, TilePosition build_spot) const
   }
 
   //Step 6: If Zerg, check creep
-  if (Constructor::is_zerg()) {
+  if (rnp::is_zerg()) {
     if (to_build.requiresCreep()) {
       for (int x = build_spot.x; x < build_spot.x + to_build.tileWidth(); x++) {
         for (int y = build_spot.y; y < build_spot.y + to_build.tileHeight(); y++) {
@@ -309,13 +309,13 @@ bool BuildingPlacer::is_defense_building(UnitType toBuild) {
 
 
 bool BuildingPlacer::base_under_construction(const BaseAgent* base) {
-  if (Constructor::is_terran()) {
+  if (rnp::is_terran()) {
     return base->get_unit()->isBeingConstructed();
   }
-  if (Constructor::is_protoss()) {
+  if (rnp::is_protoss()) {
     return base->get_unit()->isBeingConstructed();
   }
-  if (Constructor::is_zerg()) {
+  if (rnp::is_zerg()) {
     if (base->is_of_type(UnitTypes::Zerg_Hatchery)) {
       return base->get_unit()->isBeingConstructed();
     }

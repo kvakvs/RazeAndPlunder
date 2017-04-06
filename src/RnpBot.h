@@ -14,7 +14,13 @@ class BotTournamentModule : public BWAPI::TournamentModule {
   virtual void onFirstAdvertisement();
 };
 
-// singletons forward def
+//
+// Singletons forward definitions
+//
+namespace rnp {
+  class Army;
+} // rnp
+
 class AgentManager;
 class BuildingPlacer;
 class Commander;
@@ -55,6 +61,9 @@ public:
 
   const Commander* commander_ptr_ = nullptr;
   act::ActorId commander_id_;
+
+  const rnp::Army* army_ptr_ = nullptr;
+  act::ActorId army_id_;
 
   const CommanderStrategy* strategy_ptr_ = nullptr;
   act::ActorId strategy_id_;

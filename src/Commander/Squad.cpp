@@ -1,77 +1,25 @@
-#include "Squad.h"
-#include "UnitAgents/UnitAgent.h"
-#include "Managers/ExplorationManager.h"
-#include "Influencemap/MapManager.h"
 #include "Commander/Commander.h"
-#include "Managers/Constructor.h"
-#include "Pathfinding/Pathfinder.h"
-#include "Managers/AgentManager.h"
-#include "Glob.h"
+#include "Commander/UnitSetup.h"
 #include "Commander/SquadMsg.h"
+#include "Glob.h"
+#include "Influencemap/MapManager.h"
+#include "Managers/Constructor.h"
+#include "Managers/ExplorationManager.h"
+#include "Pathfinding/Pathfinder.h"
+#include "Squad.h"
 
 using namespace BWAPI;
 #define MODULE_PREFIX "(squad) "
 
 Squad::Squad(SquadType m_type, std::string m_name, int m_priority)
 : FsmBaseClass(SquadState::NOT_SET)
-, members_(), setup_(), goal_(), path_(), path_iter_()
+, members_(), goal_(), path_(), path_iter_()
 , name_("unnamed")
 {
   type_ = m_type;
   name_ = m_name;
-  active_priority_ = priority_ = m_priority;
+//  active_priority_ = priority_ = m_priority;
   goal_ = rnp::make_bad_position();
-}
-
-size_t Squad::get_max_size() {
-  size_t count = 0;
-  for (size_t i = 0; i < setup_.size(); i++) {
-    count += setup_[i].wanted_count_;
-  }
-  return count;
-}
-
-void Squad::add_setup(UnitType type, int no) {
-  rnp::log()->debug(MODULE_PREFIX "{}: add_setup {} x{}", 
-                    this->string(), type.toString(), no);
-
-  //First, check if we have the setup already
-  for (auto& setup: setup_) {
-    if (setup.type_.getID() == type.getID()) {
-      //Found, increase the amount
-      setup.wanted_count_ += no;
-      return;
-    }
-  }
-
-  //Not found, add as new
-  UnitSetup us;
-  us.type_ = type;
-  us.wanted_count_ = no;
-  us.current_count_ = 0;
-  setup_.push_back(us);
-
-  if (not type.isFlyer()) {
-    move_type_ = MoveType::GROUND;
-  }
-}
-
-void Squad::remove_setup(UnitType type, int no) {
-  for (auto& setup: setup_) {
-    if (setup.type_.getID() == type.getID()) {
-      //Found, reduce the amount
-      setup.wanted_count_ -= no;
-      if (setup.wanted_count_ < 0) {
-        setup.wanted_count_ = 0;
-      }
-      
-      int to_remove = setup.current_count_ - setup.wanted_count_;
-      for (int j = 0; j < to_remove; j++) {
-        remove_member(setup.type_);
-      }
-      return;
-    }
-  }
 }
 
 void Squad::debug_show_goal() const {
@@ -87,28 +35,10 @@ void Squad::debug_show_goal() const {
 }
 
 void Squad::tick() {
-  if (active_) {
-    tick_active();
-  }
-  else {
-    tick_inactive();
-  }
+  tick_active();
 }
 
-void Squad::tick_inactive() {
-  if (is_full() && not buildup_) {
-    active_ = true;
-  }
-}
-
-void Squad::tick_active() {
-  if (active_priority_ != priority_) {
-    priority_ = active_priority_;
-  }
-
-  fill_with_free_workers();
-}
-
+/*
 void Squad::fill_with_free_workers() {
   //Check if we need workers in the squad
   auto start_loc = Broodwar->self()->getStartLocation();
@@ -127,6 +57,7 @@ void Squad::fill_with_free_workers() {
     }
   }
 }
+*/
 
 bool Squad::is_attacking() const {
   if (is_explorer_squad()) return false;
@@ -152,46 +83,10 @@ bool Squad::is_under_attack() const {
   return is_attacking();
 }
 
-bool Squad::need_unit(UnitType type) const {
-  //1. Check if prio is set to Inactive squad.
-  if (priority_ >= 1000) {
-    return false;
-  }
-
-  int no_created = 1;
-  if (Constructor::is_zerg()) {
-    if (type.isTwoUnitsInOneEgg()) {
-      no_created = 2;
-    }
-  }
-
-  //2. Check setup
-  for (size_t i = 0; i < setup_.size(); i++) {
-    if (setup_[i].equals(type)) {
-      //Found a matching setup, see if there is room
-      if (setup_[i].current_count_
-        + rnp::constructor()->get_in_production_count(type) 
-        + no_created <= setup_[i].wanted_count_) 
-      {
-        return true;
-      }
-    }
-  }
-
-  return false;
-}
-
 bool Squad::add_member(const act::ActorId& agent_ac_id) {
   auto agent = act::whereis<BaseAgent>(agent_ac_id);
   if (not agent) {
     rnp::log()->error(MODULE_PREFIX "{0} addm: not exists {1}", 
-                      string(), agent_ac_id.string());
-    return false;
-  }
-
-  if (priority_ >= 1000) {
-    //Check if prio is above Inactive squad.
-    rnp::log()->error(MODULE_PREFIX "{0} addm: prio greater than inactive {1}",
                       string(), agent_ac_id.string());
     return false;
   }
@@ -203,8 +98,11 @@ bool Squad::add_member(const act::ActorId& agent_ac_id) {
     remove_member(agent);
   }
 
+  members_.insert(agent_ac_id);
+  msg::unit::joined_squad(agent->self(), this->self(), goal_);
+
   //Step 2. Check if we have room for this type of agent.
-  for (size_t i = 0; i < setup_.size(); i++) {
+  /*  for (size_t i = 0; i < setup_.size(); i++) {
     if (setup_[i].equals(agent->unit_type())) {
       //Found a matching setup, see if there is room
       if (setup_[i].current_count_ < setup_[i].wanted_count_) {
@@ -219,12 +117,13 @@ bool Squad::add_member(const act::ActorId& agent_ac_id) {
         return true;
       }
     }
-  }
+  }*/
 
   return false;
 }
 
 void Squad::debug_print_info() const {
+/*
   int sx = 440;
   int sy = 30;
   int w = 180;
@@ -286,72 +185,65 @@ void Squad::debug_print_info() const {
   }
   Broodwar->drawLineScreen(sx, sy + 119 + 15 * no, 
                            sx + w, sy + 119 + 15 * no, Colors::Orange);
+*/
 }
 
-bool Squad::is_full() const {
-  if (setup_.empty()) return false;
-
-  //1. Check setup
-  auto all_full = std::all_of(
-    setup_.begin(), setup_.end(),
-    [](const UnitSetup& s) {
-      return s.current_count_ >= size_t(s.wanted_count_ * 0.85f);
-    });
-  if (not all_full) { return false; }
-
-  //2. Check that all units are alive and ready
-  try {
-    auto all_alive = std::all_of(
-      members_.begin(), members_.end(),
-      [](const act::ActorId& a_id) {
-        auto a = act::whereis<BaseAgent>(a_id);
-        return a->is_alive() && a->get_unit()
-            && not a->get_unit()->isBeingConstructed();
-      });
-    if (not all_alive) { return false; }
-  }
-  catch (std::exception ex) {
-    rnp::log()->error(MODULE_PREFIX "exception {}", ex.what());
-    return false;
-  }
-
-  //3. Check if some morphing is needed
-  if (morphs_.getID() != UnitTypes::Unknown.getID()) {
-    for (auto& actor_id : members_) {
-      auto actor = act::whereis<BaseAgent>(actor_id);
-      if (not actor) continue;
-
-      if (morphs_.getID() == UnitTypes::Zerg_Lurker.getID() 
-        && actor->is_of_type(UnitTypes::Zerg_Hydralisk)) {
-        return false;
-      }
-      if (morphs_.getID() == UnitTypes::Zerg_Devourer.getID() 
-        && actor->is_of_type(UnitTypes::Zerg_Mutalisk)) {
-        return false;
-      }
-      if (morphs_.getID() == UnitTypes::Zerg_Guardian.getID() 
-        && actor->is_of_type(UnitTypes::Zerg_Mutalisk)) {
-        return false;
-      }
-    }
-  }
-
-  return true;
-}
+//bool Squad::is_full() const {
+//  if (setup_.empty()) return false;
+//
+//  //1. Check setup
+//  auto all_full = std::all_of(
+//    setup_.begin(), setup_.end(),
+//    [](const UnitSetup& s) {
+//      return s.current_count_ >= size_t(s.wanted_count_ * 0.85f);
+//    });
+//  if (not all_full) { return false; }
+//
+//  //2. Check that all units are alive and ready
+//  try {
+//    auto all_alive = std::all_of(
+//      members_.begin(), members_.end(),
+//      [](const act::ActorId& a_id) {
+//        auto a = act::whereis<BaseAgent>(a_id);
+//        return a->is_alive() && a->get_unit()
+//            && not a->get_unit()->isBeingConstructed();
+//      });
+//    if (not all_alive) { return false; }
+//  }
+//  catch (std::exception ex) {
+//    rnp::log()->error(MODULE_PREFIX "exception {}", ex.what());
+//    return false;
+//  }
+//
+//  //3. Check if some morphing is needed
+//  if (morphs_.getID() != UnitTypes::Unknown.getID()) {
+//    for (auto& actor_id : members_) {
+//      auto actor = act::whereis<BaseAgent>(actor_id);
+//      if (not actor) continue;
+//
+//      if (morphs_.getID() == UnitTypes::Zerg_Lurker.getID() 
+//        && actor->is_of_type(UnitTypes::Zerg_Hydralisk)) {
+//        return false;
+//      }
+//      if (morphs_.getID() == UnitTypes::Zerg_Devourer.getID() 
+//        && actor->is_of_type(UnitTypes::Zerg_Mutalisk)) {
+//        return false;
+//      }
+//      if (morphs_.getID() == UnitTypes::Zerg_Guardian.getID() 
+//        && actor->is_of_type(UnitTypes::Zerg_Mutalisk)) {
+//        return false;
+//      }
+//    }
+//  }
+//
+//  return true;
+//}
 
 void Squad::remove_member(const BaseAgent* agent) {
   //Step 1. Remove the agent instance
   auto& agent_id = agent->self();
   msg::unit::left_squad(agent_id, self());
   members_.erase(agent_id);
-
-  //Step 2. Update the setup list
-  for (size_t i = 0; i < setup_.size(); i++) {
-    if (setup_[i].equals(agent->unit_type())) {
-      setup_[i].current_count_--;
-
-    }
-  }
 
   // Step 3. If Explorer, set destination as explored (to avoid being killed 
   // at the same place over and over again).
@@ -365,28 +257,20 @@ void Squad::remove_member(const BaseAgent* agent) {
   }
 
   //See if squad should be set to inactive (due to too many dead units)
-  if (active_) {
-    size_t alive_count = 0;
-    act::for_each_in<BaseAgent>(members_,
-                                [&alive_count](const BaseAgent* actor) {
-                                  if (actor->is_alive()) {
-                                    alive_count++;
-                                  }
-                                });
+  size_t alive_count = 0;
+  act::for_each_in<BaseAgent>(members_,
+                              [&alive_count](const BaseAgent* actor) {
+                                if (actor->is_alive()) {
+                                  alive_count++;
+                                }
+                              });
 
-    if (alive_count <= get_max_size() / 10) {
-      active_ = false;
-    }
+  if (alive_count == 0) {
+    act::signal(self(), act::Signal::Kill); // we are done
   }
 }
 
 void Squad::disband() {
-  //Remove setup
-  for (int i = 0; i < (int)setup_.size(); i++) {
-    setup_[i].wanted_count_ = 0;
-    setup_[i].current_count_ = 0;
-  }
-
   //Remove agents (if not Bunker Squad)
   if (not this->is_bunker_defend_squad()) {
     for (auto& agent_id : members_) {
@@ -394,6 +278,7 @@ void Squad::disband() {
     }
   }
   members_.clear();
+  act::signal(self(), act::Signal::Kill); // we are done
 }
 
 act::ActorId Squad::remove_member(UnitType type) {
@@ -434,15 +319,11 @@ void Squad::attack(TilePosition m_goal) {
 
   if (fsm_state() != SquadState::ATTACK) {
     if (not is_under_attack()) {
-      if (is_active()) {
-        fsm_set_state(SquadState::ATTACK);
-      }
+      fsm_set_state(SquadState::ATTACK);
     }
   }
 
-  if (is_active()) {
-    set_goal(m_goal);
-  }
+  set_goal(m_goal);
 }
 
 void Squad::assist(TilePosition m_goal) {
@@ -633,16 +514,6 @@ int Squad::get_squad_size() const {
   return no;
 }
 
-int Squad::get_total_units() const {
-  int tot = 0;
-
-  for (int i = 0; i < (int)setup_.size(); i++) {
-    tot += setup_[i].wanted_count_;
-  }
-
-  return tot;
-}
-
 int Squad::get_strength() const {
   int strength = 0;
 
@@ -697,17 +568,17 @@ bool Squad::is_air() const {
   return move_type_ == MoveType::AIR;
 }
 
-bool Squad::has_units(UnitType type, size_t no) {
-  for (size_t i = 0; i < setup_.size(); i++) {
-    if (setup_[i].equals(type)) {
-      if (setup_[i].current_count_ >= no) {
-        //I have these units
-        return true;
-      }
-    }
-  }
-  return false;
-}
+//bool Squad::has_units(UnitType type, size_t no) {
+//  for (size_t i = 0; i < setup_.size(); i++) {
+//    if (setup_[i].equals(type)) {
+//      if (setup_[i].current_count_ >= no) {
+//        //I have these units
+//        return true;
+//      }
+//    }
+//  }
+//  return false;
+//}
 
 void Squad::on_squad_member_stuck(const act::ActorId& who_id) {
   auto who = act::whereis<BaseAgent>(who_id);
@@ -739,23 +610,8 @@ void Squad::handle_message(act::Message* incoming) {
   else if (auto sdef = dynamic_cast<msg::squad::Defend*>(incoming)) {
     defend(sdef->spot_);
   }
-  else if (auto adds = dynamic_cast<msg::squad::AddSetup*>(incoming)) {
-    add_setup(adds->type_, adds->count_);
-  }
   else if (auto req = dynamic_cast<msg::squad::Required*>(incoming)) {
     set_required(req->value_);
-  }
-  else if (dynamic_cast<msg::squad::ForceActive*>(incoming)) {
-    force_active();
-  }
-  else if (auto bup = dynamic_cast<msg::squad::Buildup*>(incoming)) {
-    set_buildup(bup->value_);
-  }
-  else if (auto pri = dynamic_cast<msg::squad::Priority*>(incoming)) {
-    set_priority(pri->value_);
-  }
-  else if (auto apri = dynamic_cast<msg::squad::ActivePriority*>(incoming)) {
-    set_active_priority(apri->value_);
   }
   else if (auto assi = dynamic_cast<msg::squad::Assist*>(incoming)) {
     assist(assi->loc_);

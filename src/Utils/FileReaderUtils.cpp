@@ -22,7 +22,7 @@ FileReaderUtils::FileReaderUtils() {
 std::string FileReaderUtils::getFilename(std::string subpath) {
   std::string filename = "N/A";
 
-  if (Constructor::is_protoss()) {
+  if (rnp::is_protoss()) {
     if (ExplorationManager::enemy_is_protoss()) {
       filename = "PvP.txt";
       if (not fileExists(subpath, filename)) filename = "PvX.txt";
@@ -39,7 +39,7 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
       filename = "PvX.txt";
     }
   }
-  else if (Constructor::is_terran()) {
+  else if (rnp::is_terran()) {
     if (ExplorationManager::enemy_is_protoss()) {
       filename = "TvP.txt";
       if (not fileExists(subpath, filename)) filename = "TvX.txt";
@@ -56,7 +56,7 @@ std::string FileReaderUtils::getFilename(std::string subpath) {
       filename = "TvX.txt";
     }
   }
-  else if (Constructor::is_zerg()) {
+  else if (rnp::is_zerg()) {
     if (ExplorationManager::enemy_is_protoss()) {
       filename = "ZvP.txt";
       if (not fileExists(subpath, filename)) filename = "ZvX.txt";

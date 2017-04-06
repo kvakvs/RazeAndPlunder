@@ -14,27 +14,27 @@ ExplorationSquad::ExplorationSquad(std::string m_name, int m_priority)
   delay_respawn_.start(0);
 }
 
-void ExplorationSquad::tick_inactive() {
-  fill_with_free_workers();
-  active_ |= is_full();
-
-  if (not members_.empty() && not active_) {
-    //Activate as soon as 1 unit has been built
-    active_ = true;
-  }
-}
+//void ExplorationSquad::tick_inactive() {
+//  //fill_with_free_workers();
+//  active_ |= is_full();
+//
+//  if (not members_.empty() && not active_) {
+//    //Activate as soon as 1 unit has been built
+//    active_ = true;
+//  }
+//}
 
 void ExplorationSquad::tick_active() {
   //All units dead, go back to inactive
-  if (members_.empty()) {
-    active_ = false;
-    //delay_respawn_.start(rnp::seconds(20)); // no instant borrow worker, wait
-    return;
-  }
-
-  if (active_priority_ != priority_) {
-    priority_ = active_priority_;
-  }
+//  if (members_.empty()) {
+//    active_ = false;
+//    //delay_respawn_.start(rnp::seconds(20)); // no instant borrow worker, wait
+//    return;
+//  }
+//
+//  if (active_priority_ != priority_) {
+//    priority_ = active_priority_;
+//  }
 
   if (m_next_explore_.value_up_to_date(rnp::seconds(10))) {
     // do nothing if the value is too fresh

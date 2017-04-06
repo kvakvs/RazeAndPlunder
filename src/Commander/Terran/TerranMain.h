@@ -34,13 +34,6 @@ public:
 private:
   using FsmBaseClass = rnp::FiniteStateMachine<TerranStrategyState>;
 
-  act::ActorId main_sq_;
-  act::ActorId secondary_sq_;
-  act::ActorId backup1_sq_;
-  act::ActorId backup2_sq_;
-  act::ActorId rush_sq_;
-  act::ActorId scout2_sq_;
-
 public:
   TerranMain();
   ~TerranMain();

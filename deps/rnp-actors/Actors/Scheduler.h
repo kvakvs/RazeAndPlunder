@@ -19,8 +19,12 @@ class Scheduler {
   using ActorPtr = std::unique_ptr<Actor>;
   using ActorMap = std::map<ActorId, ActorPtr>;
   using ActorList = std::list<Actor*>;
-  ActorMap actors_; // running
-  ActorMap actors_suspended_; // sleeping
+  // Running actors
+  ActorMap actors_; 
+  // Sleeping (not running but accessible)
+  ActorMap actors_suspended_; 
+  // Actors pending to be deleted
+  std::list<ActorId> actors_removed_;
 
   static std::unique_ptr<Scheduler> singleton_;
   uint32_t next_actor_id_ = 0;
@@ -73,6 +77,10 @@ public:
     suspend(id, 0);
   }
   void schedule(const ActorId& id);
+
+  void remove_actor(const ActorId& id) {
+    actors_removed_.push_back(id);
+  }
 };
 
 inline Scheduler& sched() {

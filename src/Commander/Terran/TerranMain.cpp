@@ -1,9 +1,10 @@
 #include "TerranMain.h"
-#include "Managers/AgentManager.h"
-#include "../ExplorationSquad.h"
-#include "../RushSquad.h"
-#include "Glob.h"
+#include "Commander/ExplorationSquad.h"
+#include "Commander/RnpArmy.h"
+#include "Commander/RushSquad.h"
 #include "Commander/SquadMsg.h"
+#include "Glob.h"
+#include "Managers/AgentManager.h"
 #include "Utils/Profiler.h"
 
 #define MODULE_PREFIX "(terran-main) "
@@ -24,8 +25,6 @@ size_t TerranMain::adjust_workers_count(size_t workers_now) const {
 
 TerranMain::TerranMain()
 : FsmBaseClass(TerranStrategyState::NoStage)
-, main_sq_(), secondary_sq_(), backup1_sq_(), backup2_sq_()
-, rush_sq_(), scout2_sq_()
 {
 }
 
@@ -58,9 +57,10 @@ void TerranMain::tick() {
     }
     break;
   case TerranStrategyState::Stage4:
-    if (rnp::commander()->get_squad(main_sq_)->is_active()) {
+    //if (rnp::commander()->get_squad(main_sq_)->is_active()) {
+    rnp::log()->warn(MODULE_PREFIX "skip stage4, TODO check army is ready");
       fsm_set_state(TerranStrategyState::Stage5);
-    }
+    //}
     break;
   case TerranStrategyState::Stage5: {
     auto ncomcenters = rnp::agent_manager()->get_units_of_type_count(
@@ -121,44 +121,18 @@ void TerranMain::on_enter_stage1() {
         c->build_plan_.add(UpgradeTypes::U_238_Shells, 30);
         c->build_plan_.add(UnitTypes::Terran_Supply_Depot, 31);
 
-        main_sq_ = Squad::spawn(SquadType::OFFENSIVE, "main1", 10);
-        msg::squad::add_setup(main_sq_, UnitTypes::Terran_Marine, 10);
-        msg::squad::required(main_sq_, true);
-        msg::squad::buildup(main_sq_, true);
-        c->squads_.insert(main_sq_);
-
-        secondary_sq_ = Squad::spawn(SquadType::OFFENSIVE, "main2", 10);
-        msg::squad::required(secondary_sq_, false);
-        msg::squad::buildup(secondary_sq_, true);
-        c->squads_.insert(secondary_sq_);
-
-        rush_sq_ = RushSquad::spawn("rush1", 11);
-        msg::squad::required(rush_sq_, false);
-        c->squads_.insert(rush_sq_);
-
-        scout2_sq_ = ExplorationSquad::spawn("scout2", 11);
-        msg::squad::add_setup(scout2_sq_, UnitTypes::Terran_SCV, 1);
-        msg::squad::required(scout2_sq_, false);
-        c->squads_.insert(scout2_sq_);
-
-        backup1_sq_ = Squad::spawn(SquadType::OFFENSIVE, "bckup1", 11);
-        msg::squad::required(backup1_sq_, false);
-        msg::squad::buildup(backup1_sq_, true);
-        c->squads_.insert(backup1_sq_);
-
-        backup2_sq_ = Squad::spawn(SquadType::OFFENSIVE, "bckup2", 12);
-        msg::squad::required(backup2_sq_, false);
-        msg::squad::buildup(backup2_sq_, true);
-        c->squads_.insert(backup2_sq_);
+        msg::army::add_setup(UnitTypes::Terran_Marine, 10);
+        //msg::army::add_setup(UnitTypes::Terran_SCV, 1);
+        // TODO: pick a random SCV and give it scouting orders/temporary scout squad
       };
   act::modify_actor<Commander>(rnp::commander_id(), fn1);
 }
 
 void TerranMain::on_enter_stage2() const {
-  msg::squad::add_setup(main_sq_, UnitTypes::Terran_Siege_Tank_Tank_Mode, 4);
-  msg::squad::add_setup(main_sq_, UnitTypes::Terran_SCV, 1);
-  msg::squad::add_setup(main_sq_, UnitTypes::Terran_Marine, 6);
-  msg::squad::add_setup(main_sq_, UnitTypes::Terran_Medic, 4);
+  msg::army::add_setup(UnitTypes::Terran_Siege_Tank_Tank_Mode, 4);
+  msg::army::add_setup(UnitTypes::Terran_SCV, 1);
+  msg::army::add_setup(UnitTypes::Terran_Marine, 6);
+  msg::army::add_setup(UnitTypes::Terran_Medic, 4);
 }
 
 void TerranMain::on_enter_stage3() {
@@ -170,9 +144,7 @@ void TerranMain::on_enter_stage3() {
         c->build_plan_.add(UnitTypes::Terran_Engineering_Bay, c_supply);
       };
   act::modify_actor<Commander>(rnp::commander_id(), fn3);
-
-  msg::squad::add_setup(main_sq_, UnitTypes::Terran_Goliath, 3);
-  msg::squad::buildup(main_sq_, false);
+  msg::army::add_setup(UnitTypes::Terran_Goliath, 3);
 }
 
 void TerranMain::on_enter_stage4() {
@@ -181,18 +153,13 @@ void TerranMain::on_enter_stage4() {
         int c_supply = Broodwar->self()->supplyUsed() / 2;
         c->build_plan_.add(UnitTypes::Terran_Barracks, c_supply);
         c->build_plan_.add(UnitTypes::Terran_Missile_Turret, c_supply);
-
-        msg::squad::add_setup(rush_sq_, UnitTypes::Terran_Vulture, 1);
-        msg::squad::priority(rush_sq_, 1);
-        msg::squad::active_priority(rush_sq_, 1000);
-        c->squads_.insert(rush_sq_);
+        msg::army::add_setup(UnitTypes::Terran_Vulture, 1);
       };
   act::modify_actor<Commander>(rnp::commander_id(), fn4);
 
-  msg::squad::add_setup(secondary_sq_, UnitTypes::Terran_Siege_Tank_Tank_Mode, 2);
-  msg::squad::add_setup(secondary_sq_, UnitTypes::Terran_Marine, 8);
-  msg::squad::add_setup(secondary_sq_, UnitTypes::Terran_Goliath, 2);
-  msg::squad::buildup(secondary_sq_, false);
+  msg::army::add_setup(UnitTypes::Terran_Siege_Tank_Tank_Mode, 2);
+  msg::army::add_setup(UnitTypes::Terran_Marine, 8);
+  msg::army::add_setup(UnitTypes::Terran_Goliath, 2);
 }
 
 void TerranMain::on_enter_stage5() {
@@ -203,8 +170,7 @@ void TerranMain::on_enter_stage5() {
       };
   act::modify_actor<Commander>(rnp::commander_id(), fn5);
 
-  msg::squad::add_setup(scout2_sq_, UnitTypes::Terran_Vulture, 2);
-  msg::squad::buildup(scout2_sq_, false);
+  msg::army::add_setup(UnitTypes::Terran_Vulture, 2);
 }
 
 void TerranMain::on_enter_stage6() {
@@ -229,9 +195,8 @@ void TerranMain::on_enter_stage7() {
       };
   act::modify_actor<Commander>(rnp::commander_id(), fn7);
 
-  msg::squad::add_setup(main_sq_, UnitTypes::Terran_Science_Vessel, 1);
-  msg::squad::add_setup(backup1_sq_, UnitTypes::Terran_Wraith, 5);
-  msg::squad::buildup(backup1_sq_, false);
+  msg::army::add_setup(UnitTypes::Terran_Science_Vessel, 1);
+  msg::army::add_setup(UnitTypes::Terran_Wraith, 5);
 }
 
 void TerranMain::on_enter_stage8() {
@@ -252,8 +217,7 @@ void TerranMain::on_enter_endgame() {
   };
   act::modify_actor<Commander>(rnp::commander_id(), fn_endgame);
 
-  msg::squad::add_setup(backup2_sq_, UnitTypes::Terran_Battlecruiser, 2);
-  msg::squad::buildup(backup2_sq_, false);
+  msg::army::add_setup(UnitTypes::Terran_Battlecruiser, 2);
 }
 
 void TerranMain::fsm_on_transition(TerranStrategyState old_st, 

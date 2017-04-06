@@ -12,14 +12,14 @@ RushSquad::RushSquad(std::string m_name, int m_priority)
   goal_ = Broodwar->self()->getStartLocation();
 }
 
-bool RushSquad::is_active() const {
-  return active_;
-}
+//bool RushSquad::is_active() const {
+//  return active_;
+//}
 
 void RushSquad::defend(TilePosition m_goal) {
-  if (not active_) {
+//  if (not active_) {
     set_goal(m_goal);
-  }
+//  }
 }
 
 void RushSquad::attack(TilePosition mGoal) {
@@ -33,24 +33,24 @@ void RushSquad::assist(TilePosition m_goal) {
   }
 }
 
-void RushSquad::tick_inactive() {
-  fill_with_free_workers();
-
-  if (is_full()) {
-    active_ = true;
-    return;
-  }
-
-  auto def_spot = rnp::commander()->find_chokepoint();
-  if (rnp::is_valid_position(def_spot)) {
-    goal_ = def_spot;
-  }
-}
+//void RushSquad::tick_inactive() {
+//  //fill_with_free_workers();
+//
+//  if (is_full()) {
+//    active_ = true;
+//    return;
+//  }
+//
+//  auto def_spot = rnp::commander()->find_chokepoint();
+//  if (rnp::is_valid_position(def_spot)) {
+//    goal_ = def_spot;
+//  }
+//}
 
 void RushSquad::tick_active() {
-  if (active_priority_ != priority_) {
-    priority_ = active_priority_;
-  }
+//  if (active_priority_ != priority_) {
+//    priority_ = active_priority_;
+//  }
 
   auto target_id = find_worker_target();
   act::for_each_in<BaseAgent>(

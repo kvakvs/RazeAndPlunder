@@ -19,6 +19,14 @@ Actor::~Actor() {
   }
 }
 
+void Actor::ac_handle_signals() {
+  if (ac_sig_.sig_kill) {
+    // We're done
+    ac_terminate();
+    sched().remove_actor(self());
+  }
+}
+
 void Actor::ac_monitor(const ActorId& id) {
   auto dst = sched().find_actor(id);
   if (dst) {

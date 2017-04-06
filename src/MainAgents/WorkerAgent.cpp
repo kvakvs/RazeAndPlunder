@@ -27,7 +27,7 @@ void WorkerAgent::destroyed() {
       || fsm_state() == WorkerState::CONSTRUCT
       || fsm_state() == WorkerState::FIND_BUILDSPOT)
   {
-    if (not Constructor::is_zerg()) {
+    if (not rnp::is_zerg()) {
       Constructor::modify([=](Constructor* c) {
           c->handle_worker_destroyed(to_build_, unit_id_);
         });
@@ -185,14 +185,12 @@ void WorkerAgent::compute_squad_worker_actions() {
   if (sq) {
     //If squad is not ative, let the worker gather
     //minerals while not doing any repairs
-    if (not sq->is_active()) {
       if (unit_->isIdle()) {
         Unit mineral = rnp::building_placer()->find_closest_mineral(unit_->getTilePosition());
         if (mineral != nullptr) {
           unit_->rightClick(mineral);
           return;
         }
-      }
     }
     else {
       rnp::navigation()->compute_move(this, goal_);
@@ -207,7 +205,7 @@ bool WorkerAgent::is_available_worker() const {
   if (unit_->isConstructing()) return false;
 
   Unit b = unit_->getTarget();
-  if (b != nullptr) if (b->isBeingConstructed()) return false;
+  if (b && b->isBeingConstructed()) return false;
   if (unit_->isRepairing()) return false;
   if (squad_id_.is_valid()) return false;
 

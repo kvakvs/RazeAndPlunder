@@ -512,9 +512,7 @@ bool NavigationAgent::move_to_goal(const BaseAgent* agent,
     else {
       //Add additional distance to avoid clogging
       //choke points.
-      if (not sq->is_active()) {
-        engage_dist += 4 * 32;
-      }
+      engage_dist += 4 * 32;
     }
   }
 

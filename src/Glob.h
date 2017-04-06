@@ -3,6 +3,10 @@
 #include <spdlog/spdlog.h>
 #include "BWAPI/UnitType.h"
 
+namespace rnp {
+  class Army;
+} // rnp
+
 class AgentManager;
 class BuildingPlacer;
 class Commander;
@@ -25,6 +29,9 @@ enum class MatchResult { Win, Loss, Draw };
 // Globally visible functions which access main class singleton
 const AgentManager* agent_manager();
 const act::ActorId& agent_manager_id();
+
+const rnp::Army* army();
+const act::ActorId& army_id();
 
 const Commander* commander();
 const act::ActorId& commander_id();

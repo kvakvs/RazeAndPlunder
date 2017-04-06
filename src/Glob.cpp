@@ -33,6 +33,10 @@ agent_manager() { return RnpBot::singleton()->agent_manager_ptr_; }
 const act::ActorId& 
 agent_manager_id() { return RnpBot::singleton()->agent_manager_id_; }
 
+const Army* rnp::army() { return RnpBot::singleton()->army_ptr_; }
+const act::ActorId& army_id() { return RnpBot::singleton()->army_id_; }
+
+
 BuildingPlacer* building_placer() {
   return RnpBot::singleton()->building_placer_.get();
 }

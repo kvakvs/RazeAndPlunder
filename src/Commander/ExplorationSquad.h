@@ -20,12 +20,12 @@ public:
   /** Returns true if this Squad is active, or false if not.
    * A Squad is active when it first has been filled with agents.
    * A Squad with destroyed units are still considered Active. */
-  bool is_active() const override {
-    return active_;
-  };
+//  bool is_active() const override {
+//    return active_;
+//  };
 
   // Called each update to issue orders. 
-  void tick_inactive() override;
+//  void tick_inactive() override;
   void tick_active() override;
 
   // Orders this squad to defend a position. 

@@ -8,9 +8,6 @@
  * Author: Johan Hagelback (johan.hagelback@gmail.com)
  */
 class UnitSetup {
-
-private:
-
 public:
   // Default constructor. 
   UnitSetup();

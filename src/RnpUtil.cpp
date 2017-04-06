@@ -65,4 +65,16 @@ bool DelayCounter::is_ready() {
   return false;
 }
 
+bool is_terran() {
+  return Broodwar->self()->getRace().getID() == Races::Terran.getID();
+}
+
+bool is_protoss() {
+  return Broodwar->self()->getRace().getID() == Races::Protoss.getID();
+}
+
+bool is_zerg() {
+  return Broodwar->self()->getRace().getID() == Races::Zerg.getID();
+}
+
 } // ns rnp

@@ -141,6 +141,10 @@ act::ActorId spawn_unit(BWAPI::Unit unit) {
 // Other helper stuff
 //
 
+bool is_terran();
+bool is_protoss();
+bool is_zerg();
+
 // For frame counters
 inline int seconds(int sec) {
   return sec * 24;
