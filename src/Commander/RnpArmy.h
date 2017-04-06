@@ -41,9 +41,10 @@ public:
 
 namespace msg::army {
 
-void add_setup(BWAPI::UnitType ut, size_t count) {
-  act::modify_actor<rnp::Army>(rnp::army_id(),
-                               [=](rnp::Army* a) { a->add_setup(ut, count); });
+inline void add_setup(BWAPI::UnitType ut, size_t count) {
+  act::modify_actor<rnp::Army>(
+    rnp::army_id(),
+    [=](rnp::Army* a) { a->add_setup(ut, count); });
 }
 
 } // msg::army

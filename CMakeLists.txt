@@ -146,6 +146,8 @@ SET(SRC_COMMANDER
         src/Commander/ExplorationSquad.h
         src/Commander/Protoss/ProtossMain.cpp
         src/Commander/Protoss/ProtossMain.h
+        src/Commander/RnpArmy.cpp
+        src/Commander/RnpArmy.h
         src/Commander/RushSquad.cpp
         src/Commander/RushSquad.h
         src/Commander/Squad.cpp

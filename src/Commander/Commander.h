@@ -55,10 +55,6 @@ private:
 
   static BWAPI::TilePosition find_defense_pos(const BWEM::ChokePoint* choke);
 
-  void check_no_squad_units();
-
-  void assign_unit(const BaseAgent* agent);
-
 public:
   Buildplan build_plan_;
   act::ActorId::Set squads_;
@@ -156,11 +152,11 @@ public:
 
   // Adds a bunker squad when a Terran Bunker has been created. Returns
   // the squadID of the bunker squad. 
-  static act::ActorId add_bunker_squad();
+//  static act::ActorId add_bunker_squad();
 
   // Removes a bunker squad. Used when the bunker is destroyed
   // with units inside. 
-  bool remove_bunker_squad(int unitID);
+//  bool remove_bunker_squad(int unitID);
 
   void handle_message(act::Message* incoming) override;
 

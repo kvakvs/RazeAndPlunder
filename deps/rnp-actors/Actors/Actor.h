@@ -43,7 +43,9 @@ public:
   // pointer to actor
   bool apply_code(Actor* actor) override {
     if (static_cast<bool>(apply_fun_)) {
-      apply_fun_(static_cast<T*>(actor));
+      auto ta = static_cast<T*>(actor);
+      assert(ta);
+      apply_fun_(ta);
       return true;
     }
     return false;

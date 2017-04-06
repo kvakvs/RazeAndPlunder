@@ -1,3 +1,4 @@
+#include "Commander/Commander.h"
 #include "Commander/RnpArmy.h"
 #include "Glob.h"
 #include "RnpUtil.h"

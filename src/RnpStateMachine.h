@@ -13,8 +13,10 @@ public:
 
   void fsm_set_state(StateType st) {
     auto old_st = fsm_state_;
-    fsm_state_ = st;
-    fsm_on_transition(old_st, st);
+    if (old_st != st) {
+      fsm_state_ = st;
+      fsm_on_transition(old_st, st);
+    }
   }
   
   StateType fsm_state() const { return fsm_state_; }

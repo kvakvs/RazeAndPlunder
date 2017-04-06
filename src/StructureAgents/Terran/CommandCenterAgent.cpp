@@ -1,8 +1,9 @@
 #include "CommandCenterAgent.h"
-#include "../../Commander/Commander.h"
+#include "Commander/Commander.h"
+#include "Commander/RnpArmy.h"
+#include "Glob.h"
 #include "Managers/AgentManager.h"
 #include "Managers/Constructor.h"
-#include "Glob.h"
 
 using namespace BWAPI;
 
@@ -48,7 +49,7 @@ void CommandCenterAgent::tick() {
     }
   }
 
-  if (rnp::commander()->is_unit_needed(UnitTypes::Terran_SCV)) {
+  if (rnp::army()->need_unit(UnitTypes::Terran_SCV)) {
     if (can_build(UnitTypes::Terran_SCV)) {
       unit_->train(UnitTypes::Terran_SCV);
     }

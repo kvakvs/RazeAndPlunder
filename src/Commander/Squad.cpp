@@ -598,20 +598,8 @@ void Squad::handle_message(act::Message* incoming) {
   if (auto mdie = dynamic_cast<msg::squad::MemberDestroyed*>(incoming)) {
     members_.erase(mdie->dead_);
   }
-  if (auto madd = dynamic_cast<msg::squad::AddMemberToAny*>(incoming)) {
-    auto agent = act::whereis<BaseAgent>(madd->member_id_);
-    if (need_unit(agent->unit_type()) && add_member(madd->member_id_)) {
-      // ok
-    } 
-    else if (not madd->continue_.empty()) {
-      msg::squad::add_member(agent, madd->continue_);
-    }
-  }
   else if (auto sdef = dynamic_cast<msg::squad::Defend*>(incoming)) {
     defend(sdef->spot_);
-  }
-  else if (auto req = dynamic_cast<msg::squad::Required*>(incoming)) {
-    set_required(req->value_);
   }
   else if (auto assi = dynamic_cast<msg::squad::Assist*>(incoming)) {
     assist(assi->loc_);

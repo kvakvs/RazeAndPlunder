@@ -21,13 +21,13 @@ bool SiegeTankAgent::use_abilities() {
 
     //If we are defending and are at the defense position, go
     //in siege mode
-    auto sq = rnp::commander()->get_squad(squad_id_);
-    if (sq) {
-      if (not sq->is_active()) {
-        double d = unit_->getDistance(Position(goal_));
-        if (d <= range * 0.5) goSiege = true;
-      }
-    }
+//    auto sq = rnp::commander()->get_squad(squad_id_);
+//    if (sq) {
+//      if (not sq->is_active()) {
+//        double d = unit_->getDistance(Position(goal_));
+//        if (d <= range * 0.5) goSiege = true;
+//      }
+//    }
 
     if (goSiege && not unit_->isSieged()) {
       unit_->siege();

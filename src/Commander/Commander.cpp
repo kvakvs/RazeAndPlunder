@@ -124,22 +124,22 @@ void Commander::debug_show_goal() const {
 }
 
 void Commander::tick_base_commander_attack_maybe_defend() {
-  auto fn_check = [](auto& s_id) {
-        auto s = act::whereis<Squad>(s_id);
-        return (s->is_required_for_attack());
-      };
-  bool active_found = std::any_of(squads_.begin(), squads_.end(), fn_check);
+//  auto fn_check = [](auto& s_id) {
+//        auto s = act::whereis<Squad>(s_id);
+//        return (s->is_required_for_attack());
+//      };
+//  bool active_found = std::any_of(squads_.begin(), squads_.end(), fn_check);
 
   //No active required squads found.
   //Go back to defend.
-  if (not active_found) {
+//  if (not active_found) {
     fsm_set_state(CommanderAttackState::DEFEND);
     TilePosition def_spot = find_chokepoint();
     for (auto& squad_id : squads_) {
       act::modify_actor<Squad>(squad_id, 
                                [=](Squad* s) { s->set_goal(def_spot); });
     }
-  }
+//  }
 }
 
 void Commander::tick_base_commander_defend() {
@@ -219,49 +219,6 @@ void Commander::tick_base_commander() {
     //Check if there are unfinished buildings we need to complete.
     check_damaged_buildings();
   }
-
-  //Check for units not belonging to a squad
-  check_no_squad_units();
-}
-
-void Commander::check_no_squad_units() {
-  act::for_each_actor<BaseAgent>(
-    [this](const BaseAgent* a) {
-      if (a->unit_type().isWorker()) return;
-      if (a->is_of_type(UnitTypes::Zerg_Overlord)) return;
-      if (a->unit_type().isBuilding()) return;
-      if (a->unit_type().isAddon()) return;
-      if (a->get_squad_id().is_valid()) return;
-
-      assign_unit(a);
-    });
-}
-
-void Commander::assign_unit(const BaseAgent* agent) {
-  if (squads_.empty()) {
-    return;
-  }
-
-  //Broodwar << agent->getUnitID() << " (" << agent->getTypeName().c_str() << ") is not assigned to a squad" << endl;
-  msg::squad::add_member(agent, squads_);
-  
-#if 0
-  act::interruptible_for_each_actor<Squad>(
-      [this,agent,&agent_type](const Squad* squad) {
-          if (squad->need_unit(agent_type)) {
-            // ask squad to take the agent, if it failed - we will get a 
-            // AddMember_Failed message back and should try again
-            msg::squad::add_member(squad->self(), 
-                                   agent->self(),
-                                   self());
-            Broodwar << agent->get_unit_id() << " ("
-                     << agent->get_type_name().c_str()
-                     << ") is assigned to SQ " << squad->get_name() << std::endl;;
-            return act::ForEach::Break;
-          }
-          return act::ForEach::Continue;
-      });
-#endif
 }
 
 TilePosition Commander::find_attack_position() {
@@ -361,7 +318,8 @@ void Commander::handle_message(act::Message* incoming) {
       remove_squad(rsq->squad_);
     }
     else if (auto bunk = dynamic_cast<msg::commander::BunkerDestroyed*>(incoming)) {
-      remove_bunker_squad(bunk->unit_id_);
+      //remove_bunker_squad(bunk->unit_id_);
+      rnp::log()->warn("destroyed bunker, TODO dead marines");
     }
 //    else if (auto amf = dynamic_cast<msg::squad::AddMember_Failed*>(incoming)) {
 //      std::cout << "Commander: add sq member failed " 
@@ -678,16 +636,9 @@ void Commander::debug_print_info() const {
         if (vis) {
           int cSize = s->get_squad_size();
 
-          if (s->is_required_for_attack()) {
-            Broodwar->drawTextScreen(170, 41 + no * 16, "*%s: \x18%d",
-                                     s->string().c_str(), s->get_squad_size());
-            no++;
-          }
-          else {
-            Broodwar->drawTextScreen(170, 41 + no * 16, "%s: \x18%d",
-                                     s->string().c_str(), s->get_squad_size());
-            no++;
-          }
+          Broodwar->drawTextScreen(170, 41 + no * 16, "%s: \x18%d",
+                                   s->string().c_str(), s->get_squad_size());
+          no++;
         }
       });
     if (no == 0) no++;
@@ -701,24 +652,24 @@ void Commander::debug_print_info() const {
 }
 
 // static
-act::ActorId Commander::add_bunker_squad() {
+//act::ActorId Commander::add_bunker_squad() {
 //  auto b_squad = act::spawn<Squad>(ActorFlavour::Squad,
 //                                   SquadType::BUNKER, "Bunker", 5);
-  msg::army::add_setup(UnitTypes::Terran_Marine, 4);
-  // TODO: reserve marines and tell them they are the bunker guys
-}
+//  msg::army::add_setup(UnitTypes::Terran_Marine, 4);
+//  // TOxDO: reserve marines and tell them they are the bunker guys
+//}
 
-bool Commander::remove_bunker_squad(int unit_id) {
-  auto loop_result = act::interruptible_for_each_in<Squad>(
-    squads_,
-    [unit_id](const Squad* s) {
-      if (s->is_bunker_defend_squad()) {
-        if (s->get_bunker_id() == unit_id) {
-          msg::commander::remove_squad(s->self());
-          return act::ForEach::Break;
-        }
-      }
-      return act::ForEach::Continue;
-    });
-  return loop_result == act::ForEachResult::Interrupted;
-}
+//bool Commander::remove_bunker_squad(int unit_id) {
+//  auto loop_result = act::interruptible_for_each_in<Squad>(
+//    squads_,
+//    [unit_id](const Squad* s) {
+//      if (s->is_bunker_defend_squad()) {
+//        if (s->get_bunker_id() == unit_id) {
+//          msg::commander::remove_squad(s->self());
+//          return act::ForEach::Break;
+//        }
+//      }
+//      return act::ForEach::Continue;
+//    });
+//  return loop_result == act::ForEachResult::Interrupted;
+//}

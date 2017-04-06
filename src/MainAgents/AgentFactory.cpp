@@ -160,9 +160,10 @@ act::ActorId AgentFactory::create_terran_agent(Unit unit) const {
     if (is_of_type(unit, UnitTypes::Terran_Bunker)) {
       //Make sure we set the squad id to the bunker, so we
       //can remove the squad if the bunker is destroyed.
-      auto squad_id = Commander::add_bunker_squad();
+//      auto squad_id = Commander::add_bunker_squad();
       auto a = rnp::spawn_unit<StructureAgent>(unit);
-      msg::unit::set_squad(a, squad_id);
+//      msg::unit::set_squad(a, squad_id);
+      rnp::log()->warn("spawned bunker, TODO add marines");
       return a;
     }
     //Default structure agent
