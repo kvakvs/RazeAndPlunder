@@ -7,13 +7,15 @@
 
 using namespace BWAPI;
 
-CommandCenterAgent::CommandCenterAgent(Unit mUnit) {
-  unit_ = mUnit;
+CommandCenterAgent::CommandCenterAgent(Unit unit) {
+  unit_ = unit;
   type_ = unit_->getType();
   unit_id_ = unit_->getID();
 
   has_sent_workers_ = false;
-  if (rnp::agent_manager()->get_units_of_type_count(UnitTypes::Terran_Command_Center) == 0) {
+
+  auto am = rnp::agent_manager();
+  if (am->get_units_of_type_count(UnitTypes::Terran_Command_Center) == 0) {
     //We dont do this for the first Command Center.
     has_sent_workers_ = true;
   }

@@ -100,14 +100,14 @@ void AgentManager::add_agent(Unit unit) const {
   }
 }
 
-void AgentManager::handle_unit_destroyed(msg::agentmanager::UnitDestroyed* incoming) {
-  auto unit_id = incoming->dead_->getID();
+void AgentManager::on_unit_destroyed(Unit dead) {
+  auto unit_id = dead->getID();
   auto actor_id = rnp::unit_actor_key(unit_id);
   auto a = act::whereis<BaseAgent>(actor_id);
 
   if (a) {
     if (a->is_building()) {
-      rnp::building_placer()->on_building_destroyed(incoming->dead_);
+      rnp::building_placer()->on_building_destroyed(dead);
     }
 
     act::send_message<msg::unit::Destroyed>(actor_id);
@@ -115,7 +115,7 @@ void AgentManager::handle_unit_destroyed(msg::agentmanager::UnitDestroyed* incom
 
     //Special case: If a bunker is destroyed, we need to remove
     //the bunker squad.
-    if (incoming->dead_->getType().getID() == UnitTypes::Terran_Bunker.getID()) {
+    if (dead->getType().getID() == UnitTypes::Terran_Bunker.getID()) {
       auto& squad_id = a->get_squad_id();
       msg::commander::remove_squad(squad_id);
     }
@@ -334,8 +334,5 @@ bool AgentManager::is_worker_targeting_unit(Unit target) const {
 }
 
 void AgentManager::handle_message(act::Message* incoming) {
-  if (auto died = dynamic_cast<msg::agentmanager::UnitDestroyed*>(incoming)) {
-    handle_unit_destroyed(died);
-  } 
-  else unhandled_message(incoming);
+  unhandled_message(incoming);
 }

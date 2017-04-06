@@ -9,6 +9,7 @@
 #include "RnpUtil.h"
 
 using namespace BWAPI;
+#define MODULE_PREFIX "<worker> "
 
 WorkerAgent::WorkerAgent(Unit unit)
 : BaseFsmClass(WorkerState::GATHER_MINERALS) 
@@ -251,7 +252,7 @@ void WorkerAgent::tick_gather() {
       unit_->rightClick(mineral);
     }
   }
-  act::suspend(self(), 8); // do not revisit this logic too often
+  act::suspend(self(), 24); // do not revisit this logic too often
 }
 
 void WorkerAgent::tick_find_build_spot() {
@@ -470,6 +471,14 @@ bool WorkerAgent::assign_to_repair(Unit building) {
     return true;
   }
   return false;
+}
+
+// Reassign worker to another command center
+void WorkerAgent::change_command_center(const act::ActorId& ccid, 
+                                        const BWAPI::Position& pos) {
+  assigned_cc_ = ccid;
+  rnp::log()->trace(MODULE_PREFIX "changed command center");
+  get_unit()->rightClick(pos);
 }
 
 void WorkerAgent::handle_message(act::Message* incoming) {

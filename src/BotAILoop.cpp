@@ -72,8 +72,10 @@ void BotAILoop::on_unit_added(Unit unit) {
 }
 
 void BotAILoop::on_unit_morphed(Unit unit) {
-  //rnp::agent_manager()->on_drone_morphed(unit);
-  msg::agentmanager::unit_destroyed(unit);
+  act::modify_actor<AgentManager>(
+    rnp::agent_manager_id(),
+    [=](AgentManager* am) { am->on_unit_destroyed(unit); });
+
   UnitType ut = unit->getType();
   Constructor::modify([=](Constructor* c) { c->unlock(ut); });
 }
@@ -86,7 +88,9 @@ void BotAILoop::on_unit_destroyed(Unit unit) {
       //rnp::commander()->remove_bunker_squad(unit->getID());
     }
 
-    msg::agentmanager::unit_destroyed(unit);
+    act::modify_actor<AgentManager>(
+      rnp::agent_manager_id(),
+      [=](AgentManager* am) { am->on_unit_destroyed(unit); });
 
     if (unit->getType().isBuilding()) {
       Constructor::modify([unit](Constructor* c) {

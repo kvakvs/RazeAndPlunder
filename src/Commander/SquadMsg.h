@@ -16,7 +16,7 @@ inline void member_destroyed(const act::ActorId& dst,
   act::send_message<MemberDestroyed>(dst, member_id);
 }
 
-//-----------------------------------------------------------------------------
+                                                   //-----------------------------------------------------------------------------
 //template <class Container>
 //void add_member(const BaseAgent* unit, const Container& squads) {
 //  auto agent_type = unit->unit_type();

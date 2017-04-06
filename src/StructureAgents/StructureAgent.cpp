@@ -268,12 +268,15 @@ void StructureAgent::send_workers() {
   int to_send = no_workers / rnp::agent_manager()->get_bases_count();
   int has_sent = 0;
 
+  auto this_cc_pos = unit_->getPosition();
+  auto this_id = self();
+  auto fn_worker_send = [=](WorkerAgent* wa) {
+        wa->change_command_center(this_id, this_cc_pos);
+      };
   act::for_each_actor<BaseAgent>(
-    [this,&has_sent,&to_send](const BaseAgent* a) {
+    [this,&has_sent,&to_send,&fn_worker_send](const BaseAgent* a) {
       if (a->is_available_worker()) {
-        Unit worker = a->get_unit();
-        //auto wa = (WorkerAgent*)a.get();
-        worker->rightClick(unit_->getPosition());
+        act::modify_actor<WorkerAgent>(a->self(), fn_worker_send);
         has_sent++;
       }
 

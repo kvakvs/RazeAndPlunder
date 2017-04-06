@@ -35,8 +35,11 @@ private:
   BWAPI::UnitType to_build_;
   BWAPI::TilePosition build_spot_;
   BWAPI::TilePosition start_spot_;
-  int start_build_frame_;
-  int last_frame_;
+  int start_build_frame_ = 0;
+  int last_frame_ = 0;
+  
+  // The command center which we belong to
+  act::ActorId assigned_cc_;
 
   bool is_build_spot_explored() const;
 
@@ -50,7 +53,7 @@ private:
 
 public:
   // Constructor. 
-  explicit WorkerAgent(BWAPI::Unit mUnit);
+  explicit WorkerAgent(BWAPI::Unit unit);
 
   // Called each update to issue orders. 
   void tick() override;
@@ -88,6 +91,10 @@ public:
 
   // Assigns this worker to repair a building. 
   bool assign_to_repair(BWAPI::Unit building);
+
+  // Reassign worker to another command center
+  void change_command_center(const act::ActorId& ccid, 
+                             const BWAPI::Position& pos);
 
   //
   // Actor section

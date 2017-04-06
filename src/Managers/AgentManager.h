@@ -101,14 +101,14 @@ public:
   // Removes inactive agents from the container. Shouldn't be called too often. 
   //void cleanup();
 
+  // Called each time an unit is destroyed
+  void on_unit_destroyed(BWAPI::Unit dead);
+
   //
   // Actor stuff
   //
 
   void handle_message(act::Message* incoming) override;
 private:
-  // Removes an agent from the container. Is called each time
-  // a unit is destroyed
-  void handle_unit_destroyed(msg::agentmanager::UnitDestroyed* incoming);
 };
 
